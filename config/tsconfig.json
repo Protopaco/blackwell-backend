@@ -1,0 +1,8 @@
+{
+  "extends": "./typescript.json",
+  "include": ["../src/**/*.ts"],
+  "exclude": ["../node_modules", "../dist"],
+  "compilerOptions": {
+    "module": "node16"
+  }
+}

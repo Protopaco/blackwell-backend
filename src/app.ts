@@ -1,0 +1,48 @@
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import { pinoHttp } from 'pino-http';
+import { logger } from './utils/logger.js';
+import mapErrorResponse from './middleware/mapErrorResponse.js';
+import healthRoute from './routes/v1/health/index.js';
+
+dotenv.config();
+
+const app = express();
+const basePath = '/api';
+
+app.use(express.json());
+app.use(pinoHttp({ logger }));
+app.use(
+  cors({
+    origin: [
+      'http://localhost:5173',
+      process.env.FRONTEND_BASE_URL,
+    ].filter(Boolean) as string[],
+    credentials: true,
+  }),
+);
+
+app.use(`${basePath}/v1/health`, healthRoute);
+
+app.use(mapErrorResponse);
+
+const PORT = Number(process.env.PORT || 3000);
+const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
+
+const server = app.listen(PORT, HOST, () => {
+  logger.info(`Blackwell Time API running at http://${HOST}:${PORT}`);
+});
+
+const gracefulShutdown = (signal: string) => {
+  logger.info(`Received ${signal}. Graceful shutdown...`);
+  server.close(() => {
+    logger.info('HTTP server closed.');
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+export default app;
