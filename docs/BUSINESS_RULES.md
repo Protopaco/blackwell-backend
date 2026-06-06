@@ -57,6 +57,21 @@ Rules and assumptions that are currently hardcoded or implied. Review when onboa
 - ClockInOut template is defined but not yet implemented
 - For ClockInOut timesheets, hours will be calculated from clock in/out times at read time
 
+> ⚠️ Cleanup: `TimesheetTemplate` is a misnomer. TotalHours and ClockInOut are not different templates — they are different time input methods for the same template. Should be renamed to `TimeInputMethod` in a future cleanup pass.
+
+## Time Entry
+
+- A TimeEntry must have either `hours` OR both `clockIn` and `clockOut` — never neither
+- For TotalHours timesheets: `hours` is set directly by the employee
+- For ClockInOut timesheets: `clockIn` and `clockOut` are set, `hours` is calculated at read time and also stored
+- Clock in/out raw values will need to be persisted to the database in a future phase — currently only hours are stored
+
+## Data Mapping
+
+- The Apps Script config sheet stores `TimesheetTemplate` — mapped to `timeInputMethod` in this codebase
+- The Apps Script config sheet uses PascalCase column headers (e.g. `EmployeeId`, `FirstName`) — the `db/` layer is responsible for mapping these to camelCase model properties
+- The `db/` layer is the only place where raw sheet column names appear — models always use camelCase
+
 ## Funding Source Allocation
 
 - Allocation percentages are stored per activity, not per pay period
