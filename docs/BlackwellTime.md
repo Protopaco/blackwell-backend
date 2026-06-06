@@ -165,6 +165,12 @@ Two levels of operations:
 
 > `writeTab` always replaces. The caller is responsible for knowing when to write. "If not exists" logic lives in the service layer, not the adapter.
 
+### Auth
+
+Uses a Google Cloud service account. Credentials are stored as a JSON string in the `GOOGLE_SERVICE_ACCOUNT_JSON` environment variable. Parsed at runtime — no file on disk, works the same locally and on Railway.
+
+Never commit the service account credentials. `service-account.json` is in `.gitignore`.
+
 ### Function Signatures
 
 ```typescript
