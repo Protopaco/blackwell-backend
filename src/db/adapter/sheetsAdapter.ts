@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { logger } from '../../utils/logger.js';
+import { logger } from '#utils/logger.js';
 
 const getAuthClient = () => {
   const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
@@ -159,6 +159,39 @@ const deleteTab = async (workbookId: string, tabName: string): Promise<void> => 
   });
 };
 
+const deleteRow = async (workbookId: string, tabName: string, rowNumber: number): Promise<void> => {
+  logger.debug(`Deleting row: ${rowNumber} from tab: ${tabName} in workbook: ${workbookId}`);
+  const sheets = await getSheetsClient();
+
+  const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId: workbookId });
+  const tab = spreadsheet.data.sheets?.find((s) => s.properties?.title === tabName);
+
+  if (!tab?.properties?.sheetId) {
+    throw new Error(`Tab not found: ${tabName}`);
+  }
+
+  // Sheets API uses 0-based row index — convert from 1-based
+  const startIndex = rowNumber - 1;
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: workbookId,
+    requestBody: {
+      requests: [
+        {
+          deleteDimension: {
+            range: {
+              sheetId: tab.properties.sheetId,
+              dimension: 'ROWS',
+              startIndex,
+              endIndex: startIndex + 1,
+            },
+          },
+        },
+      ],
+    },
+  });
+};
+
 export default {
   createWorkbook,
   createTab,
@@ -166,4 +199,5 @@ export default {
   writeTab,
   appendRow,
   deleteTab,
+  deleteRow,
 };

@@ -158,6 +158,7 @@ Two levels of operations:
 - `writeTab` — writes rows to a tab in one batch call, full replacement
 - `appendRow` — appends a single row to a tab
 - `deleteTab` — deletes a tab from a workbook
+- `deleteRow` — deletes a specific row from a tab by 1-based row number
 
 > `deleteWorkbook` is intentionally omitted. Once an employee begins using their timesheet file it must be protected. Deletion at the workbook level is too dangerous.
 
@@ -180,6 +181,8 @@ const readTab = async (workbookId: string, tabName: string): Promise<Record<stri
 const writeTab = async (workbookId: string, tabName: string, rows: Record<string, unknown>[]): Promise<void>
 const appendRow = async (workbookId: string, tabName: string, row: Record<string, unknown>): Promise<void>
 const deleteTab = async (workbookId: string, tabName: string): Promise<void>
+const deleteRow = async (workbookId: string, tabName: string, rowNumber: number): Promise<void>
+// rowNumber is 1-based — the adapter handles conversion to 0-based for the Sheets API
 ```
 
 ---
