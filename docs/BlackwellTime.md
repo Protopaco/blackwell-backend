@@ -139,9 +139,33 @@ src/
 
 - All Google Sheets access lives in `db/adapter/sheetsAdapter.ts` only
 - Everything else in `db/` calls the adapter — never Google directly
-- One file per operation (getEmployees.ts, getPayPeriodById.ts, etc.)
+- One file per operation
 - Designed to be replaced one file at a time when migrating to a real database
 - When that happens: rewrite the file to call SQL instead of the adapter — nothing else changes
+
+### Naming Conventions
+
+**`db/` layer** — data access verbs, reflect the operation against the data source:
+- `readX` — reads one or more records
+- `writeX` — replaces/updates existing records
+- `appendX` — adds a new record
+- `deleteX` — removes a record
+- `mapX` — maps a raw row to a typed model (shared, used by readX and readPayrollConfig)
+
+**`services/` layer** — business logic verbs, reflect intent:
+- `getX` — retrieves data, may apply business logic
+- `createX` — creates a new record, assigns IDs, enforces rules
+- `updateX` — updates an existing record, enforces state transitions
+
+**`routes/` layer** — named by HTTP method + resource:
+- `getX`, `postX`, `putX`, `deleteX`
+
+### Layer Rules
+- Routes call services only — never `db/` directly
+- Services call `db/` functions — never the adapter directly
+- `db/` functions call the adapter — never Google APIs directly
+- Infrastructure concerns (env vars, file IDs) live in the `db/` layer, not services or routes
+- `CLIENT_CONFIG_FILE_ID` lives only in `db/client/readClients.ts`
 
 ### sheetsAdapter Operations
 
