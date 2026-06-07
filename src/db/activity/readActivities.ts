@@ -27,9 +27,9 @@ const mapToActivity = (row: Record<string, unknown>): Activity => ({
   flatRateAmount: row['FlatRateAmount'] ? Number(row['FlatRateAmount']) : undefined,
 });
 
-const getActivities = async (payrollConfigFileId: string): Promise<Activity[]> => {
+const readActivities = async (payrollConfigFileId: string): Promise<Activity[]> => {
   const rows = await sheetsAdapter.readTab(payrollConfigFileId, 'Activities');
   return rows.map(mapToActivity);
 };
 
-export default getActivities;
+export default readActivities;

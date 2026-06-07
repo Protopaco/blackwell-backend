@@ -7,9 +7,9 @@ const mapToHoliday = (row: Record<string, unknown>): Holiday => ({
   holidayDate: row['HolidayDate'] as string,
 });
 
-const getHolidays = async (payrollConfigFileId: string): Promise<Holiday[]> => {
+const readHolidays = async (payrollConfigFileId: string): Promise<Holiday[]> => {
   const rows = await sheetsAdapter.readTab(payrollConfigFileId, 'Holidays');
   return rows.map(mapToHoliday);
 };
 
-export default getHolidays;
+export default readHolidays;

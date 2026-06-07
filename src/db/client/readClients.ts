@@ -18,9 +18,12 @@ const mapToClient = (row: Record<string, unknown>): Client => ({
   payPeriodRegistryFileId: row['PayPeriodRegistryFileId'] as string,
 });
 
-const getClients = async (clientConfigFileId: string): Promise<Client[]> => {
+const readClients = async (): Promise<Client[]> => {
+  const clientConfigFileId = process.env.CLIENT_CONFIG_FILE_ID;
+  if (!clientConfigFileId) throw new Error('CLIENT_CONFIG_FILE_ID is not set');
+
   const rows = await sheetsAdapter.readTab(clientConfigFileId, 'Clients');
   return rows.map(mapToClient);
 };
 
-export default getClients;
+export default readClients;

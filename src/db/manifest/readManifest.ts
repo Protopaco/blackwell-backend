@@ -3,7 +3,7 @@ import TimesheetManifest from '#models/TimesheetManifest.js';
 
 const MANIFEST_TAB = '_manifest';
 
-const getManifest = async (timesheetFileId: string, tabName: string): Promise<TimesheetManifest | null> => {
+const readManifest = async (timesheetFileId: string, tabName: string): Promise<TimesheetManifest | null> => {
   try {
     const rows = await sheetsAdapter.readTab(timesheetFileId, MANIFEST_TAB);
     const manifestRow = rows.find((row) => row['tabName'] === tabName);
@@ -14,4 +14,4 @@ const getManifest = async (timesheetFileId: string, tabName: string): Promise<Ti
   }
 };
 
-export default getManifest;
+export default readManifest;

@@ -93,7 +93,7 @@ const mapToSettings = (row: Record<string, unknown>): Settings => ({
   payPeriodStartDate: row['PayPeriodStartDate'] as string,
 });
 
-const getPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollConfig> => {
+const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollConfig> => {
   logger.debug(`Loading payroll config from workbook: ${payrollConfigFileId}`);
 
   const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
@@ -137,4 +137,4 @@ const getPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollCon
   };
 };
 
-export default getPayrollConfig;
+export default readPayrollConfig;

@@ -11,10 +11,10 @@ const mapToPayPeriod = (row: Record<string, unknown>): PayPeriod => ({
   createdDate: row['CreatedDate'] as string,
 });
 
-const getPayPeriods = async (payPeriodRegistryFileId: string): Promise<PayPeriod[]> => {
+const readPayPeriods = async (payPeriodRegistryFileId: string): Promise<PayPeriod[]> => {
   const currentYear = String(new Date().getFullYear());
   const rows = await sheetsAdapter.readTab(payPeriodRegistryFileId, currentYear);
   return rows.map(mapToPayPeriod);
 };
 
-export default getPayPeriods;
+export default readPayPeriods;

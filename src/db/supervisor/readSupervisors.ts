@@ -8,9 +8,9 @@ const mapToSupervisor = (row: Record<string, unknown>): Supervisor => ({
   supervisorEmail: row['SupervisorEmail'] as string,
 });
 
-const getSupervisors = async (payrollConfigFileId: string): Promise<Supervisor[]> => {
+const readSupervisors = async (payrollConfigFileId: string): Promise<Supervisor[]> => {
   const rows = await sheetsAdapter.readTab(payrollConfigFileId, 'Supervisors');
   return rows.map(mapToSupervisor);
 };
 
-export default getSupervisors;
+export default readSupervisors;

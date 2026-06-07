@@ -1,7 +1,7 @@
 import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
 import PayPeriod from '#models/PayPeriod.js';
 
-const savePayPeriod = async (payPeriodRegistryFileId: string, payPeriod: PayPeriod): Promise<void> => {
+const appendPayPeriod = async (payPeriodRegistryFileId: string, payPeriod: PayPeriod): Promise<void> => {
   const currentYear = String(new Date().getFullYear());
 
   const row: Record<string, unknown> = {
@@ -16,4 +16,4 @@ const savePayPeriod = async (payPeriodRegistryFileId: string, payPeriod: PayPeri
   await sheetsAdapter.appendRow(payPeriodRegistryFileId, currentYear, row);
 };
 
-export default savePayPeriod;
+export default appendPayPeriod;

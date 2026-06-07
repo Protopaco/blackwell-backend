@@ -7,9 +7,9 @@ const mapToFundingSource = (row: Record<string, unknown>): FundingSource => ({
   fundingSourceCode: (row['FundingSourceCode'] as string) || undefined,
 });
 
-const getFundingSources = async (payrollConfigFileId: string): Promise<FundingSource[]> => {
+const readFundingSources = async (payrollConfigFileId: string): Promise<FundingSource[]> => {
   const rows = await sheetsAdapter.readTab(payrollConfigFileId, 'FundingSources');
   return rows.map(mapToFundingSource);
 };
 
-export default getFundingSources;
+export default readFundingSources;

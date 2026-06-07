@@ -16,9 +16,9 @@ const mapToEmployee = (row: Record<string, unknown>): Employee => ({
   timesheetFileId: row['TimesheetFileId'] as string,
 });
 
-const getEmployees = async (payrollConfigFileId: string): Promise<Employee[]> => {
+const readEmployees = async (payrollConfigFileId: string): Promise<Employee[]> => {
   const rows = await sheetsAdapter.readTab(payrollConfigFileId, 'Employees');
   return rows.map(mapToEmployee);
 };
 
-export default getEmployees;
+export default readEmployees;
