@@ -1,4 +1,4 @@
-import updatePayPeriodDb from '#db/payPeriod/updatePayPeriod.js';
+import updatePayPeriodDb from '#db/payPeriod/writePayPeriod.js';
 import PayPeriod from '#models/PayPeriod.js';
 
 const updatePayPeriod = async (

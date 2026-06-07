@@ -1,8 +1,8 @@
 import getClientById from '#db/client/getClientById.js';
-import getPayPeriodById from '#db/payPeriod/getPayPeriodById.js';
-import getPayrollConfig from '#db/payrollConfig/getPayrollConfig.js';
-import getManifest from '#db/manifest/getManifest.js';
-import saveManifest from '#db/manifest/saveManifest.js';
+import getPayPeriodById from '#db/payPeriod/readPayPeriodById.js';
+import getPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
+import getManifest from '#db/manifest/readManifest.js';
+import saveManifest from '#db/manifest/appendManifest.js';
 import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
 import Guid from '#models/Guid.js';

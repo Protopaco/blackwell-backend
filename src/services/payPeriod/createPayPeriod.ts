@@ -1,4 +1,4 @@
-import savePayPeriod from '#db/payPeriod/savePayPeriod.js';
+import savePayPeriod from '#db/payPeriod/appendPayPeriod.js';
 import PayPeriod from '#models/PayPeriod.js';
 
 const createPayPeriod = async (

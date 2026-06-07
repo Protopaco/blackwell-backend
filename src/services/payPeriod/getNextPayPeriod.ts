@@ -1,5 +1,5 @@
-import getPayPeriods from '#db/payPeriod/getPayPeriods.js';
-import getSettings from '#db/settings/getSettings.js';
+import getPayPeriods from '#db/payPeriod/readPayPeriods.js';
+import getSettings from '#db/settings/readSettings.js';
 import PayPeriod from '#models/PayPeriod.js';
 import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import { PayPeriodInterval } from '#models/PayPeriodInterval.js';

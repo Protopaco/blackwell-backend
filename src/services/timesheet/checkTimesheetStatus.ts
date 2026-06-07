@@ -1,5 +1,5 @@
 import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
-import getManifest from '#db/manifest/getManifest.js';
+import getManifest from '#db/manifest/readManifest.js';
 import { TimesheetStatus, TimesheetStatusType } from '#models/TimesheetStatus.js';
 
 const EMPLOYEE_SIGNATURE_COLUMN = 'B';
