@@ -1,8 +1,10 @@
-import getPayPeriods from '#db/payPeriod/readPayPeriods.js';
-import getSettings from '#db/settings/readSettings.js';
+import getPayPeriods from '#services/payPeriod/getPayPeriods.js';
+import getClientById from '#services/client/getClientById.js';
+import readSettings from '#db/settings/readSettings.js';
 import PayPeriod from '#models/PayPeriod.js';
 import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import { PayPeriodInterval } from '#models/PayPeriodInterval.js';
+import { logger } from '#utils/logger.js';
 
 const INTERVAL_DAYS: Record<string, number> = {
   [PayPeriodInterval.Weekly]: 7,
@@ -21,13 +23,15 @@ const formatPayPeriodName = (startDate: string, endDate: string): string => {
   return `${start} - ${end}`;
 };
 
-const getNextPayPeriod = async (
-  payrollConfigFileId: string,
-  payPeriodRegistryFileId: string,
-): Promise<PayPeriod> => {
+const getNextPayPeriod = async (clientId: string): Promise<PayPeriod | null> => {
+  logger.info(`getNextPayPeriod clientId=${clientId}`);
+
+  const client = await getClientById(clientId);
+  if (!client) return null;
+
   const [settings, payPeriods] = await Promise.all([
-    getSettings(payrollConfigFileId),
-    getPayPeriods(payPeriodRegistryFileId),
+    readSettings(client.payrollConfigFileId),
+    getPayPeriods(clientId),
   ]);
 
   const intervalDays = INTERVAL_DAYS[settings.payPeriodInterval];
