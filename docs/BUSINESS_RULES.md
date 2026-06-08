@@ -24,7 +24,10 @@ Row 4: Holiday row — holiday name above its date column, empty otherwise
 Row 5: Day row — Mon, Tue, Wed, Thu, Fri, Sat, Sun
 Row 6: Date row — formatted dates e.g. 6/1, 6/2...
 Row 7+: Activity rows (see Activity Sort Order below)
-Last: Divider
+Daily Total row — sums all hourly activity rows per column; includes weekly total formula
+[Divider]
+Flat Rate Activities (if any exist)
+[Divider]
 
 [Week 2]
 ...same structure repeated...
@@ -32,6 +35,10 @@ Last: Divider
 [Footer]
 Employee signature row
 Supervisor signature row
+
+[Daily Totals]
+One column per day (Mon-Sun) — formula sums all hourly activity rows for that day
+One weekly total cell — formula sums the daily total columns
 
 [Summary]
 Total Hours Worked    — sum of all hourly activity rows
@@ -57,6 +64,9 @@ Activities are split into three groups, each sorted alphabetically:
 ```
 
 Work and Time Off groups are not visually separated from each other but Time Off sits below Work. Flat Rate is always separated by a divider.
+
+> Implementation: `sortActivities()` service function in `src/services/timesheet/sortActivities.ts`
+> Returns: `{ workActivities[], timeOffActivities[], flatRateActivities[] }` each sorted alphabetically by activityName
 
 ### Holiday Display
 
@@ -88,6 +98,20 @@ Work and Time Off groups are not visually separated from each other but Time Off
 - Supported intervals: Weekly, Bi-weekly
 - Monthly is defined in constants but not yet implemented
 - Pay period names are formatted as MM/DD - MM/DD
+- Pay periods are chunked into 7-day blocks starting from the pay period start date (not calendar weeks)
+  - A pay period starting on Wednesday will chunk Wed-Tue, not Mon-Sun
+  - This ensures week totals and daily totals align with the actual pay period calendar
+- Implementation: `chunkDatesByWeek()` utility in `src/utils/dateUtils.ts`
+
+## Date Utilities
+
+The `src/utils/dateUtils.ts` module provides:
+
+- `getDatesBetween(startDate, endDate)` — returns array of all dates inclusive between start and end
+- `chunkDatesByWeek(dates)` — chunks array into 7-day blocks; used to split pay periods into weekly sections
+- `formatDateHeader(date)` — formats date as M/D (no leading zeros) for display in timesheet
+- `getDayOfWeek(date)` — returns day name (Mon, Tue, Wed, etc.) for display in timesheet
+- `getHolidayName(date, holidays)` — looks up holiday name for a given date, returns null if not a holiday
 
 ## Activities
 
@@ -150,6 +174,30 @@ Work and Time Off groups are not visually separated from each other but Time Off
 - Flat rate activity cells should only accept integers
 - No letters or symbols permitted in data entry cells
 - To be implemented after initial timesheet structure is approved
+
+## Timesheet Generation Pipeline (In Progress)
+
+The timesheet generation service (`generateTimesheets`) builds the entire sheet structure in memory, then writes in a single batch call to avoid throttling:
+
+1. Load payroll config (one batch read of all config tabs)
+2. Filter to active employees
+3. For each employee:
+   - Check if timesheet already exists (read manifest tab)
+   - Generate timesheet structure in memory:
+     - Sort activities via `sortActivities()`
+     - Get date range via `getDatesBetween()` 
+     - Chunk dates via `chunkDatesByWeek()`
+     - Build header, footer, daily totals, and summary rows
+     - Build week sections with holiday row, day row, date row, activity rows, daily total
+   - Write entire structure to employee's timesheet file in one call
+   - Build and save manifest for later reading
+
+Implementation status:
+- ✅ `sortActivities()` — separates and sorts activities by type
+- ✅ `dateUtils.ts` — all date utilities complete
+- 🔄 Row builders — TODO: header row, footer row, daily total row, summary row builders
+- 🔄 Week builder — TODO: combines holiday + day + date + activities + daily total for one week
+- 🔄 Main orchestration — TODO: glue together all pieces, build in-memory structure, write batch
 
 ## Funding Source Allocation
 
