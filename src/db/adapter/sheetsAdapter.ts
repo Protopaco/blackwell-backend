@@ -119,6 +119,26 @@ const writeTab = async (
   });
 };
 
+// Writes a raw 2D array to a tab with USER_ENTERED input option (formulas are interpreted).
+// Use this instead of writeTab when the data contains Sheets formulas.
+const writeValues = async (
+  workbookId: string,
+  tabName: string,
+  values: unknown[][],
+): Promise<void> => {
+  logger.debug(`Writing values to tab: ${tabName} in workbook: ${workbookId}`);
+  if (values.length === 0) return;
+
+  const sheets = await getSheetsClient();
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: workbookId,
+    range: tabName,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: values as string[][] },
+  });
+};
+
 const appendRow = async (
   workbookId: string,
   tabName: string,
@@ -197,6 +217,7 @@ export default {
   createTab,
   readTab,
   writeTab,
+  writeValues,
   appendRow,
   deleteTab,
   deleteRow,
