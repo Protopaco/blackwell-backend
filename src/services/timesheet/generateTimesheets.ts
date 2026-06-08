@@ -1,23 +1,29 @@
-import getClientById from '#db/client/getClientById.js';
-import getPayPeriodById from '#db/payPeriod/readPayPeriodById.js';
-import getPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
-import getManifest from '#db/manifest/readManifest.js';
-import saveManifest from '#db/manifest/appendManifest.js';
-import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
-import { EmployeeStatus } from '#models/EmployeeStatus.js';
-import Guid from '#models/Guid.js';
-import { logger } from '#utils/logger.js';
+import readClientById from "#db/client/readClientById.js";
+import getPayPeriodById from "#db/payPeriod/readPayPeriodById.js";
+import getPayrollConfig from "#db/payrollConfig/readPayrollConfig.js";
+import getManifest from "#db/manifest/readManifest.js";
+import saveManifest from "#db/manifest/appendManifest.js";
+import sheetsAdapter from "#db/adapter/sheetsAdapter.js";
+import { EmployeeStatus } from "#models/EmployeeStatus.js";
+import Guid from "#models/Guid.js";
+import { logger } from "#utils/logger.js";
 
-const generateTimesheets = async (clientId: Guid, payPeriodId: Guid): Promise<void> => {
+const generateTimesheets = async (
+  clientId: Guid,
+  payPeriodId: Guid,
+): Promise<void> => {
   const clientConfigFileId = process.env.CLIENT_CONFIG_FILE_ID;
-  if (!clientConfigFileId) throw new Error('CLIENT_CONFIG_FILE_ID is not set');
+  if (!clientConfigFileId) throw new Error("CLIENT_CONFIG_FILE_ID is not set");
 
   // Load client
-  const client = await getClientById(clientConfigFileId, clientId);
+  const client = await readClientById(clientId);
   if (!client) throw new Error(`Client not found: ${clientId}`);
 
   // Load pay period
-  const payPeriod = await getPayPeriodById(client.payPeriodRegistryFileId, payPeriodId);
+  const payPeriod = await getPayPeriodById(
+    client.payPeriodRegistryFileId,
+    payPeriodId,
+  );
   if (!payPeriod) throw new Error(`Pay period not found: ${payPeriodId}`);
 
   // Load all config in one batch call
@@ -31,20 +37,29 @@ const generateTimesheets = async (clientId: Guid, payPeriodId: Guid): Promise<vo
 
   for (const employee of activeEmployees) {
     // Skip if timesheet already exists for this pay period
-    const existingManifest = await getManifest(employee.timesheetFileId, payPeriod.payPeriodName);
+    const existingManifest = await getManifest(
+      employee.timesheetFileId,
+      payPeriod.payPeriodName,
+    );
     if (existingManifest) {
-      logger.info(`Timesheet already exists — skipping ${employee.firstName} ${employee.lastName}`);
+      logger.info(
+        `Timesheet already exists — skipping ${employee.firstName} ${employee.lastName}`,
+      );
       continue;
     }
 
-    logger.info(`Generating timesheet for ${employee.firstName} ${employee.lastName}`);
+    logger.info(
+      `Generating timesheet for ${employee.firstName} ${employee.lastName}`,
+    );
 
     // TODO: build timesheet structure in memory
     // TODO: write timesheet in one batch call
     // TODO: build manifest
     // TODO: save manifest
 
-    logger.info(`Timesheet generated for ${employee.firstName} ${employee.lastName}`);
+    logger.info(
+      `Timesheet generated for ${employee.firstName} ${employee.lastName}`,
+    );
   }
 };
 

@@ -1,6 +1,6 @@
 const PayPeriodInterval = {
   Weekly: 'Weekly',
-  BiWeekly: 'Bi-weekly',
+  BiWeekly: 'Bi-Weekly',
   Monthly: 'Monthly',
 } as const;
 
