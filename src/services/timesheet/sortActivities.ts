@@ -1,0 +1,43 @@
+import Activity from '#models/Activity.js';
+import { PayRate } from '#models/PayRate.js';
+import { PayrollCategory } from '#models/PayrollCategory.js';
+
+const TIME_OFF_CATEGORIES = [
+  PayrollCategory.ETO,
+  PayrollCategory.PTO,
+  PayrollCategory.STO,
+];
+
+interface SortedActivities {
+  workActivities: Activity[];
+  timeOffActivities: Activity[];
+  flatRateActivities: Activity[];
+}
+
+const sortActivities = (activities: Activity[]): SortedActivities => {
+  const workActivities: Activity[] = [];
+  const timeOffActivities: Activity[] = [];
+  const flatRateActivities: Activity[] = [];
+
+  activities.forEach((activity) => {
+    if (activity.payRate === PayRate.FlatRate) {
+      flatRateActivities.push(activity);
+    } else if (TIME_OFF_CATEGORIES.includes(activity.payrollCategory as any)) {
+      timeOffActivities.push(activity);
+    } else {
+      workActivities.push(activity);
+    }
+  });
+
+  const alphabetical = (a: Activity, b: Activity) =>
+    a.activityName.localeCompare(b.activityName);
+
+  return {
+    workActivities: workActivities.sort(alphabetical),
+    timeOffActivities: timeOffActivities.sort(alphabetical),
+    flatRateActivities: flatRateActivities.sort(alphabetical),
+  };
+};
+
+export type { SortedActivities };
+export default sortActivities;
