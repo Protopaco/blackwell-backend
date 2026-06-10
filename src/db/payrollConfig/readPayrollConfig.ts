@@ -7,6 +7,9 @@ import mapFundingSource from '#db/fundingSource/mapFundingSource.js';
 import mapHoliday from '#db/holiday/mapHoliday.js';
 import mapSettings from '#db/settings/mapSettings.js';
 import { logger } from '#utils/logger.js';
+import { createCache } from '#utils/cache.js';
+
+const cache = createCache<PayrollConfig>(5 * 60 * 1000);
 
 const TAB_NAMES = {
   employees: 'Employees',
@@ -31,6 +34,9 @@ const parseRows = (values: unknown[][]): Record<string, unknown>[] => {
 
 const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollConfig> => {
   logger.debug(`Loading payroll config from workbook: ${payrollConfigFileId}`);
+
+  const cached = cache.get(payrollConfigFileId);
+  if (cached) return cached;
 
   const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
   if (!serviceAccountJson) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is not set');
@@ -62,7 +68,7 @@ const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollCo
   const settings = settingsRows.length > 0 ? mapSettings(settingsRows[0]) : null;
   if (!settings) throw new Error('Settings not found in Payroll Config');
 
-  return {
+  const config: PayrollConfig = {
     employees: employeeRows.map(mapEmployee),
     supervisors: supervisorRows.map(mapSupervisor),
     activities: activityRows.map(mapActivity),
@@ -70,6 +76,12 @@ const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollCo
     holidays: holidayRows.map(mapHoliday),
     settings,
   };
+
+  cache.set(payrollConfigFileId, config);
+  return config;
 };
 
+const clearPayrollConfigCache = (): void => cache.clear();
+
+export { clearPayrollConfigCache };
 export default readPayrollConfig;
