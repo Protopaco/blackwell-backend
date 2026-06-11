@@ -13,10 +13,10 @@ const mapToClient = (row: Record<string, unknown>): Client => ({
   clientFolderId: row['ClientFolderId'] as string,
   employeePayrollFolderId: row['EmployeePayrollFolderId'] as string,
   payrollConfigFolderId: row['PayrollConfigFolderId'] as string,
-  reportsFolderId: row['ReportsFolderId'] as string,
+  reportsFolderId: row['ReportFolderId'] as string,
   payrollReportFolderId: row['PayrollReportFolderId'] as string,
   allocationReportFolderId: row['AllocationReportFolderId'] as string,
-  timesheetsFolderId: row['TimesheetsFolderId'] as string,
+  timesheetsFolderId: row['TimesheetFolderId'] as string,
   payrollConfigFileId: row['PayrollConfigFileId'] as string,
   payPeriodRegistryFileId: row['PayPeriodRegistryFileId'] as string,
 });

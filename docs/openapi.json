@@ -73,12 +73,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "Draft",
-              "Pending",
-              "Open",
-              "Closed"
-            ]
+            "enum": ["Draft", "Pending", "Open", "Closed"]
           },
           "startDate": {
             "type": "string",
@@ -112,12 +107,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "NotGenerated",
-              "Generated",
-              "Submitted",
-              "Approved"
-            ]
+            "enum": ["NotGenerated", "Generated", "Submitted", "Approved"]
           }
         }
       },
@@ -141,19 +131,14 @@
       "post": {
         "operationId": "v1GenerateTimesheets",
         "summary": "Generate timesheets for all active employees for a pay period",
-        "tags": [
-          "Timesheet"
-        ],
+        "tags": ["Timesheet"],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "clientId",
-                  "payPeriodId"
-                ],
+                "required": ["clientId", "payPeriodId"],
                 "properties": {
                   "clientId": {
                     "type": "string"
@@ -183,9 +168,7 @@
       "get": {
         "operationId": "v1GetTimesheetStatus",
         "summary": "Get timesheet status for all employees for a pay period",
-        "tags": [
-          "Timesheet"
-        ],
+        "tags": ["Timesheet"],
         "parameters": [
           {
             "in": "query",
@@ -225,9 +208,7 @@
       "put": {
         "operationId": "v1UpdatePayPeriod",
         "summary": "Update an existing pay period",
-        "tags": [
-          "PayPeriod"
-        ],
+        "tags": ["PayPeriod"],
         "parameters": [
           {
             "in": "path",
@@ -247,9 +228,7 @@
       "get": {
         "operationId": "v1GetPayPeriodById",
         "summary": "Get a single pay period by ID",
-        "tags": [
-          "PayPeriod"
-        ],
+        "tags": ["PayPeriod"],
         "parameters": [
           {
             "in": "path",
@@ -286,9 +265,7 @@
       "post": {
         "operationId": "v1CreatePayPeriod",
         "summary": "Create a new pay period",
-        "tags": [
-          "PayPeriod"
-        ],
+        "tags": ["PayPeriod"],
         "responses": {
           "201": {
             "description": "Pay period created"
@@ -298,9 +275,7 @@
       "get": {
         "operationId": "v1GetPayPeriods",
         "summary": "Get all pay periods for a client",
-        "tags": [
-          "PayPeriod"
-        ],
+        "tags": ["PayPeriod"],
         "parameters": [
           {
             "in": "query",
@@ -332,9 +307,7 @@
       "get": {
         "operationId": "v1GetNextPayPeriod",
         "summary": "Get suggested next pay period for a client",
-        "tags": [
-          "PayPeriod"
-        ],
+        "tags": ["PayPeriod"],
         "parameters": [
           {
             "in": "query",
@@ -363,9 +336,7 @@
       "get": {
         "operationId": "v1Health",
         "summary": "Health check",
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "responses": {
           "200": {
             "description": "Service is healthy"
@@ -377,9 +348,7 @@
       "get": {
         "operationId": "v1GetClients",
         "summary": "Get all clients",
-        "tags": [
-          "Client"
-        ],
+        "tags": ["Client"],
         "responses": {
           "200": {
             "description": "List of clients",
@@ -393,6 +362,18 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/cache/clear": {
+      "post": {
+        "operationId": "v1ClearCache",
+        "summary": "Clear all in-memory caches and force fresh reads from Google Sheets",
+        "tags": ["Admin"],
+        "responses": {
+          "200": {
+            "description": "Cache cleared"
           }
         }
       }

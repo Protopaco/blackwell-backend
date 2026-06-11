@@ -123,6 +123,7 @@ The `src/utils/dateUtils.ts` module provides:
 - Only Active employees get timesheets generated
 - One timesheet file per employee, one tab per pay period
 - Timesheet files are never deleted through the tool
+- When a new employee is added, their Google Sheets timesheet file must be created manually in Google Drive and shared with the service account as Editor. The resulting file ID must be entered into the `TimesheetFileId` column in the Employees config tab before timesheets can be generated for that employee.
 
 ## Holidays
 
