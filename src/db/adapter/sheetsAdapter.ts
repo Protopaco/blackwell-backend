@@ -72,6 +72,27 @@ const createTab = async (workbookId: string, tabName: string): Promise<void> => 
   });
 };
 
+const tabExists = async (workbookId: string, tabName: string): Promise<boolean> => {
+  try {
+    const sheets = await getSheetsClient();
+    const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId: workbookId });
+    return spreadsheet.data.sheets?.some((sheet) => sheet.properties?.title === tabName) ?? false;
+  } catch {
+    return false;
+  }
+};
+
+const createTabIfNotExists = async (workbookId: string, tabName: string): Promise<void> => {
+  try {
+    await createTab(workbookId, tabName);
+  } catch (error: any) {
+    const alreadyExists = error?.errors?.[0]?.reason === 'badRequest' &&
+      error?.message?.includes('already exists');
+    if (!alreadyExists) throw error;
+    logger.debug(`Tab already exists, skipping create: ${tabName}`);
+  }
+};
+
 const readTab = async (
   workbookId: string,
   tabName: string,
@@ -121,6 +142,29 @@ const writeTab = async (
 
 // Writes a raw 2D array to a tab with USER_ENTERED input option (formulas are interpreted).
 // Use this instead of writeTab when the data contains Sheets formulas.
+// Writes values to a specific A1 range (e.g. "Employees!K3:L3"). USER_ENTERED so formulas work.
+const updateCells = async (workbookId: string, range: string, values: unknown[][]): Promise<void> => {
+  logger.debug(`Updating cells: ${range} in workbook: ${workbookId}`);
+  const sheets = await getSheetsClient();
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: workbookId,
+    range,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: values as string[][] },
+  });
+};
+
+// Returns raw rows with no header interpretation — use when the first row is data, not a header.
+const readTabValues = async (workbookId: string, tabName: string): Promise<unknown[][]> => {
+  logger.debug(`Reading raw values from tab: ${tabName} in workbook: ${workbookId}`);
+  const sheets = await getSheetsClient();
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: workbookId,
+    range: tabName,
+  });
+  return (response.data.values as unknown[][]) ?? [];
+};
+
 const writeValues = async (
   workbookId: string,
   tabName: string,
@@ -214,8 +258,12 @@ const deleteRow = async (workbookId: string, tabName: string, rowNumber: number)
 
 export default {
   createWorkbook,
+  updateCells,
   createTab,
+  tabExists,
+  createTabIfNotExists,
   readTab,
+  readTabValues,
   writeTab,
   writeValues,
   appendRow,

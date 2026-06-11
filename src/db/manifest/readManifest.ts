@@ -5,10 +5,10 @@ const MANIFEST_TAB = '_manifest';
 
 const readManifest = async (timesheetFileId: string, tabName: string): Promise<TimesheetManifest | null> => {
   try {
-    const rows = await sheetsAdapter.readTab(timesheetFileId, MANIFEST_TAB);
-    const manifestRow = rows.find((row) => row['tabName'] === tabName);
-    if (!manifestRow) return null;
-    return JSON.parse(manifestRow['manifest'] as string) as TimesheetManifest;
+    const rows = await sheetsAdapter.readTabValues(timesheetFileId, MANIFEST_TAB);
+    const matchingRow = rows.find((row) => row[0] === tabName);
+    if (!matchingRow) return null;
+    return JSON.parse(matchingRow[1] as string) as TimesheetManifest;
   } catch {
     return null;
   }

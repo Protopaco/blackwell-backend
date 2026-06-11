@@ -4,6 +4,7 @@ import saveManifest from '#db/manifest/appendManifest.js';
 import getManifest from '#db/manifest/readManifest.js';
 import getPayPeriodById from '#db/payPeriod/readPayPeriodById.js';
 import getPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
+import updateEmployeeTimesheetFile from '#db/employee/updateEmployeeTimesheetFile.js';
 import Activity from '#models/Activity.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
 import Guid from '#models/Guid.js';
@@ -88,8 +89,25 @@ const generateTimesheets = async (
   for (const employee of activeEmployees) {
     const existingManifest = await getManifest(employee.timesheetFileId, payPeriod.payPeriodName);
     if (existingManifest) {
-      logger.info(`Timesheet already exists — skipping ${employee.firstName} ${employee.lastName}`);
-      continue;
+      const tabStillExists = await sheetsAdapter.tabExists(employee.timesheetFileId, payPeriod.payPeriodName);
+      if (tabStillExists) {
+        logger.info(`Timesheet already exists — skipping ${employee.firstName} ${employee.lastName}`);
+        continue;
+      }
+      logger.info(`Manifest exists but tab was deleted — regenerating ${employee.firstName} ${employee.lastName}`);
+    }
+
+    if (!employee.timesheetFileId) {
+      logger.info(`No timesheet file for ${employee.firstName} ${employee.lastName} — creating`);
+      const newFileId = await sheetsAdapter.createWorkbook(
+        `${employee.firstName} ${employee.lastName} Timesheets`,
+        client.timesheetsFolderId,
+      );
+      const newFileLink = `https://docs.google.com/spreadsheets/d/${newFileId}/edit`;
+      await updateEmployeeTimesheetFile(client.payrollConfigFileId, employee.employeeId, newFileId, newFileLink);
+      employee.timesheetFileId = newFileId;
+      employee.timesheetFileLink = newFileLink;
+      logger.info(`Created timesheet file for ${employee.firstName} ${employee.lastName}: ${newFileId}`);
     }
 
     logger.info(`Generating timesheet for ${employee.firstName} ${employee.lastName}`);
@@ -154,7 +172,7 @@ const generateTimesheets = async (
       allRows.push(buildSummaryRow('Flat Rate Shifts', countaRows(flatRateRowNums, maxDays)));
     }
 
-    await sheetsAdapter.createTab(employee.timesheetFileId, payPeriod.payPeriodName);
+    await sheetsAdapter.createTabIfNotExists(employee.timesheetFileId, payPeriod.payPeriodName);
     await sheetsAdapter.writeValues(employee.timesheetFileId, payPeriod.payPeriodName, allRows);
 
     const manifest: TimesheetManifest = {
