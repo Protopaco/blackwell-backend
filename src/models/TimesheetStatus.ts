@@ -3,6 +3,7 @@ const TimesheetStatus = {
   Generated: 'Generated',
   Submitted: 'Submitted',
   Approved: 'Approved',
+  Complete: 'Complete',
 } as const;
 
 type TimesheetStatus = typeof TimesheetStatus[keyof typeof TimesheetStatus];

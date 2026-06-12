@@ -207,7 +207,7 @@ const deleteTab = async (workbookId: string, tabName: string): Promise<void> => 
   const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId: workbookId });
   const tab = spreadsheet.data.sheets?.find((s) => s.properties?.title === tabName);
 
-  if (!tab?.properties?.sheetId) {
+  if (!tab || tab.properties?.sheetId === undefined) {
     throw new Error(`Tab not found: ${tabName}`);
   }
 
@@ -230,7 +230,7 @@ const deleteRow = async (workbookId: string, tabName: string, rowNumber: number)
   const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId: workbookId });
   const tab = spreadsheet.data.sheets?.find((s) => s.properties?.title === tabName);
 
-  if (!tab?.properties?.sheetId) {
+  if (!tab || tab.properties?.sheetId === undefined) {
     throw new Error(`Tab not found: ${tabName}`);
   }
 

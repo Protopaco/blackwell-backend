@@ -127,7 +127,9 @@ const generateTimesheets = async (
       currentRow += result.rows.length;
     }
 
+    const employeeSignatureCell = { row: allRows.length + 1, column: 2 }; // 1-based; col B
     allRows.push(buildSignatureRow('Employee Signature:'));
+    const supervisorSignatureCell = { row: allRows.length + 1, column: 2 };
     allRows.push(buildSignatureRow('Supervisor Signature:'));
 
     const hourlyRowNums: number[] = [];
@@ -181,6 +183,8 @@ const generateTimesheets = async (
       generatedAt: new Date().toISOString(),
       tabName: payPeriod.payPeriodName,
       weeks: weekManifests,
+      employeeSignatureCell,
+      supervisorSignatureCell,
     };
 
     await saveManifest(employee.timesheetFileId, manifest);
