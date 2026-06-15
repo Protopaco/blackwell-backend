@@ -14,6 +14,7 @@ import TimesheetManifest, { WeekManifest } from '#models/TimesheetManifest.js';
 import { chunkDatesByWeek, getDatesBetween, getHolidayName } from '#utils/dateUtils.js';
 import { logger } from '#utils/logger.js';
 import buildWeek from './buildWeek.js';
+import applyTimesheetFormatting from './applyTimesheetFormatting.js';
 import {
   buildDividerRow,
   buildEmployeeRow,
@@ -26,6 +27,7 @@ import sortActivities from './sortActivities.js';
 
 const TIME_OFF_CATEGORIES = [PayrollCategory.ETO, PayrollCategory.PTO, PayrollCategory.STO] as const;
 
+// Builds a =SUM() formula that totals each given row across all day columns (B through the last day column).
 const sumRows = (rowNums: number[], maxDays: number): string => {
   if (rowNums.length === 0) return '0';
   const lastCol = colLetter(maxDays);
@@ -46,6 +48,7 @@ const sumCells = (rowNums: number[], cols: number[]): string => {
   return `=SUM(${cells.join(',')})`;
 };
 
+// Builds a =COUNTA() formula that counts filled cells across day columns for the given rows — used for flat-rate shift counts.
 const countaRows = (rowNums: number[], maxDays: number): string => {
   if (rowNums.length === 0) return '0';
   const lastCol = colLetter(maxDays);
@@ -53,6 +56,9 @@ const countaRows = (rowNums: number[], maxDays: number): string => {
   return `=COUNTA(${ranges.join(',')})`;
 };
 
+// For each active employee, creates a new timesheet file if needed, writes all week rows and summary formulas,
+// and saves a manifest entry so future status checks know what was generated and where signatures belong.
+// Skips employees whose timesheet for this pay period already exists.
 const generateTimesheets = async (
   clientId: Guid,
   payPeriodId: Guid,
@@ -99,7 +105,7 @@ const generateTimesheets = async (
 
     if (!employee.timesheetFileId) {
       logger.info(`No timesheet file for ${employee.firstName} ${employee.lastName} — creating`);
-      const newFileId = await sheetsAdapter.createWorkbook(
+      const newFileId = await sheetsAdapter.createOAuthWorkbook(
         `${employee.firstName} ${employee.lastName} Timesheets`,
         client.timesheetsFolderId,
       );
@@ -125,12 +131,21 @@ const generateTimesheets = async (
       allRows.push(...result.rows);
       weekManifests.push(result.weekManifest);
       currentRow += result.rows.length;
+      // Add a blank row after each week for visual separation
+      allRows.push(buildDividerRow());
+      currentRow += 1;
     }
+
+    // One extra blank row before signatures
+    allRows.push(buildDividerRow());
 
     const employeeSignatureCell = { row: allRows.length + 1, column: 2 }; // 1-based; col B
     allRows.push(buildSignatureRow('Employee Signature:'));
     const supervisorSignatureCell = { row: allRows.length + 1, column: 2 };
     allRows.push(buildSignatureRow('Supervisor Signature:'));
+
+    // Blank row between signatures and summary totals
+    allRows.push(buildDividerRow());
 
     const hourlyRowNums: number[] = [];
     const flatRateRowNums: number[] = [];
@@ -163,15 +178,22 @@ const generateTimesheets = async (
       }
     }
 
-    allRows.push(buildSummaryRow('Total Hours Worked', sumRows(hourlyRowNums, maxDays)));
-    allRows.push(buildSummaryRow('Holiday Hours', sumCells(hourlyRowNums, holidayColumns)));
+    const summaryRows: { label: string; row: number }[] = [];
+
+    const pushSummary = (label: string, formula: string) => {
+      summaryRows.push({ label, row: allRows.length + 1 });
+      allRows.push(buildSummaryRow(label, formula));
+    };
+
+    pushSummary('Total Hours Worked', sumRows(hourlyRowNums, maxDays));
+    pushSummary('Holiday Hours', sumCells(hourlyRowNums, holidayColumns));
 
     for (const category of presentTimeOffCategories) {
-      allRows.push(buildSummaryRow(category, sumRows(categoryRowNums.get(category) ?? [], maxDays)));
+      pushSummary(category, sumRows(categoryRowNums.get(category) ?? [], maxDays));
     }
 
     if (hasFlatRate) {
-      allRows.push(buildSummaryRow('Flat Rate Shifts', countaRows(flatRateRowNums, maxDays)));
+      pushSummary('Flat Rate Shifts', countaRows(flatRateRowNums, maxDays));
     }
 
     await sheetsAdapter.createTabIfNotExists(employee.timesheetFileId, payPeriod.payPeriodName);
@@ -185,7 +207,16 @@ const generateTimesheets = async (
       weeks: weekManifests,
       employeeSignatureCell,
       supervisorSignatureCell,
+      summaryRows,
     };
+
+    await applyTimesheetFormatting(
+      employee.timesheetFileId,
+      payPeriod.payPeriodName,
+      manifest,
+      payrollConfig.holidays,
+      maxDays,
+    );
 
     await saveManifest(employee.timesheetFileId, manifest);
 

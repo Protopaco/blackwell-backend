@@ -1,4 +1,5 @@
 import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
+import { invalidatePayrollConfigCache } from '#db/payrollConfig/readPayrollConfig.js';
 import Guid from '#models/Guid.js';
 
 const EMPLOYEES_TAB = 'Employees';
@@ -15,6 +16,8 @@ const toColumnLetter = (colIndex: number): string => {
   return result;
 };
 
+// Writes a newly created timesheet file's ID and link into the employee's row in the Employees tab,
+// then invalidates the payrollConfig cache so subsequent reads see the updated value.
 const updateEmployeeTimesheetFile = async (
   payrollConfigFileId: string,
   employeeId: Guid,
@@ -50,6 +53,8 @@ const updateEmployeeTimesheetFile = async (
     `${EMPLOYEES_TAB}!${toColumnLetter(fileLinkColIndex)}${sheetRowNumber}`,
     [[timesheetFileLink]],
   );
+
+  invalidatePayrollConfigCache(payrollConfigFileId);
 };
 
 export default updateEmployeeTimesheetFile;

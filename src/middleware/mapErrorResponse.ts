@@ -2,6 +2,8 @@ import { DatabaseError } from 'pg';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger.js';
 
+// Express error handler that maps known database constraint errors to appropriate HTTP codes and returns a JSON body.
+// Registered as the last middleware in app.ts so it catches unhandled errors from all routes.
 export default (err: unknown, req: Request, res: Response, next: NextFunction) => {
   logger.error(err);
 

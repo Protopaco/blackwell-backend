@@ -15,6 +15,8 @@ interface WeekBuildResult {
   weekManifest: WeekManifest;
 }
 
+// Builds all sheet rows for one week of a timesheet and returns row data plus a manifest summary
+// of where each activity row and date column landed — called once per week by generateTimesheets.
 const buildWeek = (
   weekIndex: number,
   dates: Date[],
@@ -83,6 +85,7 @@ const buildWeek = (
   const weekManifest: WeekManifest = {
     weekIndex,
     dateRow,
+    dailyTotalRow: dailyTotalRowNum,
     dates: dates.map((date, dateIndex) => ({
       date: date.toISOString().split('T')[0],
       column: dateIndex + 2, // 1-based; A=1 is label col, so first day is B=2

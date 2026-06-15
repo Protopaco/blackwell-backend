@@ -11,18 +11,22 @@ const INTERVAL_DAYS: Record<string, number> = {
   [PayPeriodInterval.BiWeekly]: 14,
 };
 
+// Returns a new date string offset by the given number of days — used to compute pay period start/end dates.
 const addDays = (dateStr: string, days: number): string => {
   const date = new Date(dateStr);
   date.setDate(date.getDate() + days);
   return date.toISOString().split('T')[0];
 };
 
+// Formats a pay period name from two ISO date strings as "MM/DD - MM/DD".
 const formatPayPeriodName = (startDate: string, endDate: string): string => {
   const start = startDate.split('-').slice(1).join('/');
   const end = endDate.split('-').slice(1).join('/');
   return `${start} - ${end}`;
 };
 
+// Computes the next unsaved pay period based on the client's interval setting and the most recent existing pay period end date.
+// Used by the GET /payPeriod/next route to pre-populate the create form.
 const getNextPayPeriod = async (clientId: string): Promise<PayPeriod | null> => {
   logger.info(`getNextPayPeriod clientId=${clientId}`);
 

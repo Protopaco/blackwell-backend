@@ -1,6 +1,7 @@
 import Employee from '#models/Employee.js';
 import { EmployeeStatusType } from '#models/EmployeeStatus.js';
 
+// Converts a raw Employees sheet row into an Employee model — called by readEmployees and readPayrollConfig.
 const mapEmployee = (row: Record<string, unknown>): Employee => ({
   employeeId: row['EmployeeId'] as string,
   firstName: row['FirstName'] as string,

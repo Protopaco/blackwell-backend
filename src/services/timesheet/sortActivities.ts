@@ -14,6 +14,8 @@ interface SortedActivities {
   flatRateActivities: Activity[];
 }
 
+// Splits a flat activity list into work, time-off, and flat-rate buckets, each sorted alphabetically.
+// Used by generateTimesheets to determine row order on the timesheet.
 const sortActivities = (activities: Activity[]): SortedActivities => {
   const workActivities: Activity[] = [];
   const timeOffActivities: Activity[] = [];

@@ -2,6 +2,7 @@ import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
 
 const MANIFEST_TAB = '_manifest';
 
+// Removes the manifest entry for a specific pay period tab from the _manifest tab — no-ops if the entry doesn't exist.
 const deleteManifest = async (timesheetFileId: string, tabName: string): Promise<void> => {
   const rows = await sheetsAdapter.readTab(timesheetFileId, MANIFEST_TAB);
 

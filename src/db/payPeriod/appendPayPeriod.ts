@@ -1,6 +1,7 @@
 import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
 import PayPeriod from '#models/PayPeriod.js';
 
+// Appends a new pay period row to the current year's tab in the pay period registry file.
 const appendPayPeriod = async (payPeriodRegistryFileId: string, payPeriod: PayPeriod): Promise<void> => {
   const currentYear = String(new Date().getFullYear());
 

@@ -123,7 +123,7 @@ The `src/utils/dateUtils.ts` module provides:
 - Only Active employees get timesheets generated
 - One timesheet file per employee, one tab per pay period
 - Timesheet files are never deleted through the tool
-- When a new employee is added, their Google Sheets timesheet file must be created manually in Google Drive and shared with the service account as Editor. The resulting file ID must be entered into the `TimesheetFileId` column in the Employees config tab before timesheets can be generated for that employee.
+- When a new employee is added, their timesheet file is created automatically in the client's `TimesheetFolderId` via OAuth. The file ID is written back to the `TimesheetFileId` column in the Employees config tab automatically.
 
 ## Holidays
 
@@ -199,6 +199,22 @@ Implementation status:
 - 🔄 Row builders — TODO: header row, footer row, daily total row, summary row builders
 - 🔄 Week builder — TODO: combines holiday + day + date + activities + daily total for one week
 - 🔄 Main orchestration — TODO: glue together all pieces, build in-memory structure, write batch
+
+## Payroll Reports
+
+- One payroll report file per pay period, named by pay period (e.g. `04/29 - 05/12`), stored in the client's `payrollReportFolderId`
+- Files are created automatically via OAuth when a payroll report is first generated for a pay period
+- Each file has four tabs:
+
+| Tab | Owner | Description |
+|-----|-------|-------------|
+| `Hours` | App | Raw activity totals read from timesheets, written as static values |
+| `ADP Summary` | App | Hours rolled up by payroll category per employee, written as static values |
+| `Results` | Bookkeeper | Gross pay per employee as output by ADP — manually entered, never touched by the app |
+| `Allocation` | Formulas | Funding source cost breakdown — formula-driven, reads from `Hours` and `Results`, updates automatically when `Results` is filled in |
+
+- Regenerating a payroll report overwrites `Hours` and `ADP Summary` only — `Results` and `Allocation` are never touched
+- The `Allocation` tab updates automatically when the bookkeeper fills in `Results` — no additional step required
 
 ## Funding Source Allocation
 

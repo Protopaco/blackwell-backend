@@ -2,6 +2,7 @@ import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
 import Holiday from '#models/Holiday.js';
 import mapHoliday from '#db/holiday/mapHoliday.js';
 
+// Reads all holidays from the Holidays tab of a client's payroll config file.
 const readHolidays = async (payrollConfigFileId: string): Promise<Holiday[]> => {
   const rows = await sheetsAdapter.readTab(payrollConfigFileId, 'Holidays');
   return rows.map(mapHoliday);

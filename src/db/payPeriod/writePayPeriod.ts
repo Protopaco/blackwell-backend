@@ -2,6 +2,7 @@ import sheetsAdapter from "#db/adapter/sheetsAdapter.js";
 import getPayPeriods from "#db/payPeriod/readPayPeriods.js";
 import PayPeriod from "#models/PayPeriod.js";
 
+// Overwrites all pay period rows for the current year, updating the one matching the given pay period — used when changing status.
 const writePayPeriod = async (
   payPeriodRegistryFileId: string,
   updatedPayPeriod: PayPeriod,

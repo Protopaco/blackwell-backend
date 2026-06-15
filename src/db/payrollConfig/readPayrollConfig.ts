@@ -32,6 +32,8 @@ const parseRows = (values: unknown[][]): Record<string, unknown>[] => {
   });
 };
 
+// Loads all config tabs (employees, activities, settings, etc.) in one batchGet call and caches the result for 5 minutes.
+// Used by generateTimesheets and other services that need full client config in a single read.
 const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollConfig> => {
   logger.debug(`Loading payroll config from workbook: ${payrollConfigFileId}`);
 
@@ -81,7 +83,10 @@ const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollCo
   return config;
 };
 
+// Clears cached config for all clients — called by the admin clear-cache endpoint.
 const clearPayrollConfigCache = (): void => cache.clear();
+// Removes the cached config for one client — called after updateEmployeeTimesheetFile so the next read is fresh.
+const invalidatePayrollConfigCache = (payrollConfigFileId: string): void => cache.delete(payrollConfigFileId);
 
-export { clearPayrollConfigCache };
+export { clearPayrollConfigCache, invalidatePayrollConfigCache };
 export default readPayrollConfig;

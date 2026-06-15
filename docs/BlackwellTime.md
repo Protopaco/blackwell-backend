@@ -1197,18 +1197,15 @@ src/
 
 ---
 
-## Future Enhancements
+## OAuth2 File Creation
 
-### Automated Timesheet File Creation for New Employees
+The service account cannot create Google Drive files owned by a real user — files it creates count against the service account's storage quota, which is zero. To create timesheet files for new employees and payroll report files for each pay period, the system uses OAuth2 offline flow.
 
-Currently, when a new employee is added, their Google Sheets timesheet file must be created manually. This is because the service account cannot create Drive files owned by a real Google user — files created by a service account count against the service account's storage quota, which is zero.
-
-The fix is OAuth2 offline flow:
+### Setup (one-time)
 
 1. Create an OAuth2 Client ID in Google Cloud Console (type: Desktop App)
 2. Run a one-time local authorization script that opens a browser and asks for consent
-3. Store the resulting `refresh_token` in the environment
-4. Use the refresh token in `copyWorkbook` to make Drive API calls on behalf of the real user
+3. Store the resulting `refresh_token` in the environment as `GOOGLE_OAUTH_REFRESH_TOKEN`
+4. The system uses this token to make Drive file creation calls on behalf of the real user
 
-This would allow the system to copy the timesheet template into the client's timesheets folder, owned by the real user's account, without any manual intervention. All other API calls (Sheets reads/writes) can remain on the service account.
-```
+All other API calls (Sheets reads/writes) remain on the service account. Only file creation uses OAuth.

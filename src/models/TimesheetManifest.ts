@@ -14,6 +14,7 @@ interface ActivityRowManifest {
 interface WeekManifest {
   weekIndex: number;
   dateRow: number;
+  dailyTotalRow: number;
   dates: DateColumnManifest[];
   activityRows: ActivityRowManifest[];
 }
@@ -21,6 +22,11 @@ interface WeekManifest {
 interface SignatureCell {
   row: number;
   column: number;
+}
+
+interface SummaryRowManifest {
+  label: string;
+  row: number;
 }
 
 interface TimesheetManifest {
@@ -31,7 +37,8 @@ interface TimesheetManifest {
   weeks: WeekManifest[];
   employeeSignatureCell: SignatureCell;
   supervisorSignatureCell: SignatureCell;
+  summaryRows: SummaryRowManifest[];
 }
 
-export type { DateColumnManifest, ActivityRowManifest, WeekManifest, SignatureCell };
+export type { DateColumnManifest, ActivityRowManifest, WeekManifest, SignatureCell, SummaryRowManifest };
 export default TimesheetManifest;

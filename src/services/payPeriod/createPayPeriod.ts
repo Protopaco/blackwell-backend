@@ -3,6 +3,7 @@ import getClientById from '#services/client/getClientById.js';
 import PayPeriod from '#models/PayPeriod.js';
 import { logger } from '#utils/logger.js';
 
+// Assigns a new UUID and creation date to a pay period and appends it to the client's pay period registry.
 const createPayPeriod = async (clientId: string, payPeriod: PayPeriod): Promise<void> => {
   logger.info(`createPayPeriod clientId=${clientId}`);
 

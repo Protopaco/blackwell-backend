@@ -3,6 +3,8 @@ import TimesheetManifest from '#models/TimesheetManifest.js';
 
 const MANIFEST_TAB = '_manifest';
 
+// Writes a timesheet manifest entry to the _manifest tab (creating it if needed), removes the default Sheet1,
+// and overwrites an existing entry for the same pay period tab rather than duplicating it.
 const appendManifest = async (timesheetFileId: string, manifest: TimesheetManifest): Promise<void> => {
   await sheetsAdapter.createTabIfNotExists(timesheetFileId, MANIFEST_TAB);
 

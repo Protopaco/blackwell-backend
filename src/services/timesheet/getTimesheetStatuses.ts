@@ -5,6 +5,8 @@ import { EmployeeStatus } from '#models/EmployeeStatus.js';
 import TimesheetStatusResult from '#models/TimesheetStatusResult.js';
 import { logger } from '#utils/logger.js';
 
+// Returns a status entry for every active employee showing whether their timesheet is generated,
+// submitted, approved, or complete — called by the GET /timesheet/status route.
 const getTimesheetStatuses = async (
   clientId: string,
   payPeriodId: string,

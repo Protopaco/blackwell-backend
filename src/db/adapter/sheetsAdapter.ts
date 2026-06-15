@@ -1,6 +1,7 @@
 import { google } from 'googleapis';
 import { logger } from '#utils/logger.js';
 
+// Builds a GoogleAuth client from the service account JSON env var — used by all service-account API calls.
 const getAuthClient = () => {
   const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
 
@@ -19,16 +20,59 @@ const getAuthClient = () => {
   });
 };
 
+// Returns an authenticated Google Sheets API client — used for all spreadsheet read/write operations.
 const getSheetsClient = async () => {
   const auth = getAuthClient();
   return google.sheets({ version: 'v4', auth });
 };
 
+// Returns an authenticated Google Drive API client (service account) — used for creating workbooks.
 const getDriveClient = async () => {
   const auth = getAuthClient();
   return google.drive({ version: 'v3', auth });
 };
 
+// Returns a Google Drive API client authenticated as a real user via OAuth — required so new files
+// are owned by the user rather than the service account, making them visible in their Google Drive.
+const getOAuthDriveClient = () => {
+  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error('GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, and GOOGLE_OAUTH_REFRESH_TOKEN must be set');
+  }
+
+  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
+  oauth2Client.setCredentials({ refresh_token: refreshToken });
+
+  return google.drive({ version: 'v3', auth: oauth2Client });
+};
+
+// Creates a new Google Sheets workbook owned by the OAuth user in the specified Drive folder.
+// Used when generating a timesheet file for an employee who doesn't have one yet.
+const createOAuthWorkbook = async (name: string, folderId: string): Promise<string> => {
+  logger.debug(`Creating workbook via OAuth: ${name}`);
+  const drive = getOAuthDriveClient();
+
+  const response = await drive.files.create({
+    requestBody: {
+      name,
+      mimeType: 'application/vnd.google-apps.spreadsheet',
+      parents: [folderId],
+    },
+    fields: 'id',
+  });
+
+  const workbookId = response.data.id;
+  if (!workbookId) throw new Error(`Failed to create workbook via OAuth: ${name}`);
+
+  logger.debug(`Workbook created via OAuth: ${workbookId}`);
+  return workbookId;
+};
+
+// Creates a new Google Sheets workbook owned by the service account — not currently used for
+// employee files (see createOAuthWorkbook), but available for admin-created files.
 const createWorkbook = async (name: string, folderId?: string): Promise<string> => {
   logger.debug(`Creating workbook: ${name}`);
   const drive = await getDriveClient();
@@ -54,6 +98,7 @@ const createWorkbook = async (name: string, folderId?: string): Promise<string> 
   return workbookId;
 };
 
+// Adds a new sheet tab to an existing workbook — throws if the tab already exists.
 const createTab = async (workbookId: string, tabName: string): Promise<void> => {
   logger.debug(`Creating tab: ${tabName} in workbook: ${workbookId}`);
   const sheets = await getSheetsClient();
@@ -72,6 +117,7 @@ const createTab = async (workbookId: string, tabName: string): Promise<void> => 
   });
 };
 
+// Returns true if a tab with the given name exists in the workbook — used before creating or deleting tabs.
 const tabExists = async (workbookId: string, tabName: string): Promise<boolean> => {
   try {
     const sheets = await getSheetsClient();
@@ -82,6 +128,7 @@ const tabExists = async (workbookId: string, tabName: string): Promise<boolean> 
   }
 };
 
+// Creates a tab only if it doesn't already exist — safe to call unconditionally when writing timesheet or manifest tabs.
 const createTabIfNotExists = async (workbookId: string, tabName: string): Promise<void> => {
   try {
     await createTab(workbookId, tabName);
@@ -93,6 +140,7 @@ const createTabIfNotExists = async (workbookId: string, tabName: string): Promis
   }
 };
 
+// Reads a tab and maps each row to a keyed object using the first row as headers — used for config/data tabs.
 const readTab = async (
   workbookId: string,
   tabName: string,
@@ -120,6 +168,7 @@ const readTab = async (
   });
 };
 
+// Overwrites an entire tab with keyed row objects, writing headers on the first row — used when updating pay period records.
 const writeTab = async (
   workbookId: string,
   tabName: string,
@@ -183,6 +232,7 @@ const writeValues = async (
   });
 };
 
+// Appends a single row of values to the end of a tab — used when adding new pay periods or manifest entries.
 const appendRow = async (
   workbookId: string,
   tabName: string,
@@ -200,6 +250,7 @@ const appendRow = async (
   });
 };
 
+// Permanently removes a tab from a workbook — used to delete the default Sheet1 after a new timesheet file is set up.
 const deleteTab = async (workbookId: string, tabName: string): Promise<void> => {
   logger.debug(`Deleting tab: ${tabName} from workbook: ${workbookId}`);
   const sheets = await getSheetsClient();
@@ -223,6 +274,7 @@ const deleteTab = async (workbookId: string, tabName: string): Promise<void> => 
   });
 };
 
+// Deletes a single row (1-based) from a tab — used when removing a manifest entry after a timesheet tab is deleted.
 const deleteRow = async (workbookId: string, tabName: string, rowNumber: number): Promise<void> => {
   logger.debug(`Deleting row: ${rowNumber} from tab: ${tabName} in workbook: ${workbookId}`);
   const sheets = await getSheetsClient();
@@ -256,8 +308,27 @@ const deleteRow = async (workbookId: string, tabName: string, rowNumber: number)
   });
 };
 
+// Returns the numeric sheetId for a named tab — required by formatting batchUpdate requests.
+const getSheetId = async (workbookId: string, tabName: string): Promise<number> => {
+  const sheets = await getSheetsClient();
+  const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId: workbookId });
+  const sheet = spreadsheet.data.sheets?.find((s) => s.properties?.title === tabName);
+  if (!sheet || sheet.properties?.sheetId === undefined) throw new Error(`Tab not found: ${tabName}`);
+  return sheet.properties.sheetId;
+};
+
+// Sends an array of pre-built formatting requests in a single batchUpdate call — used by applyTimesheetFormatting.
+const applyFormattingRequests = async (workbookId: string, requests: object[]): Promise<void> => {
+  const sheets = await getSheetsClient();
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: workbookId,
+    requestBody: { requests },
+  });
+};
+
 export default {
   createWorkbook,
+  createOAuthWorkbook,
   updateCells,
   createTab,
   tabExists,
@@ -269,4 +340,6 @@ export default {
   appendRow,
   deleteTab,
   deleteRow,
+  getSheetId,
+  applyFormattingRequests,
 };
