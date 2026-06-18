@@ -1,5 +1,17 @@
 # BlackwellTime Backend — Development Guidelines
 
+## **Variable Naming — Non-Negotiable Rule**
+
+**Every variable name must state exactly what it is. No abbreviations. No single-letter variables. No ambiguous shorthand. If someone reads the name without any other context, they must know precisely what the value represents.**
+
+- `col` → `columnIndex`
+- `r` → `rowIndex`
+- `bg` → `backgroundColor`
+- `numDays` → `daysInWeek`
+- `d` → the actual thing it is (e.g., `date`, `employee`, `holidayRecord`)
+
+**This rule applies everywhere: function parameters, local variables, loop variables, destructured values. No exceptions.**
+
 ## Comment Documentation
 
 Every function must have a one-line comment immediately above its definition describing what it does and when it is used. Use two lines only when a single line would be too cramped to be useful.

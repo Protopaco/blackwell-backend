@@ -26,13 +26,14 @@ describe("POST /api/v1/timesheet/generate", () => {
     );
   });
 
+  // Generate can take up to ~15s on first run: OAuth file creation + formatting batchUpdate
   it("returns 200", async () => {
     const res = await request(app)
       .post("/api/v1/timesheet/generate")
       .send({ clientId: TEST_CLIENT_ID, payPeriodId });
 
     expect(res.status).toBe(200);
-  });
+  }, 30_000);
 
   it("all active employees have a timesheet after generation", async () => {
     const res = await request(app).get(
