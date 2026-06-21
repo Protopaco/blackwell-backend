@@ -8,14 +8,18 @@ type Color = { red: number; green: number; blue: number };
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
 
-// #0D0D3B — structural rows: day/date headers, activity label column, dividers, daily total rows.
-const PRIMARY: Color = { red: 0.051, green: 0.051, blue: 0.231 };
+// #0E1733 — structural rows: day/date headers, activity label column, dividers, daily total rows.
+const PRIMARY: Color = { red: 0.055, green: 0.09, blue: 0.2 };
 
 // #6565AB — pay period and employee name header rows.
 const SECONDARY: Color = { red: 0.396, green: 0.396, blue: 0.667 };
 
-// #661F66 — holiday name cells in the holiday header row.
-const ACCENT: Color = { red: 0.4, green: 0.122, blue: 0.4 };
+// #7A305C — holiday name cells in the holiday header row.
+const ACCENT: Color = {
+  red: 122 / 255, // 0.478
+  green: 48 / 255, // 0.188
+  blue: 92 / 255, // 0.361
+};
 
 // #DCDEF0 — weekend and holiday data cells, and summary value cells.
 const MUTED: Color = { red: 0.863, green: 0.871, blue: 0.941 };

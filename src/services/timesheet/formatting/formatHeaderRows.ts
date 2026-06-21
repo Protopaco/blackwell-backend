@@ -7,8 +7,8 @@ const formatHeaderRows = (sheetId: number): object[] => [
   fillRow(sheetId, 1, 0, 1, PRIMARY, WHITE, true),
   fillRow(sheetId, 1, 1, 2, SECONDARY, WHITE, true),
   fillRow(sheetId, 2, 0, 2, SECONDARY, WHITE, true),
-  outlineBorder(sheetId, 1, 0, 2, MUTED),
-  outlineBorder(sheetId, 2, 0, 2, MUTED),
+  outlineBorder(sheetId, 1, 0, 2, MUTED, true, true, true, true, true, true),
+  outlineBorder(sheetId, 2, 0, 2, MUTED, true, true, true, true, true, true),
 ];
 
 export default formatHeaderRows;

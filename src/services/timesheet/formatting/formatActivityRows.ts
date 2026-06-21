@@ -12,6 +12,7 @@ const formatActivityRows = (
   firstDayColumnIndex: number,
   totalColumnCount: number,
   specialColumnIndexes: Set<number>,
+  holidayColumnIndexes: number[],
 ): object[] => {
   const requests: object[] = [];
 
@@ -20,16 +21,49 @@ const formatActivityRows = (
     const isEvenRow = rowAlternationIndex % 2 === 0;
 
     // Step 1: entire row gets PRIMARY — establishes the label column background and white text.
-    requests.push(fillRow(sheetId, rowNumber, labelColumnIndex, totalColumnCount, PRIMARY, WHITE, false, "LEFT"));
+    requests.push(
+      fillRow(
+        sheetId,
+        rowNumber,
+        labelColumnIndex,
+        totalColumnCount,
+        PRIMARY,
+        WHITE,
+        false,
+        "LEFT",
+      ),
+    );
 
     // Step 2: override day columns — even rows are white, odd rows are muted.
     const dayBackgroundColor = isEvenRow ? WHITE : MUTED;
     const dayTextColor = isEvenRow ? BLACK : BLACK;
-    requests.push(fillRow(sheetId, rowNumber, firstDayColumnIndex, totalColumnCount, dayBackgroundColor, dayTextColor, false, "CENTER"));
+    requests.push(
+      fillRow(
+        sheetId,
+        rowNumber,
+        firstDayColumnIndex,
+        totalColumnCount,
+        dayBackgroundColor,
+        dayTextColor,
+        false,
+        "CENTER",
+      ),
+    );
 
     // Step 3: override weekend and holiday columns to MUTED regardless of alternation.
-    for (const specialColumnIndex of specialColumnIndexes) {
-      requests.push(fillRow(sheetId, rowNumber, specialColumnIndex, specialColumnIndex + 1, MUTED, BLACK, false, "CENTER"));
+    for (const specialColumnIndex of holidayColumnIndexes) {
+      requests.push(
+        fillRow(
+          sheetId,
+          rowNumber,
+          specialColumnIndex,
+          specialColumnIndex + 1,
+          MUTED,
+          BLACK,
+          false,
+          "CENTER",
+        ),
+      );
     }
   });
 

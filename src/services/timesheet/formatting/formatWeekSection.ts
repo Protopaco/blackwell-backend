@@ -23,23 +23,69 @@ const formatWeekSection = (
   const dailyTotalRowNumber = week.dailyTotalRow;
 
   const holidayColumnIndexes = week.dates
-    .filter((dateEntry) => holidays.some((holiday) => holiday.holidayDate === dateEntry.date))
+    .filter((dateEntry) =>
+      holidays.some((holiday) => holiday.holidayDate === dateEntry.date),
+    )
     .map((dateEntry) => dateEntry.column - 1); // manifest columns are 1-based; convert to 0-based
 
   const weekendColumnIndexes = week.dates
     .filter((dateEntry) => isWeekend(dateEntry.date))
     .map((dateEntry) => dateEntry.column - 1);
 
-  const specialColumnIndexes = new Set([...holidayColumnIndexes, ...weekendColumnIndexes]);
-  const activityRowNumbers = new Set(week.activityRows.map((activityRow) => activityRow.row));
+  const specialColumnIndexes = new Set([
+    ...holidayColumnIndexes,
+    ...weekendColumnIndexes,
+  ]);
+  const activityRowNumbers = new Set(
+    week.activityRows.map((activityRow) => activityRow.row),
+  );
 
   return [
-    ...formatHolidayNameRow(sheetId, holidayNameRowNumber, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
-    formatDayOfWeekRow(sheetId, dayOfWeekRowNumber, labelColumnIndex, totalColumnCount),
-    formatDateRow(sheetId, dateRowNumber, labelColumnIndex, totalColumnCount),
-    ...formatActivityRows(sheetId, week.activityRows, labelColumnIndex, firstDayColumnIndex, totalColumnCount, specialColumnIndexes),
-    ...formatDividerRows(sheetId, dateRowNumber, dailyTotalRowNumber, labelColumnIndex, totalColumnCount, activityRowNumbers),
-    ...formatDailyTotalRow(sheetId, dailyTotalRowNumber, labelColumnIndex, totalColumnCount),
+    ...formatHolidayNameRow(
+      sheetId,
+      holidayNameRowNumber,
+      labelColumnIndex,
+      totalColumnCount,
+      holidayColumnIndexes,
+    ),
+    formatDayOfWeekRow(
+      sheetId,
+      dayOfWeekRowNumber,
+      labelColumnIndex,
+      totalColumnCount,
+      holidayColumnIndexes,
+    ),
+    formatDateRow(
+      sheetId,
+      dateRowNumber,
+      labelColumnIndex,
+      totalColumnCount,
+      holidayColumnIndexes,
+    ),
+    ...formatActivityRows(
+      sheetId,
+      week.activityRows,
+      labelColumnIndex,
+      firstDayColumnIndex,
+      totalColumnCount,
+      specialColumnIndexes,
+      holidayColumnIndexes,
+    ),
+    ...formatDividerRows(
+      sheetId,
+      dateRowNumber,
+      dailyTotalRowNumber,
+      labelColumnIndex,
+      totalColumnCount,
+      activityRowNumbers,
+    ),
+    ...formatDailyTotalRow(
+      sheetId,
+      dailyTotalRowNumber,
+      labelColumnIndex,
+      totalColumnCount,
+      holidayColumnIndexes,
+    ),
   ];
 };
 

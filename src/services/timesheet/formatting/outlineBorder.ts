@@ -8,6 +8,12 @@ const outlineBorder = (
   startColumnIndex: number,
   endColumnIndex: number,
   color = PRIMARY,
+  top = true,
+  bottom = true,
+  left = true,
+  right = true,
+  innerHorizontal = false,
+  innerVertical = false,
 ): object => {
   const solidBorder = { style: "SOLID", width: 1, color };
   return {
@@ -19,12 +25,12 @@ const outlineBorder = (
         startColumnIndex,
         endColumnIndex,
       ),
-      top: solidBorder,
-      bottom: solidBorder,
-      left: solidBorder,
-      right: solidBorder,
-      innerHorizontal: solidBorder,
-      innerVertical: solidBorder,
+      top: top ? solidBorder : undefined,
+      bottom: bottom ? solidBorder : undefined,
+      left: left ? solidBorder : undefined,
+      right: right ? solidBorder : undefined,
+      innerHorizontal: innerHorizontal ? solidBorder : undefined,
+      innerVertical: innerVertical ? solidBorder : undefined,
     },
   };
 };
