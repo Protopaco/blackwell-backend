@@ -1,4 +1,10 @@
-import { PRIMARY, WHITE, BLACK, MUTED } from "#utils/timesheetTheme.js";
+import {
+  PRIMARY,
+  WHITE,
+  BLACK,
+  MUTED,
+  MUTED_ACCENT,
+} from "#utils/timesheetTheme.js";
 import { type ActivityRowManifest } from "#models/TimesheetManifest.js";
 import fillRow from "./fillRow.js";
 
@@ -52,14 +58,16 @@ const formatActivityRows = (
 
     // Step 3: override weekend and holiday columns to MUTED regardless of alternation.
     for (const specialColumnIndex of holidayColumnIndexes) {
+      const holidayBackgroundColor = isEvenRow ? WHITE : MUTED_ACCENT;
+      const holidayTextColor = isEvenRow ? BLACK : BLACK;
       requests.push(
         fillRow(
           sheetId,
           rowNumber,
           specialColumnIndex,
           specialColumnIndex + 1,
-          MUTED,
-          BLACK,
+          holidayBackgroundColor,
+          holidayTextColor,
           false,
           "CENTER",
         ),

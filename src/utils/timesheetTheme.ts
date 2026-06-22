@@ -21,6 +21,9 @@ const ACCENT: Color = {
   blue: 92 / 255, // 0.361
 };
 
+// #D9C7D3 — muted accent variant, reserved for future use.
+const MUTED_ACCENT: Color = { red: 0.851, green: 0.78, blue: 0.827 };
+
 // #DCDEF0 — weekend and holiday data cells, and summary value cells.
 const MUTED: Color = { red: 0.863, green: 0.871, blue: 0.941 };
 
@@ -49,6 +52,7 @@ export {
   PRIMARY,
   SECONDARY,
   ACCENT,
+  MUTED_ACCENT,
   MUTED,
   MUTED_DARK,
   WHITE,
