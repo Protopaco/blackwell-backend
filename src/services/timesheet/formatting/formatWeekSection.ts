@@ -78,6 +78,7 @@ const formatWeekSection = (
       labelColumnIndex,
       totalColumnCount,
       activityRowNumbers,
+      holidayColumnIndexes,
     ),
     ...formatDailyTotalRow(
       sheetId,
