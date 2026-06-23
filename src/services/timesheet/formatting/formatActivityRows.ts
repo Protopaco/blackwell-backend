@@ -41,33 +41,29 @@ const formatActivityRows = (
     );
 
     // Step 2: override day columns — even rows are white, odd rows are muted.
-    const dayBackgroundColor = isEvenRow ? WHITE : MUTED;
-    const dayTextColor = isEvenRow ? BLACK : BLACK;
     requests.push(
       fillRow(
         sheetId,
         rowNumber,
         firstDayColumnIndex,
         totalColumnCount,
-        dayBackgroundColor,
-        dayTextColor,
+        isEvenRow ? WHITE : MUTED,
+        BLACK,
         false,
         "CENTER",
       ),
     );
 
-    // Step 3: override weekend and holiday columns to MUTED regardless of alternation.
+    // Step 3: override holiday columns — even rows stay white, odd rows use muted accent.
     for (const specialColumnIndex of holidayColumnIndexes) {
-      const holidayBackgroundColor = isEvenRow ? WHITE : MUTED_ACCENT;
-      const holidayTextColor = isEvenRow ? BLACK : BLACK;
       requests.push(
         fillRow(
           sheetId,
           rowNumber,
           specialColumnIndex,
           specialColumnIndex + 1,
-          holidayBackgroundColor,
-          holidayTextColor,
+          isEvenRow ? WHITE : MUTED_ACCENT,
+          BLACK,
           false,
           "CENTER",
         ),

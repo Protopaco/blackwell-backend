@@ -6,7 +6,7 @@ import formatFreezeRows from "./formatting/formatFreezeRows.js";
 import formatColumnWidths from "./formatting/formatColumnWidths.js";
 import formatHeaderRows from "./formatting/formatHeaderRows.js";
 import formatWeekSection from "./formatting/formatWeekSection.js";
-import formatSignatureBorders from "./formatting/formatSignatureBorders.js";
+import formatSignatureRows from "./formatting/formatSignatureRows.js";
 import formatSummaryRows from "./formatting/formatSummaryRows.js";
 
 // Applies all visual formatting to a timesheet tab in a single batchUpdate call.
@@ -18,7 +18,9 @@ const applyTimesheetFormatting = async (
   holidays: Holiday[],
   maxDays: number,
 ): Promise<void> => {
-  logger.debug(`Applying formatting to tab: ${tabName} in workbook: ${workbookId}`);
+  logger.debug(
+    `Applying formatting to tab: ${tabName} in workbook: ${workbookId}`,
+  );
 
   const sheetId = await sheetsAdapter.getSheetId(workbookId, tabName);
 
@@ -35,9 +37,20 @@ const applyTimesheetFormatting = async (
     ...formatColumnWidths(sheetId, totalColumnCount),
     ...formatHeaderRows(sheetId),
     ...manifest.weeks.flatMap((week) =>
-      formatWeekSection(sheetId, week, holidays, labelColumnIndex, firstDayColumnIndex, totalColumnCount),
+      formatWeekSection(
+        sheetId,
+        week,
+        holidays,
+        labelColumnIndex,
+        firstDayColumnIndex,
+        totalColumnCount,
+      ),
     ),
-    ...formatSignatureBorders(sheetId, manifest.employeeSignatureCell, manifest.supervisorSignatureCell),
+    ...formatSignatureRows(
+      sheetId,
+      manifest.employeeSignatureCell,
+      manifest.supervisorSignatureCell,
+    ),
     ...formatSummaryRows(sheetId, manifest.summaryRows),
   ];
 
