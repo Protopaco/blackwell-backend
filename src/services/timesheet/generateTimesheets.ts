@@ -215,14 +215,21 @@ const generateTimesheets = async (
       }
     }
 
-    const holidayColumns: number[] = [];
+    const holidayHoursCells: string[] = [];
     for (const weekManifest of weekManifests) {
+      const weekHourlyRowNumbers = weekManifest.activityRows
+        .filter((activityRow) => {
+          const activity = activityMap.get(activityRow.activityId);
+          return activity && activity.payRate !== PayRate.FlatRate;
+        })
+        .map((activityRow) => activityRow.row);
+
       for (const dateEntry of weekManifest.dates) {
-        if (
-          getHolidayName(new Date(dateEntry.date), payrollConfig.holidays) !==
-          null
-        ) {
-          holidayColumns.push(dateEntry.column);
+        if (getHolidayName(new Date(dateEntry.date), payrollConfig.holidays) !== null) {
+          const columnLetter = colLetter(dateEntry.column - 1);
+          for (const rowNumber of weekHourlyRowNumbers) {
+            holidayHoursCells.push(`${columnLetter}${rowNumber}`);
+          }
         }
       }
     }
@@ -235,7 +242,7 @@ const generateTimesheets = async (
     };
 
     pushSummary("Total Hours Worked", sumRows(hourlyRowNums, maxDays));
-    pushSummary("Holiday Hours", sumCells(hourlyRowNums, holidayColumns));
+    pushSummary("Holiday Hours", holidayHoursCells.length > 0 ? `=SUM(${holidayHoursCells.join(',')})` : '0');
 
     for (const category of presentTimeOffCategories) {
       pushSummary(
