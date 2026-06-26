@@ -3,27 +3,14 @@ import request from "supertest";
 import app from "../../src/app.js";
 import { TEST_CLIENT_ID } from "../helpers/testClient.js";
 import getTestPayPeriod from "../helpers/getTestPayPeriod.js";
-import TimesheetStatusResult from "../../src/models/TimesheetStatusResult.js";
-import { TimesheetStatus } from "../../src/models/TimesheetStatus.js";
 
 describe("POST /api/v1/timesheet/generate", () => {
   let payPeriodId: string;
   let payPeriodName: string;
-  let statusBefore: TimesheetStatusResult[];
 
   beforeAll(async () => {
     ({ payPeriodId, payPeriodName } = await getTestPayPeriod());
-
-    console.log("🚀 ~ TEST_CLIENT_ID:", TEST_CLIENT_ID);
-    const res = await request(app).get(
-      `/api/v1/timesheet/status?clientId=${TEST_CLIENT_ID}&payPeriodId=${payPeriodId}`,
-    );
-    statusBefore = res.body;
     console.log(`Pay period: ${payPeriodName}`);
-    console.log(
-      "Status before generate:",
-      JSON.stringify(statusBefore, null, 2),
-    );
   });
 
   // Generate can take up to ~15s on first run: OAuth file creation + formatting batchUpdate
@@ -37,17 +24,19 @@ describe("POST /api/v1/timesheet/generate", () => {
 
   it("all active employees have a timesheet after generation", async () => {
     const res = await request(app).get(
-      `/api/v1/timesheet/status?clientId=${TEST_CLIENT_ID}&payPeriodId=${payPeriodId}`,
+      `/api/v1/timesheet/status/${TEST_CLIENT_ID}/${payPeriodId}`,
     );
 
-    const statusAfter: TimesheetStatusResult[] = res.body;
+    const statusAfter = res.body;
     console.log("Status after generate:", JSON.stringify(statusAfter, null, 2));
 
+    expect(res.status).toBe(200);
+    expect(Array.isArray(statusAfter)).toBe(true);
     expect(statusAfter.length).toBeGreaterThan(0);
     for (const entry of statusAfter) {
-      expect(entry.status).not.toBe(TimesheetStatus.NotGenerated);
+      expect(entry.totalHours).not.toBeNull();
     }
-  });
+  }, 30_000);
 
   it("returns 400 when clientId is missing", async () => {
     const res = await request(app)

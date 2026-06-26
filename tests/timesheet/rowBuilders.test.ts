@@ -118,12 +118,12 @@ describe('buildDayRow', () => {
 
 describe('buildDateRow', () => {
   it('starts with an empty label column', () => {
-    const row = buildDateRow(WEEK_DATES);
+    const row = buildDateRow(WEEK_DATES, 7);
     expect(row[0]).toBe('');
   });
 
   it('formats dates as M/D without leading zeros', () => {
-    const row = buildDateRow(WEEK_DATES);
+    const row = buildDateRow(WEEK_DATES, 7);
     expect(row[1]).toBe('6/1');
     expect(row[7]).toBe('6/7');
   });

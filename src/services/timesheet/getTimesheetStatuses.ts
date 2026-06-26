@@ -1,35 +1,35 @@
 import getPayPeriodById from '#services/payPeriod/getPayPeriodById.js';
 import getEmployees from '#services/employee/getEmployees.js';
-import checkTimesheetStatus from '#services/timesheet/checkTimesheetStatus.js';
+import readTimesheetDetail from '#services/timesheet/readTimesheetDetail.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
-import TimesheetStatusResult from '#models/TimesheetStatusResult.js';
+import EmployeeTimesheetStatus from '#models/EmployeeTimesheetStatus.js';
 import { logger } from '#utils/logger.js';
 
-// Returns a status entry for every active employee showing whether their timesheet is generated,
-// submitted, approved, or complete — called by the GET /timesheet/status route.
+// Returns a status entry for every active employee showing hours entered and whether each signature cell is filled.
+// Returns null if the pay period is not found.
 const getTimesheetStatuses = async (
   clientId: string,
   payPeriodId: string,
-): Promise<TimesheetStatusResult[] | null> => {
+): Promise<EmployeeTimesheetStatus[] | null> => {
   logger.info(`getTimesheetStatuses clientId=${clientId} payPeriodId=${payPeriodId}`);
 
   const payPeriod = await getPayPeriodById(clientId, payPeriodId);
   if (!payPeriod) return null;
 
   const employees = await getEmployees(clientId);
-  const activeEmployees = employees.filter((e) => e.status === EmployeeStatus.Active);
+  const activeEmployees = employees.filter((employee) => employee.status === EmployeeStatus.Active);
 
   return Promise.all(
     activeEmployees.map(async (employee) => {
-      const status = await checkTimesheetStatus(
-        employee.timesheetFileId,
-        payPeriod.payPeriodName,
-      );
+      const detail = await readTimesheetDetail(employee.timesheetFileId, payPeriod.payPeriodName);
       return {
         employeeId: employee.employeeId,
         employeeName: `${employee.firstName} ${employee.lastName}`,
         timesheetFileId: employee.timesheetFileId,
-        status,
+        timesheetFileLink: employee.timesheetFileLink,
+        totalHours: detail.totalHours,
+        employeeSigned: detail.employeeSigned,
+        supervisorSigned: detail.supervisorSigned,
       };
     }),
   );

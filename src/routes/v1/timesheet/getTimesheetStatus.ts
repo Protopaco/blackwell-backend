@@ -6,40 +6,42 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/timesheet/status:
+ * /api/v1/timesheet/status/{clientId}/{payPeriodId}:
  *   get:
  *     operationId: v1GetTimesheetStatus
- *     summary: Get timesheet status for all employees for a pay period
+ *     summary: Get timesheet status for all active employees for a pay period
  *     tags:
  *       - Timesheet
  *     parameters:
- *       - in: query
- *         name: payPeriodId
+ *       - in: path
+ *         name: clientId
  *         required: true
  *         schema:
  *           type: string
- *       - in: query
- *         name: clientId
+ *       - in: path
+ *         name: payPeriodId
  *         required: true
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Timesheet status per employee
+ *         description: Per-employee timesheet status including hours and signature state
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/TimesheetStatusResponse'
+ *                 $ref: '#/components/schemas/EmployeeTimesheetStatus'
+ *       404:
+ *         description: Pay period not found
  */
-router.get('/status', async (req: Request, res: Response) => {
-  const { payPeriodId, clientId } = req.query as { payPeriodId: string; clientId: string };
-  logger.info(`GET /timesheet/status — request payPeriodId=${payPeriodId} clientId=${clientId}`);
+router.get('/status/:clientId/:payPeriodId', async (req: Request, res: Response) => {
+  const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
+  logger.info(`GET /timesheet/status/${clientId}/${payPeriodId}`);
 
   const statuses = await getTimesheetStatusesService(clientId, payPeriodId);
   if (!statuses) {
-    logger.info('GET /timesheet/status — response 404');
+    logger.info(`GET /timesheet/status — response 404`);
     return res.status(404).json({ error: 'not_found', message: 'Pay period not found' });
   }
 
