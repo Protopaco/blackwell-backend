@@ -17,6 +17,7 @@ interface WeekManifest {
   dailyTotalRow: number;
   dates: DateColumnManifest[];
   activityRows: ActivityRowManifest[];
+  flatRateRows: ActivityRowManifest[];
 }
 
 interface SignatureCell {

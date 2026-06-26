@@ -1,6 +1,6 @@
-import Holiday from '#models/Holiday.js';
-import { WeekManifest } from '#models/TimesheetManifest.js';
-import { SortedActivities } from './sortActivities.js';
+import Holiday from "#models/Holiday.js";
+import { WeekManifest } from "#models/TimesheetManifest.js";
+import { SortedActivities } from "./sortActivities.js";
 import {
   buildActivityRow,
   buildDailyTotalRow,
@@ -8,7 +8,7 @@ import {
   buildDayRow,
   buildDividerRow,
   buildHolidayRow,
-} from './rowBuilders.js';
+} from "./rowBuilders.js";
 
 interface WeekBuildResult {
   rows: unknown[][];
@@ -23,8 +23,10 @@ const buildWeek = (
   sortedActivities: SortedActivities,
   holidays: Holiday[],
   startRow: number,
+  maxDays: number,
 ): WeekBuildResult => {
-  const { workActivities, timeOffActivities, flatRateActivities } = sortedActivities;
+  const { workActivities, timeOffActivities, flatRateActivities } =
+    sortedActivities;
   const workCount = workActivities.length;
   const timeOffCount = timeOffActivities.length;
   const flatRateCount = flatRateActivities.length;
@@ -35,7 +37,7 @@ const buildWeek = (
 
   rows.push(buildHolidayRow(dates, holidays));
   rows.push(buildDayRow(dates));
-  rows.push(buildDateRow(dates));
+  rows.push(buildDateRow(dates, maxDays));
 
   const dateRow = startRow + rows.length - 1;
   const firstActivityRow = startRow + rows.length;
@@ -61,12 +63,29 @@ const buildWeek = (
 
   const lastHourlyRow = startRow + rows.length - 1;
 
-  rows.push(buildDividerRow());
+  const dailyTotalRowNum = startRow + rows.length;
+  const hasHourlyActivities = workCount + timeOffCount > 0;
+  const formulaFirstRow = hasHourlyActivities
+    ? firstActivityRow
+    : dailyTotalRowNum;
+  const formulaLastRow = hasHourlyActivities ? lastHourlyRow : dailyTotalRowNum;
+
+  rows.push(
+    buildDailyTotalRow(
+      dates,
+      formulaFirstRow,
+      formulaLastRow,
+      dailyTotalRowNum,
+    ),
+  );
+
+  const flatRateRows: typeof activityRows = [];
 
   if (flatRateCount > 0) {
+    rows.push(buildDividerRow());
     for (let flatRateIndex = 0; flatRateIndex < flatRateCount; flatRateIndex++) {
       rows.push(buildActivityRow(flatRateActivities[flatRateIndex], dayCount));
-      activityRows.push({
+      flatRateRows.push({
         activityId: flatRateActivities[flatRateIndex].activityId,
         activityName: flatRateActivities[flatRateIndex].activityName,
         row: startRow + rows.length - 1,
@@ -75,22 +94,16 @@ const buildWeek = (
     rows.push(buildDividerRow());
   }
 
-  const dailyTotalRowNum = startRow + rows.length;
-  const hasHourlyActivities = workCount + timeOffCount > 0;
-  const formulaFirstRow = hasHourlyActivities ? firstActivityRow : dailyTotalRowNum;
-  const formulaLastRow = hasHourlyActivities ? lastHourlyRow : dailyTotalRowNum;
-
-  rows.push(buildDailyTotalRow(dates, formulaFirstRow, formulaLastRow, dailyTotalRowNum));
-
   const weekManifest: WeekManifest = {
     weekIndex,
     dateRow,
     dailyTotalRow: dailyTotalRowNum,
     dates: dates.map((date, dateIndex) => ({
-      date: date.toISOString().split('T')[0],
+      date: date.toISOString().split("T")[0],
       column: dateIndex + 2, // 1-based; A=1 is label col, so first day is B=2
     })),
     activityRows,
+    flatRateRows,
   };
 
   return { rows, weekManifest };

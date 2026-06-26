@@ -171,6 +171,7 @@ const generateTimesheets = async (
         sortedActivities,
         payrollConfig.holidays,
         currentRow,
+        maxDays,
       );
       allRows.push(...result.rows);
       weekManifests.push(result.weekManifest);

@@ -39,6 +39,13 @@ const formatWeekSection = (
   const activityRowNumbers = new Set(
     week.activityRows.map((activityRow) => activityRow.row),
   );
+  const flatRateRowNumbers = new Set(
+    week.flatRateRows.map((flatRateRow) => flatRateRow.row),
+  );
+  const lastFlatRateRowNumber =
+    week.flatRateRows.length > 0
+      ? Math.max(...week.flatRateRows.map((flatRateRow) => flatRateRow.row))
+      : dailyTotalRowNumber;
 
   return [
     ...formatHolidayNameRow(
@@ -71,6 +78,23 @@ const formatWeekSection = (
       specialColumnIndexes,
       holidayColumnIndexes,
     ),
+    ...formatDailyTotalRow(
+      sheetId,
+      dailyTotalRowNumber,
+      labelColumnIndex,
+      totalColumnCount,
+      holidayColumnIndexes,
+    ),
+    ...formatActivityRows(
+      sheetId,
+      week.flatRateRows,
+      labelColumnIndex,
+      firstDayColumnIndex,
+      totalColumnCount,
+      specialColumnIndexes,
+      holidayColumnIndexes,
+      true,
+    ),
     ...formatDividerRows(
       sheetId,
       dateRowNumber,
@@ -80,11 +104,13 @@ const formatWeekSection = (
       activityRowNumbers,
       holidayColumnIndexes,
     ),
-    ...formatDailyTotalRow(
+    ...formatDividerRows(
       sheetId,
       dailyTotalRowNumber,
+      lastFlatRateRowNumber + 2,
       labelColumnIndex,
       totalColumnCount,
+      flatRateRowNumbers,
       holidayColumnIndexes,
     ),
   ];

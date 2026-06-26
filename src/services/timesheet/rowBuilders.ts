@@ -38,9 +38,9 @@ const buildHolidayRow = (dates: Date[], holidays: Holiday[]): unknown[] => {
 const buildDayRow = (dates: Date[]): unknown[] =>
   ['', ...dates.map(getDayOfWeek)];
 
-// Builds the row of M/D formatted dates for a week.
-const buildDateRow = (dates: Date[]): unknown[] =>
-  ['', ...dates.map(formatDateHeader)];
+// Builds the row of M/D formatted dates for a week, with "Total" in the weekly total column.
+const buildDateRow = (dates: Date[], maxDays: number): unknown[] =>
+  ['', ...dates.map(formatDateHeader), ...Array(maxDays - dates.length).fill(''), 'Total'];
 
 // Builds a blank data-entry row for a single activity with one empty cell per day.
 const buildActivityRow = (activity: Activity, numberOfDays: number): unknown[] =>
