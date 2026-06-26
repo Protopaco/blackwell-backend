@@ -141,6 +141,12 @@ The `src/utils/dateUtils.ts` module provides:
 - Approval is recorded by writing the supervisor name and date to the signature row
 - No digital signature verification
 - No approval notifications
+- Status is determined by reading signature cell coordinates from the manifest:
+  - `NotGenerated` — no manifest found
+  - `Generated` — manifest exists, signature cells are empty
+  - `Submitted` — employee signature cell is filled
+  - `Approved` — supervisor signature cell is filled (employee may or may not be signed)
+  - `Complete` — both signature cells are filled
 
 ## Pay Rates
 
@@ -176,29 +182,34 @@ The `src/utils/dateUtils.ts` module provides:
 - No letters or symbols permitted in data entry cells
 - To be implemented after initial timesheet structure is approved
 
-## Timesheet Generation Pipeline (In Progress)
+## Timesheet Generation Pipeline (Complete)
 
 The timesheet generation service (`generateTimesheets`) builds the entire sheet structure in memory, then writes in a single batch call to avoid throttling:
 
 1. Load payroll config (one batch read of all config tabs)
 2. Filter to active employees
 3. For each employee:
-   - Check if timesheet already exists (read manifest tab)
+   - Check if timesheet already exists (read manifest) — skip if tab still exists; regenerate if tab was manually deleted
+   - Create timesheet file via OAuth if employee has no `timesheetFileId` yet
    - Generate timesheet structure in memory:
      - Sort activities via `sortActivities()`
-     - Get date range via `getDatesBetween()` 
+     - Get date range via `getDatesBetween()`
      - Chunk dates via `chunkDatesByWeek()`
-     - Build header, footer, daily totals, and summary rows
-     - Build week sections with holiday row, day row, date row, activity rows, daily total
+     - Build header rows, then one week section per week (holiday, day, date, activity, daily total rows)
+     - Build signature rows and summary formula rows
    - Write entire structure to employee's timesheet file in one call
+   - Apply all formatting in one `batchUpdate` call via `applyTimesheetFormatting()`
    - Build and save manifest for later reading
 
 Implementation status:
 - ✅ `sortActivities()` — separates and sorts activities by type
 - ✅ `dateUtils.ts` — all date utilities complete
-- 🔄 Row builders — TODO: header row, footer row, daily total row, summary row builders
-- 🔄 Week builder — TODO: combines holiday + day + date + activities + daily total for one week
-- 🔄 Main orchestration — TODO: glue together all pieces, build in-memory structure, write batch
+- ✅ `rowBuilders.ts` — header, employee, divider, holiday, day, date, activity, daily total, summary, signature rows
+- ✅ `buildWeek.ts` — combines holiday + day + date + activities + daily total for one week, returns rows + WeekManifest
+- ✅ `generateTimesheets.ts` — full orchestration: in-memory build, batch write, formatting, manifest save
+- ✅ `applyTimesheetFormatting.ts` — all formatting applied in single batchUpdate
+- ✅ `checkTimesheetStatus.ts` — reads signature cells via manifest coordinates
+- ✅ `getTimesheetStatuses.ts` — status for all active employees for a pay period
 
 ## Payroll Reports
 

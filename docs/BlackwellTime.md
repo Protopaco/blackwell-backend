@@ -788,8 +788,9 @@ Services contain all business logic. They call `db/` functions and return result
 const TimesheetStatus = {
   NotGenerated: "NotGenerated",
   Generated: "Generated",
-  Submitted: "Submitted",
-  Approved: "Approved",
+  Submitted: "Submitted",   // employee has signed
+  Approved: "Approved",     // supervisor has signed (but not employee)
+  Complete: "Complete",     // both have signed
 } as const;
 type TimesheetStatus = typeof TimesheetStatus[keyof typeof TimesheetStatus];
 ```
