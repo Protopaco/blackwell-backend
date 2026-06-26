@@ -118,8 +118,8 @@ const formatActivityRows = (
     // Step 4: override holiday columns.
     // Regular rows: even → white, odd → muted accent.
     // Flat rate rows: even → muted accent, odd → muted accent dark.
-    const evenHolidayColor = isFlatRateSection ? MUTED_ACCENT : WHITE;
-    const oddHolidayColor = isFlatRateSection ? MUTED_ACCENT_DARK : MUTED_ACCENT;
+    const evenHolidayColor = MUTED_ACCENT;
+    const oddHolidayColor = MUTED_ACCENT_DARK;
     for (const specialColumnIndex of holidayColumnIndexes) {
       requests.push(
         fillRow(

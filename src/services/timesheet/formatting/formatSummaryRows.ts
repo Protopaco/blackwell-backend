@@ -1,11 +1,12 @@
-import { MUTED, BLACK } from "#utils/timesheetTheme.js";
+import { PRIMARY, WHITE, MUTED, BLACK } from "#utils/timesheetTheme.js";
 import { type SummaryRowManifest } from "#models/TimesheetManifest.js";
 import fillRow from "./fillRow.js";
 
-// Builds fill requests for summary value cells — MUTED background on column B, centered text.
+// Builds fill requests for summary rows — PRIMARY/WHITE on the label column, MUTED on the value column.
 const formatSummaryRows = (sheetId: number, summaryRows: SummaryRowManifest[]): object[] =>
-  summaryRows.map((summaryRow) =>
+  summaryRows.flatMap((summaryRow) => [
+    fillRow(sheetId, summaryRow.row, 0, 1, PRIMARY, WHITE, false, "LEFT"),
     fillRow(sheetId, summaryRow.row, 1, 2, MUTED, BLACK, false, "CENTER"),
-  );
+  ]);
 
 export default formatSummaryRows;
