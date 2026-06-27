@@ -73,7 +73,12 @@
           },
           "status": {
             "type": "string",
-            "enum": ["Draft", "Pending", "Open", "Closed"]
+            "enum": [
+              "Draft",
+              "Pending",
+              "Open",
+              "Closed"
+            ]
           },
           "startDate": {
             "type": "string",
@@ -107,7 +112,12 @@
           },
           "status": {
             "type": "string",
-            "enum": ["NotGenerated", "Generated", "Submitted", "Approved"]
+            "enum": [
+              "NotGenerated",
+              "Generated",
+              "Submitted",
+              "Approved"
+            ]
           }
         }
       },
@@ -131,14 +141,19 @@
       "post": {
         "operationId": "v1GenerateTimesheets",
         "summary": "Generate timesheets for all active employees for a pay period",
-        "tags": ["Timesheet"],
+        "tags": [
+          "Timesheet"
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["clientId", "payPeriodId"],
+                "required": [
+                  "clientId",
+                  "payPeriodId"
+                ],
                 "properties": {
                   "clientId": {
                     "type": "string"
@@ -164,23 +179,25 @@
         }
       }
     },
-    "/api/v1/timesheet/status": {
+    "/api/v1/timesheet/status/{clientId}/{payPeriodId}": {
       "get": {
         "operationId": "v1GetTimesheetStatus",
-        "summary": "Get timesheet status for all employees for a pay period",
-        "tags": ["Timesheet"],
+        "summary": "Get timesheet status for all active employees for a pay period",
+        "tags": [
+          "Timesheet"
+        ],
         "parameters": [
           {
-            "in": "query",
-            "name": "payPeriodId",
+            "in": "path",
+            "name": "clientId",
             "required": true,
             "schema": {
               "type": "string"
             }
           },
           {
-            "in": "query",
-            "name": "clientId",
+            "in": "path",
+            "name": "payPeriodId",
             "required": true,
             "schema": {
               "type": "string"
@@ -189,17 +206,59 @@
         ],
         "responses": {
           "200": {
-            "description": "Timesheet status per employee",
+            "description": "Per-employee timesheet status including hours and signature state",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TimesheetStatusResponse"
+                    "$ref": "#/components/schemas/EmployeeTimesheetStatus"
                   }
                 }
               }
             }
+          },
+          "404": {
+            "description": "Pay period not found"
+          }
+        }
+      }
+    },
+    "/api/v1/payrollReport/{clientId}/{payPeriodId}/generate": {
+      "post": {
+        "operationId": "v1GeneratePayrollReport",
+        "summary": "Generate or regenerate the payroll report for a pay period",
+        "description": "Only processes timesheets that are Complete (both employee and supervisor signed). Archives the previous report tabs and writes fresh data.",
+        "tags": [
+          "PayrollReport"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payroll report generated successfully"
+          },
+          "404": {
+            "description": "Client or pay period not found"
+          },
+          "422": {
+            "description": "No Complete timesheets found"
           }
         }
       }
@@ -208,7 +267,9 @@
       "put": {
         "operationId": "v1UpdatePayPeriod",
         "summary": "Update an existing pay period",
-        "tags": ["PayPeriod"],
+        "tags": [
+          "PayPeriod"
+        ],
         "parameters": [
           {
             "in": "path",
@@ -228,7 +289,9 @@
       "get": {
         "operationId": "v1GetPayPeriodById",
         "summary": "Get a single pay period by ID",
-        "tags": ["PayPeriod"],
+        "tags": [
+          "PayPeriod"
+        ],
         "parameters": [
           {
             "in": "path",
@@ -265,7 +328,9 @@
       "post": {
         "operationId": "v1CreatePayPeriod",
         "summary": "Create a new pay period",
-        "tags": ["PayPeriod"],
+        "tags": [
+          "PayPeriod"
+        ],
         "responses": {
           "201": {
             "description": "Pay period created"
@@ -275,7 +340,9 @@
       "get": {
         "operationId": "v1GetPayPeriods",
         "summary": "Get all pay periods for a client",
-        "tags": ["PayPeriod"],
+        "tags": [
+          "PayPeriod"
+        ],
         "parameters": [
           {
             "in": "query",
@@ -307,7 +374,9 @@
       "get": {
         "operationId": "v1GetNextPayPeriod",
         "summary": "Get suggested next pay period for a client",
-        "tags": ["PayPeriod"],
+        "tags": [
+          "PayPeriod"
+        ],
         "parameters": [
           {
             "in": "query",
@@ -336,7 +405,9 @@
       "get": {
         "operationId": "v1Health",
         "summary": "Health check",
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "responses": {
           "200": {
             "description": "Service is healthy"
@@ -348,7 +419,9 @@
       "get": {
         "operationId": "v1GetClients",
         "summary": "Get all clients",
-        "tags": ["Client"],
+        "tags": [
+          "Client"
+        ],
         "responses": {
           "200": {
             "description": "List of clients",
@@ -370,7 +443,9 @@
       "post": {
         "operationId": "v1ClearCache",
         "summary": "Clear all in-memory caches and force fresh reads from Google Sheets",
-        "tags": ["Admin"],
+        "tags": [
+          "Admin"
+        ],
         "responses": {
           "200": {
             "description": "Cache cleared"
