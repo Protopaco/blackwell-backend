@@ -1,4 +1,4 @@
-import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
+import readTabValues from '#db/adapter/readTabValues.js';
 import readManifest from '#db/manifest/readManifest.js';
 import Activity from '#models/Activity.js';
 import Employee from '#models/Employee.js';
@@ -22,7 +22,7 @@ const readTimesheetEntries = async (
   const manifest = await readManifest(employee.timesheetFileId, tabName);
   if (!manifest) return [];
 
-  const tabValues = await sheetsAdapter.readTabValues(employee.timesheetFileId, tabName);
+  const tabValues = await readTabValues(employee.timesheetFileId, tabName);
   const entries: TimesheetEntry[] = [];
 
   for (const weekManifest of manifest.weeks) {

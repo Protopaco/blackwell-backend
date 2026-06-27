@@ -1,4 +1,5 @@
-import sheetsAdapter from "#db/adapter/sheetsAdapter.js";
+import getSheetId from '#db/adapter/getSheetId.js';
+import applyFormattingRequests from '#db/adapter/applyFormattingRequests.js';
 import Holiday from "#models/Holiday.js";
 import TimesheetManifest from "#models/TimesheetManifest.js";
 import { logger } from "#utils/logger.js";
@@ -22,7 +23,7 @@ const applyTimesheetFormatting = async (
     `Applying formatting to tab: ${tabName} in workbook: ${workbookId}`,
   );
 
-  const sheetId = await sheetsAdapter.getSheetId(workbookId, tabName);
+  const sheetId = await getSheetId(workbookId, tabName);
 
   // Column layout (all 0-based):
   //   0       = A — labels
@@ -54,7 +55,7 @@ const applyTimesheetFormatting = async (
     ...formatSummaryRows(sheetId, manifest.summaryRows),
   ];
 
-  await sheetsAdapter.applyFormattingRequests(workbookId, requests);
+  await applyFormattingRequests(workbookId, requests);
   logger.debug(`Formatting complete for tab: ${tabName}`);
 };
 

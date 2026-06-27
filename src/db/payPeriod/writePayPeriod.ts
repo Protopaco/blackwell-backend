@@ -1,4 +1,4 @@
-import sheetsAdapter from "#db/adapter/sheetsAdapter.js";
+import writeTab from '#db/adapter/writeTab.js';
 import getPayPeriods from "#db/payPeriod/readPayPeriods.js";
 import PayPeriod from "#models/PayPeriod.js";
 
@@ -28,7 +28,7 @@ const writePayPeriod = async (
     PayrollReportFileId: pp.payrollReportFileId,
   }));
 
-  await sheetsAdapter.writeTab(payPeriodRegistryFileId, currentYear, rows);
+  await writeTab(payPeriodRegistryFileId, currentYear, rows);
 };
 
 export default writePayPeriod;

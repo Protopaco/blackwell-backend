@@ -1,4 +1,7 @@
-import sheetsAdapter from "#db/adapter/sheetsAdapter.js";
+import tabExists from '#db/adapter/tabExists.js';
+import createOAuthWorkbook from '#db/adapter/createOAuthWorkbook.js';
+import createTabIfNotExists from '#db/adapter/createTabIfNotExists.js';
+import writeValues from '#db/adapter/writeValues.js';
 import readClientById from "#db/client/readClientById.js";
 import saveManifest from "#db/manifest/appendManifest.js";
 import getManifest from "#db/manifest/readManifest.js";
@@ -109,7 +112,7 @@ const generateTimesheets = async (
       payPeriod.payPeriodName,
     );
     if (existingManifest) {
-      const tabStillExists = await sheetsAdapter.tabExists(
+      const tabStillExists = await tabExists(
         employee.timesheetFileId,
         payPeriod.payPeriodName,
       );
@@ -128,7 +131,7 @@ const generateTimesheets = async (
       logger.info(
         `No timesheet file for ${employee.firstName} ${employee.lastName} — creating`,
       );
-      const newFileId = await sheetsAdapter.createOAuthWorkbook(
+      const newFileId = await createOAuthWorkbook(
         `${employee.firstName} ${employee.lastName} Timesheets`,
         client.timesheetsFolderId,
       );
@@ -256,11 +259,11 @@ const generateTimesheets = async (
       pushSummary("Flat Rate Shifts", countaRows(flatRateRowNums, maxDays));
     }
 
-    await sheetsAdapter.createTabIfNotExists(
+    await createTabIfNotExists(
       employee.timesheetFileId,
       payPeriod.payPeriodName,
     );
-    await sheetsAdapter.writeValues(
+    await writeValues(
       employee.timesheetFileId,
       payPeriod.payPeriodName,
       allRows,

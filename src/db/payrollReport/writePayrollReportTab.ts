@@ -1,4 +1,5 @@
-import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
+import createTabIfNotExists from '#db/adapter/createTabIfNotExists.js';
+import writeValues from '#db/adapter/writeValues.js';
 import { logger } from '#utils/logger.js';
 
 // Creates a tab (if not exists) and writes a 2D array of values to it using USER_ENTERED input option.
@@ -9,8 +10,8 @@ const writePayrollReportTab = async (
   values: unknown[][],
 ): Promise<void> => {
   logger.debug(`writePayrollReportTab tab=${tabName} workbook=${workbookId}`);
-  await sheetsAdapter.createTabIfNotExists(workbookId, tabName);
-  await sheetsAdapter.writeValues(workbookId, tabName, values);
+  await createTabIfNotExists(workbookId, tabName);
+  await writeValues(workbookId, tabName, values);
 };
 
 export default writePayrollReportTab;

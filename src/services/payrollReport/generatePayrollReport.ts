@@ -1,4 +1,5 @@
-import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
+import createOAuthWorkbook from '#db/adapter/createOAuthWorkbook.js';
+import renameTab from '#db/adapter/renameTab.js';
 import readClientById from '#db/client/readClientById.js';
 import archivePayrollReportTab from '#db/payrollReport/archivePayrollReportTab.js';
 import writePayrollReportTab from '#db/payrollReport/writePayrollReportTab.js';
@@ -76,7 +77,7 @@ const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise
   let reportFileId = payPeriod.payrollReportFileId;
   if (!reportFileId) {
     logger.info(`generatePayrollReport: creating report file for ${payPeriod.payPeriodName}`);
-    reportFileId = await sheetsAdapter.createOAuthWorkbook(payPeriod.payPeriodName, client.payrollReportFolderId);
+    reportFileId = await createOAuthWorkbook(payPeriod.payPeriodName, client.payrollReportFolderId);
     await writePayPeriod(client.payPeriodRegistryFileId, { ...payPeriod, payrollReportFileId: reportFileId });
     logger.info(`generatePayrollReport: report file created ${reportFileId}`);
   }
@@ -93,8 +94,8 @@ const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise
   await archivePayrollReportTab(reportFileId, CURRENT_HOURS_TAB, `hrs_${archiveTimestamp}`);
   await archivePayrollReportTab(reportFileId, CURRENT_ADP_SUMMARY_TAB, `adp_${archiveTimestamp}`);
 
-  await sheetsAdapter.renameTab(reportFileId, PENDING_HOURS_TAB, CURRENT_HOURS_TAB);
-  await sheetsAdapter.renameTab(reportFileId, PENDING_ADP_SUMMARY_TAB, CURRENT_ADP_SUMMARY_TAB);
+  await renameTab(reportFileId, PENDING_HOURS_TAB, CURRENT_HOURS_TAB);
+  await renameTab(reportFileId, PENDING_ADP_SUMMARY_TAB, CURRENT_ADP_SUMMARY_TAB);
 
   logger.info(`generatePayrollReport: complete for pay period ${payPeriod.payPeriodName}`);
 };

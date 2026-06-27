@@ -1,4 +1,4 @@
-import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
+import readTab from '#db/adapter/readTab.js';
 import Client from '#models/Client.js';
 import { createCache } from '#utils/cache.js';
 
@@ -30,7 +30,7 @@ const readClients = async (): Promise<Client[]> => {
   const cached = cache.get(clientConfigFileId);
   if (cached) return cached;
 
-  const rows = await sheetsAdapter.readTab(clientConfigFileId, 'Clients');
+  const rows = await readTab(clientConfigFileId, 'Clients');
   const clients = rows.map(mapToClient);
   cache.set(clientConfigFileId, clients);
   return clients;

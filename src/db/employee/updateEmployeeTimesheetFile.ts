@@ -1,4 +1,5 @@
-import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
+import readTabValues from '#db/adapter/readTabValues.js';
+import updateCells from '#db/adapter/updateCells.js';
 import { invalidatePayrollConfigCache } from '#db/payrollConfig/readPayrollConfig.js';
 import Guid from '#models/Guid.js';
 
@@ -24,7 +25,7 @@ const updateEmployeeTimesheetFile = async (
   timesheetFileId: string,
   timesheetFileLink: string,
 ): Promise<void> => {
-  const rows = await sheetsAdapter.readTabValues(payrollConfigFileId, EMPLOYEES_TAB);
+  const rows = await readTabValues(payrollConfigFileId, EMPLOYEES_TAB);
   if (rows.length === 0) throw new Error('Employees tab is empty');
 
   const headers = rows[0] as string[];
@@ -42,13 +43,13 @@ const updateEmployeeTimesheetFile = async (
 
   const sheetRowNumber = employeeRowIndex + 1; // 1-based
 
-  await sheetsAdapter.updateCells(
+  await updateCells(
     payrollConfigFileId,
     `${EMPLOYEES_TAB}!${toColumnLetter(fileIdColIndex)}${sheetRowNumber}`,
     [[timesheetFileId]],
   );
 
-  await sheetsAdapter.updateCells(
+  await updateCells(
     payrollConfigFileId,
     `${EMPLOYEES_TAB}!${toColumnLetter(fileLinkColIndex)}${sheetRowNumber}`,
     [[timesheetFileLink]],

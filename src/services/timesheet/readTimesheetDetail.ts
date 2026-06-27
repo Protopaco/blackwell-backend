@@ -1,4 +1,4 @@
-import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
+import readTabValues from '#db/adapter/readTabValues.js';
 import readManifest from '#db/manifest/readManifest.js';
 import { logger } from '#utils/logger.js';
 
@@ -26,7 +26,7 @@ const readTimesheetDetail = async (
   if (!employeeSignatureCell || !supervisorSignatureCell) return notGenerated;
 
   logger.debug(`readTimesheetDetail reading tab values: ${tabName}`);
-  const rows = await sheetsAdapter.readTabValues(timesheetFileId, tabName);
+  const rows = await readTabValues(timesheetFileId, tabName);
 
   const employeeSigned = Boolean(rows[employeeSignatureCell.row - 1]?.[employeeSignatureCell.column - 1]);
   const supervisorSigned = Boolean(rows[supervisorSignatureCell.row - 1]?.[supervisorSignatureCell.column - 1]);

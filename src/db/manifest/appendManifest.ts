@@ -1,31 +1,31 @@
-import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
+import createTabIfNotExists from '#db/adapter/createTabIfNotExists.js';
+import readTabValues from '#db/adapter/readTabValues.js';
+import updateCells from '#db/adapter/updateCells.js';
+import appendRow from '#db/adapter/appendRow.js';
 import TimesheetManifest from '#models/TimesheetManifest.js';
 
 const MANIFEST_TAB = '_manifest';
 
-// Writes a timesheet manifest entry to the _manifest tab (creating it if needed), removes the default Sheet1,
-// and overwrites an existing entry for the same pay period tab rather than duplicating it.
+// Writes a timesheet manifest entry to the _manifest tab (creating it if needed) and overwrites
+// an existing entry for the same pay period tab rather than duplicating it.
+// Sheet1 cleanup is handled automatically by createTabIfNotExists.
 const appendManifest = async (timesheetFileId: string, manifest: TimesheetManifest): Promise<void> => {
-  await sheetsAdapter.createTabIfNotExists(timesheetFileId, MANIFEST_TAB);
-
-  if (await sheetsAdapter.tabExists(timesheetFileId, 'Sheet1')) {
-    await sheetsAdapter.deleteTab(timesheetFileId, 'Sheet1');
-  }
+  await createTabIfNotExists(timesheetFileId, MANIFEST_TAB);
 
   const serialised = JSON.stringify(manifest);
-  const existingRows = await sheetsAdapter.readTabValues(timesheetFileId, MANIFEST_TAB);
+  const existingRows = await readTabValues(timesheetFileId, MANIFEST_TAB);
   const existingRowIndex = existingRows.findIndex((row) => row[0] === manifest.tabName);
 
   if (existingRowIndex >= 0) {
     // Overwrite in place — someone deleted the tab without clearing the manifest entry
     const sheetRowNumber = existingRowIndex + 1; // 1-based
-    await sheetsAdapter.updateCells(
+    await updateCells(
       timesheetFileId,
       `${MANIFEST_TAB}!A${sheetRowNumber}:B${sheetRowNumber}`,
       [[manifest.tabName, serialised]],
     );
   } else {
-    await sheetsAdapter.appendRow(timesheetFileId, MANIFEST_TAB, {
+    await appendRow(timesheetFileId, MANIFEST_TAB, {
       tabName: manifest.tabName,
       manifest: serialised,
     });

@@ -1,4 +1,4 @@
-import sheetsAdapter from '#db/adapter/sheetsAdapter.js';
+import readTab from '#db/adapter/readTab.js';
 import PayPeriod from '#models/PayPeriod.js';
 import { PayPeriodStatusType } from '#models/PayPeriodStatus.js';
 
@@ -16,7 +16,7 @@ const mapToPayPeriod = (row: Record<string, unknown>): PayPeriod => ({
 // Reads all pay periods for the current calendar year from the pay period registry file.
 const readPayPeriods = async (payPeriodRegistryFileId: string): Promise<PayPeriod[]> => {
   const currentYear = String(new Date().getFullYear());
-  const rows = await sheetsAdapter.readTab(payPeriodRegistryFileId, currentYear);
+  const rows = await readTab(payPeriodRegistryFileId, currentYear);
   return rows.map(mapToPayPeriod);
 };
 
