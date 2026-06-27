@@ -8,6 +8,7 @@ interface PayPeriod {
   startDate: string;
   endDate: string;
   createdDate: string;
+  payrollReportFileId: string;
 }
 
 export default PayPeriod;
