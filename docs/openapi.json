@@ -96,7 +96,7 @@
           }
         }
       },
-      "TimesheetStatusResponse": {
+      "EmployeeTimesheetStatus": {
         "type": "object",
         "properties": {
           "employeeId": {
@@ -110,14 +110,20 @@
           "timesheetFileId": {
             "type": "string"
           },
-          "status": {
+          "timesheetFileLink": {
             "type": "string",
-            "enum": [
-              "NotGenerated",
-              "Generated",
-              "Submitted",
-              "Approved"
-            ]
+            "example": "https://docs.google.com/spreadsheets/d/..."
+          },
+          "totalHours": {
+            "type": "number",
+            "nullable": true,
+            "example": 72.5
+          },
+          "employeeSigned": {
+            "type": "boolean"
+          },
+          "supervisorSigned": {
+            "type": "boolean"
           }
         }
       },
