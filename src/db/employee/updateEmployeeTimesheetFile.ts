@@ -1,9 +1,9 @@
 import readTabValues from '#db/adapter/readTabValues.js';
 import updateCells from '#db/adapter/updateCells.js';
+import { EMPLOYEES_TAB } from '#config/constants.js';
 import { invalidatePayrollConfigCache } from '#db/payrollConfig/readPayrollConfig.js';
 import Guid from '#models/Guid.js';
 
-const EMPLOYEES_TAB = 'Employees';
 
 // 0-based column index → A1 column letter
 const toColumnLetter = (colIndex: number): string => {

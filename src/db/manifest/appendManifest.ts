@@ -2,9 +2,8 @@ import createTabIfNotExists from '#db/adapter/createTabIfNotExists.js';
 import readTabValues from '#db/adapter/readTabValues.js';
 import updateCells from '#db/adapter/updateCells.js';
 import appendRow from '#db/adapter/appendRow.js';
+import { MANIFEST_TAB } from '#config/constants.js';
 import TimesheetManifest from '#models/TimesheetManifest.js';
-
-const MANIFEST_TAB = '_manifest';
 
 // Writes a timesheet manifest entry to the _manifest tab (creating it if needed) and overwrites
 // an existing entry for the same pay period tab rather than duplicating it.

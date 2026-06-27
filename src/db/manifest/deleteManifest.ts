@@ -1,7 +1,6 @@
 import readTab from '#db/adapter/readTab.js';
 import deleteRow from '#db/adapter/deleteRow.js';
-
-const MANIFEST_TAB = '_manifest';
+import { MANIFEST_TAB } from '#config/constants.js';
 
 // Removes the manifest entry for a specific pay period tab from the _manifest tab — no-ops if the entry doesn't exist.
 const deleteManifest = async (timesheetFileId: string, tabName: string): Promise<void> => {

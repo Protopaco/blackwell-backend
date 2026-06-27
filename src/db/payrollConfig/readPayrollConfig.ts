@@ -6,18 +6,26 @@ import mapActivity from '#db/activity/mapActivity.js';
 import mapFundingSource from '#db/fundingSource/mapFundingSource.js';
 import mapHoliday from '#db/holiday/mapHoliday.js';
 import mapSettings from '#db/settings/mapSettings.js';
+import {
+  EMPLOYEES_TAB,
+  ACTIVITIES_TAB,
+  FUNDING_SOURCES_TAB,
+  HOLIDAYS_TAB,
+  SUPERVISORS_TAB,
+  SETTINGS_TAB,
+} from '#config/constants.js';
 import { logger } from '#utils/logger.js';
 import { createCache } from '#utils/cache.js';
 
 const cache = createCache<PayrollConfig>(5 * 60 * 1000);
 
 const TAB_NAMES = {
-  employees: 'Employees',
-  supervisors: 'Supervisors',
-  fundingSources: 'FundingSources',
-  activities: 'Activities',
-  settings: 'Settings',
-  holidays: 'Holidays',
+  employees: EMPLOYEES_TAB,
+  supervisors: SUPERVISORS_TAB,
+  fundingSources: FUNDING_SOURCES_TAB,
+  activities: ACTIVITIES_TAB,
+  settings: SETTINGS_TAB,
+  holidays: HOLIDAYS_TAB,
 };
 
 const parseRows = (values: unknown[][]): Record<string, unknown>[] => {

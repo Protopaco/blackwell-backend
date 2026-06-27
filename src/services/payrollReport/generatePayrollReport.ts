@@ -17,12 +17,13 @@ import buildArchiveTimestamp from './buildArchiveTimestamp.js';
 import buildHoursRows from './buildHoursRows.js';
 import buildSheetValues from './buildSheetValues.js';
 import buildSummaryRows from './buildSummaryRows.js';
+import {
+  CURRENT_HOURS_TAB,
+  CURRENT_ADP_SUMMARY_TAB,
+  PENDING_HOURS_TAB,
+  PENDING_ADP_SUMMARY_TAB,
+} from '#config/constants.js';
 import { logger } from '#utils/logger.js';
-
-const CURRENT_HOURS_TAB = 'current_hours';
-const CURRENT_ADP_SUMMARY_TAB = 'current_adp_summary';
-const PENDING_HOURS_TAB = 'pending_hours';
-const PENDING_ADP_SUMMARY_TAB = 'pending_adp_summary';
 
 const HOURS_HEADERS: (keyof PayrollReportHoursRow)[] = [
   'GeneratedAt', 'EmployeeId', 'EmployeeName', 'ActivityName',

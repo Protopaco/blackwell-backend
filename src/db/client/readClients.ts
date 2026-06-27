@@ -1,4 +1,5 @@
 import readTab from '#db/adapter/readTab.js';
+import { CLIENTS_TAB } from '#config/constants.js';
 import Client from '#models/Client.js';
 import { createCache } from '#utils/cache.js';
 
@@ -30,7 +31,7 @@ const readClients = async (): Promise<Client[]> => {
   const cached = cache.get(clientConfigFileId);
   if (cached) return cached;
 
-  const rows = await readTab(clientConfigFileId, 'Clients');
+  const rows = await readTab(clientConfigFileId, CLIENTS_TAB);
   const clients = rows.map(mapToClient);
   cache.set(clientConfigFileId, clients);
   return clients;
