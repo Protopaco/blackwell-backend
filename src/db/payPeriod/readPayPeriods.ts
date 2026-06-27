@@ -10,6 +10,7 @@ const mapToPayPeriod = (row: Record<string, unknown>): PayPeriod => ({
   startDate: row['StartDate'] as string,
   endDate: row['EndDate'] as string,
   createdDate: row['CreatedDate'] as string,
+  payrollReportFileId: (row['PayrollReportFileId'] as string) ?? '',
 });
 
 // Reads all pay periods for the current calendar year from the pay period registry file.

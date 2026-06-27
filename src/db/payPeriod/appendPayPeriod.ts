@@ -12,6 +12,7 @@ const appendPayPeriod = async (payPeriodRegistryFileId: string, payPeriod: PayPe
     StartDate: payPeriod.startDate,
     EndDate: payPeriod.endDate,
     CreatedDate: payPeriod.createdDate || new Date().toISOString(),
+    PayrollReportFileId: payPeriod.payrollReportFileId ?? '',
   };
 
   await sheetsAdapter.appendRow(payPeriodRegistryFileId, currentYear, row);

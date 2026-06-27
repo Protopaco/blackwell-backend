@@ -25,6 +25,7 @@ const writePayPeriod = async (
     StartDate: pp.startDate,
     EndDate: pp.endDate,
     CreatedDate: pp.createdDate,
+    PayrollReportFileId: pp.payrollReportFileId,
   }));
 
   await sheetsAdapter.writeTab(payPeriodRegistryFileId, currentYear, rows);
