@@ -62,6 +62,7 @@ const getNextPayPeriod = async (clientId: string): Promise<PayPeriod | null> => 
     startDate,
     endDate,
     createdDate: '',
+    payrollReportFileId: '',
   };
 };
 

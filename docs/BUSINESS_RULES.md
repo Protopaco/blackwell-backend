@@ -208,8 +208,8 @@ Implementation status:
 - ✅ `buildWeek.ts` — combines holiday + day + date + activities + daily total for one week, returns rows + WeekManifest
 - ✅ `generateTimesheets.ts` — full orchestration: in-memory build, batch write, formatting, manifest save
 - ✅ `applyTimesheetFormatting.ts` — all formatting applied in single batchUpdate
-- ✅ `checkTimesheetStatus.ts` — reads signature cells via manifest coordinates
-- ✅ `getTimesheetStatuses.ts` — status for all active employees for a pay period
+- ✅ `readTimesheetDetail.ts` — reads signature cells and total hours via manifest coordinates
+- ✅ `getTimesheetStatuses.ts` — returns per-employee hours + signature status for a pay period (GET /timesheet/status/:clientId/:payPeriodId)
 
 ## Payroll Reports
 
@@ -219,13 +219,75 @@ Implementation status:
 
 | Tab | Owner | Description |
 |-----|-------|-------------|
-| `Hours` | App | Raw activity totals read from timesheets, written as static values |
-| `ADP Summary` | App | Hours rolled up by payroll category per employee, written as static values |
+| `Hours` | App | Raw activity totals read from timesheets, appended on each run |
+| `ADP Summary` | App | Hours rolled up by payroll category per employee, appended on each run |
 | `Results` | Bookkeeper | Gross pay per employee as output by ADP — manually entered, never touched by the app |
 | `Allocation` | Formulas | Funding source cost breakdown — formula-driven, reads from `Hours` and `Results`, updates automatically when `Results` is filled in |
 
-- Regenerating a payroll report overwrites `Hours` and `ADP Summary` only — `Results` and `Allocation` are never touched
-- The `Allocation` tab updates automatically when the bookkeeper fills in `Results` — no additional step required
+### Re-run Behaviour
+
+The payroll report function is designed to be called multiple times for the same pay period as timesheets are signed. Each run archives the previous data and writes a fresh set from scratch.
+
+On each run:
+1. Check if the report file exists — create it via OAuth if not
+2. Scan all active employee timesheets — only process employees whose timesheet is `Complete` (both employee and supervisor signatures present)
+3. If no timesheets are Complete, throw an error and do nothing
+4. If `current_hours` exists, rename it to `hrs_MMDD_HHmm` (e.g. `hrs_0626_1430`)
+5. If `current_adp_summary` exists, rename it to `adp_MMDD_HHmm` using the same timestamp
+6. Write fresh `current_hours` and `current_adp_summary` tabs with all currently-Complete employees
+
+> The archive tabs use the timestamp of when they were archived, not when they were originally generated. MMDD_HHmm format (e.g. `hrs_0626_1430`) is used to keep tab names short.
+
+> Write order is: write new data to temp tabs first, then rename old tabs to archives, then rename temp tabs to current. This ensures `Allocation` is never left pointing at a missing tab if a write fails midway.
+
+> `Results` and `Allocation` are never touched on any run, regardless of how many times the function is called.
+
+> The UI disables the generate button while the function is running to prevent concurrent runs.
+
+### Tab Structure
+
+```
+current_hours         ← always the latest run; referenced by Allocation formulas
+current_adp_summary   ← always the latest run
+hrs_0626_1430         ← archived previous run (Hours)
+adp_0626_1430         ← archived previous run (ADP Summary, same timestamp)
+hrs_0624_0900         ← older run
+adp_0624_0900         ← older run
+Results               ← bookkeeper-entered gross pay, never touched by app
+Allocation            ← formula-driven, always reads from current_hours and Results
+```
+
+### Hours Tab Columns
+
+One row per employee per activity per day. Raw daily entries are preserved so any aggregation can be derived — holiday hours, non-holiday hours, weekly subtotals, funding source breakdowns.
+
+| Column | Description |
+|--------|-------------|
+| `generatedAt` | ISO timestamp of the run that produced this row |
+| `employeeId` | |
+| `employeeName` | |
+| `activityName` | |
+| `payrollCategory` | Base / ETO / PTO / STO / Holiday / FlatRate |
+| `date` | ISO date string (YYYY-MM-DD) |
+| `isHoliday` | TRUE if this date is a configured holiday for the client |
+| `hours` | Hours entered for this activity on this date (shift count for flat rate) |
+
+### ADP Summary Tab Columns
+
+Rolled up from the Hours tab data — total hours per employee per payroll category.
+
+| Column | Description |
+|--------|-------------|
+| `generatedAt` | ISO timestamp of the run that produced this row |
+| `employeeId` | |
+| `employeeName` | |
+| `payrollCategory` | |
+| `totalHours` | Sum of all hours in this category for this employee across the pay period |
+| `holidayHours` | Hours in this category that fell on holiday dates |
+
+### Flat Rate Activities in Reports
+
+Flat rate activities are counted by shifts, not summed as hours. In the `Hours` tab, `hours` for a flat rate activity is `1` if the employee worked that day or `0` if not. The `payrollCategory` is `FlatRate` to distinguish them from hourly rows.
 
 ## Funding Source Allocation
 
