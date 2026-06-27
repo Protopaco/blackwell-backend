@@ -107,21 +107,22 @@ const generateTimesheets = async (
   );
 
   for (const employee of activeEmployees) {
+    const tabAlreadyExists = await tabExists(
+      employee.timesheetFileId,
+      payPeriod.payPeriodName,
+    );
+    if (tabAlreadyExists) {
+      logger.info(
+        `Timesheet tab already exists — skipping ${employee.firstName} ${employee.lastName}`,
+      );
+      continue;
+    }
+
     const existingManifest = await getManifest(
       employee.timesheetFileId,
       payPeriod.payPeriodName,
     );
     if (existingManifest) {
-      const tabStillExists = await tabExists(
-        employee.timesheetFileId,
-        payPeriod.payPeriodName,
-      );
-      if (tabStillExists) {
-        logger.info(
-          `Timesheet already exists — skipping ${employee.firstName} ${employee.lastName}`,
-        );
-        continue;
-      }
       logger.info(
         `Manifest exists but tab was deleted — regenerating ${employee.firstName} ${employee.lastName}`,
       );
