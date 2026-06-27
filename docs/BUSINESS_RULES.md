@@ -220,7 +220,7 @@ Implementation status:
 | Tab | Owner | Description |
 |-----|-------|-------------|
 | `Hours` | App | Raw activity totals read from timesheets, appended on each run |
-| `ADP Summary` | App | Hours rolled up by payroll category per employee, appended on each run |
+| `Payroll Summary` | App | Hours rolled up by payroll category per employee, appended on each run |
 | `Results` | Bookkeeper | Gross pay per employee as output by ADP — manually entered, never touched by the app |
 | `Allocation` | Formulas | Funding source cost breakdown — formula-driven, reads from `Hours` and `Results`, updates automatically when `Results` is filled in |
 
@@ -247,14 +247,14 @@ On each run:
 ### Tab Structure
 
 ```
-current_hours         ← always the latest run; referenced by Allocation formulas
-current_adp_summary   ← always the latest run
-hrs_0626_1430         ← archived previous run (Hours)
-adp_0626_1430         ← archived previous run (ADP Summary, same timestamp)
-hrs_0624_0900         ← older run
-adp_0624_0900         ← older run
-Results               ← bookkeeper-entered gross pay, never touched by app
-Allocation            ← formula-driven, always reads from current_hours and Results
+current_hours            ← always the latest run; referenced by Allocation formulas
+current_payroll_summary  ← always the latest run
+hrs_0626_1430            ← archived previous run (Hours)
+payroll_0626_1430        ← archived previous run (Payroll Summary, same timestamp)
+hrs_0624_0900            ← older run
+payroll_0624_0900        ← older run
+Results                  ← bookkeeper-entered gross pay, never touched by app
+Allocation               ← formula-driven, always reads from current_hours and Results
 ```
 
 ### Hours Tab Columns

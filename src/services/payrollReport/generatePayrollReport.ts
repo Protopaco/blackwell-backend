@@ -19,9 +19,9 @@ import buildSheetValues from './buildSheetValues.js';
 import buildSummaryRows from './buildSummaryRows.js';
 import {
   CURRENT_HOURS_TAB,
-  CURRENT_ADP_SUMMARY_TAB,
+  CURRENT_PAYROLL_SUMMARY_TAB,
   PENDING_HOURS_TAB,
-  PENDING_ADP_SUMMARY_TAB,
+  PENDING_PAYROLL_SUMMARY_TAB,
 } from '#config/constants.js';
 import { logger } from '#utils/logger.js';
 
@@ -90,13 +90,13 @@ const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise
   const summaryValues = buildSheetValues(buildSummaryRows(allEntries, generatedAt) as unknown as Record<string, unknown>[], SUMMARY_HEADERS as string[]);
 
   await writePayrollReportTab(reportFileId, PENDING_HOURS_TAB, hoursValues);
-  await writePayrollReportTab(reportFileId, PENDING_ADP_SUMMARY_TAB, summaryValues);
+  await writePayrollReportTab(reportFileId, PENDING_PAYROLL_SUMMARY_TAB, summaryValues);
 
   await archivePayrollReportTab(reportFileId, CURRENT_HOURS_TAB, `hrs_${archiveTimestamp}`);
-  await archivePayrollReportTab(reportFileId, CURRENT_ADP_SUMMARY_TAB, `adp_${archiveTimestamp}`);
+  await archivePayrollReportTab(reportFileId, CURRENT_PAYROLL_SUMMARY_TAB, `payroll_${archiveTimestamp}`);
 
   await renameTab(reportFileId, PENDING_HOURS_TAB, CURRENT_HOURS_TAB);
-  await renameTab(reportFileId, PENDING_ADP_SUMMARY_TAB, CURRENT_ADP_SUMMARY_TAB);
+  await renameTab(reportFileId, PENDING_PAYROLL_SUMMARY_TAB, CURRENT_PAYROLL_SUMMARY_TAB);
 
   logger.info(`generatePayrollReport: complete for pay period ${payPeriod.payPeriodName}`);
 };
