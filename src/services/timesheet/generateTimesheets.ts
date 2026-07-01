@@ -11,7 +11,7 @@ import updateEmployeeTimesheetFile from "#db/employee/updateEmployeeTimesheetFil
 import Activity from "#models/Activity.js";
 import { EmployeeStatus } from "#models/EmployeeStatus.js";
 import Guid from "#models/Guid.js";
-import { PayRate } from "#models/PayRate.js";
+import { PayRate, isFlatRate } from "#models/PayRate.js";
 import { PayrollCategory } from "#models/PayrollCategory.js";
 import TimesheetManifest, { WeekManifest } from "#models/TimesheetManifest.js";
 import {
@@ -223,7 +223,7 @@ const generateTimesheets = async (
       const weekHourlyRowNumbers = weekManifest.activityRows
         .filter((activityRow) => {
           const activity = activityMap.get(activityRow.activityId);
-          return activity && activity.payRate !== PayRate.FlatRate;
+          return activity && !isFlatRate(activity.payRate);
         })
         .map((activityRow) => activityRow.row);
 

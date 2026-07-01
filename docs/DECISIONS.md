@@ -54,6 +54,16 @@ Employees have a holiday rate in addition to base and secondary rates. It is not
 
 ---
 
+## Flat Rate Codes
+
+Flat rate activities need named codes that the payroll service maps to dollar amounts (same way Base/Secondary map to employee hourly rates). Placeholder codes `FlatRate1` and `FlatRate2` are in use until confirmed with the client.
+
+**Questions:**
+- What flat rate activity types does Blackwell actually have (e.g. on-call, meetings)?
+- Does the payroll service support named flat rate codes, or does it take a dollar amount directly?
+
+---
+
 ## Payroll Submission — Rate on File
 
 Employees have up to three rates (base, secondary, holiday) plus flat rate amounts per activity.

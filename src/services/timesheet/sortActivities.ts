@@ -1,5 +1,5 @@
 import Activity from '#models/Activity.js';
-import { PayRate } from '#models/PayRate.js';
+import { PayRate, isFlatRate } from '#models/PayRate.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
 
 const TIME_OFF_CATEGORIES = [
@@ -22,7 +22,7 @@ const sortActivities = (activities: Activity[]): SortedActivities => {
   const flatRateActivities: Activity[] = [];
 
   activities.forEach((activity) => {
-    if (activity.payRate === PayRate.FlatRate) {
+    if (isFlatRate(activity.payRate)) {
       flatRateActivities.push(activity);
     } else if (TIME_OFF_CATEGORIES.includes(activity.payrollCategory as any)) {
       timeOffActivities.push(activity);
