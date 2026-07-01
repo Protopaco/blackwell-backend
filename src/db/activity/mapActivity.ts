@@ -21,7 +21,6 @@ const mapActivity = (row: Record<string, unknown>): Activity => ({
   payrollCategory: row['PayrollCategory'] as PayrollCategoryType,
   fundingSources: mapFundingSources(row),
   payRate: row['PayRate'] as PayRateType,
-  flatRateAmount: row['FlatRateAmount'] ? Number(row['FlatRateAmount']) : undefined,
 });
 
 export default mapActivity;

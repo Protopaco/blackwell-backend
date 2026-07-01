@@ -32,7 +32,7 @@ const HOURS_HEADERS: (keyof PayrollReportHoursRow)[] = [
 
 const SUMMARY_HEADERS: (keyof PayrollReportSummaryRow)[] = [
   'GeneratedAt', 'EmployeeId', 'EmployeeName',
-  'PayrollCategory', 'PayRate', 'TotalHours', 'HolidayHours',
+  'PayrollCategory', 'PayRate', 'IsHoliday', 'TotalHours',
 ];
 
 // Generates or regenerates the payroll report for a pay period.
