@@ -1,8 +1,5 @@
-import PayrollReportSummaryEntry from './PayrollReportSummaryEntry.js';
+import EmployeePayrollSummary from './EmployeePayrollSummary.js';
 
-interface PayrollReportResponse {
-  generatedAt: string;
-  rows: PayrollReportSummaryEntry[];
-}
+type PayrollReportResponse = Record<string, EmployeePayrollSummary>;
 
 export default PayrollReportResponse;

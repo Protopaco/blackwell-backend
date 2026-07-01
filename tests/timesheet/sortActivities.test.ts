@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import sortActivities from '../../src/services/timesheet/sortActivities.js';
 import Activity from '../../src/models/Activity.js';
-import { PayRate } from '../../src/models/PayRate.js';
+import { PayRate, isFlatRate } from '../../src/models/PayRate.js';
 import { PayrollCategory } from '../../src/models/PayrollCategory.js';
 
 const makeActivity = (
@@ -15,18 +15,17 @@ const makeActivity = (
   payrollCategory: payrollCategory as any,
   fundingSources: [],
   payRate: payRate as any,
-  flatRateAmount: undefined,
 });
 
 const mockActivities: Activity[] = [
-  makeActivity('Programs', PayRate.Base, PayrollCategory.Base),
-  makeActivity('Admin', PayRate.Base, PayrollCategory.Base),
-  makeActivity('Management', PayRate.Secondary, PayrollCategory.Base),
+  makeActivity('Programs', PayRate.Base, PayrollCategory.Regular),
+  makeActivity('Admin', PayRate.Base, PayrollCategory.Regular),
+  makeActivity('Management', PayRate.Secondary, PayrollCategory.Regular),
   makeActivity('PTO', PayRate.Base, PayrollCategory.PTO),
   makeActivity('ETO', PayRate.Base, PayrollCategory.ETO),
   makeActivity('STO', PayRate.Base, PayrollCategory.STO),
-  makeActivity('On-Call', PayRate.FlatRate, PayrollCategory.Base),
-  makeActivity('Weekend Coverage', PayRate.FlatRate, PayrollCategory.Base),
+  makeActivity('On-Call', PayRate.FlatRate1, PayrollCategory.Regular),
+  makeActivity('Weekend Coverage', PayRate.FlatRate2, PayrollCategory.Regular),
 ];
 
 describe('sortActivities', () => {
@@ -48,7 +47,7 @@ describe('sortActivities', () => {
 
   it('puts flat rate activities in flat rate group regardless of payroll category', () => {
     const { flatRateActivities } = sortActivities(mockActivities);
-    expect(flatRateActivities.every((a) => a.payRate === PayRate.FlatRate)).toBe(true);
+    expect(flatRateActivities.every((a) => isFlatRate(a.payRate))).toBe(true);
   });
 
   it('puts ETO PTO STO in time off group', () => {

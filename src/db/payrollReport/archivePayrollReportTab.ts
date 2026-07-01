@@ -14,6 +14,11 @@ const archivePayrollReportTab = async (
     logger.debug(`archivePayrollReportTab: tab not found, skipping — ${currentTabName}`);
     return;
   }
+  const archiveExists = await tabExists(workbookId, archiveTabName);
+  if (archiveExists) {
+    logger.debug(`archivePayrollReportTab: archive tab already exists, skipping — ${archiveTabName}`);
+    return;
+  }
   logger.debug(`archivePayrollReportTab: ${currentTabName} → ${archiveTabName}`);
   await renameTab(workbookId, currentTabName, archiveTabName);
 };

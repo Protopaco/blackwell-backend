@@ -9,7 +9,7 @@ const router = Router();
  * /api/v1/payrollReport/{clientId}/{payPeriodId}:
  *   get:
  *     operationId: v1GetPayrollReport
- *     summary: Get the current ADP Summary data for a pay period
+ *     summary: Get the current payroll summary for a pay period grouped by employee
  *     tags:
  *       - PayrollReport
  *     parameters:
@@ -25,7 +25,41 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: Payroll report summary
+ *         description: Payroll report grouped by employee, with hourly and flat rate entries separated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties:
+ *                 type: object
+ *                 properties:
+ *                   employeeName:
+ *                     type: string
+ *                   hourly:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         payrollCategory:
+ *                           type: string
+ *                           enum: [Regular, ETO, PTO, STO]
+ *                         payRate:
+ *                           type: string
+ *                           enum: [Base, Secondary]
+ *                         isHoliday:
+ *                           type: boolean
+ *                         totalHours:
+ *                           type: number
+ *                   flatRate:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         payRate:
+ *                           type: string
+ *                           enum: [FlatRate1, FlatRate2]
+ *                         quantity:
+ *                           type: number
  *       404:
  *         description: Client, pay period, or report not found
  */
