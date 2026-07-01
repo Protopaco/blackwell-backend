@@ -1,7 +1,6 @@
 const PayRate = {
   Base: 'Base',
   Secondary: 'Secondary',
-  Holiday: 'Holiday',
   FlatRate: 'FlatRate',
 } as const;
 

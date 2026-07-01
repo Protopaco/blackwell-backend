@@ -6,7 +6,7 @@ const buildSummaryRows = (entries: TimesheetEntry[], generatedAt: string): Payro
   const summaryMap = new Map<string, PayrollReportSummaryRow>();
 
   for (const entry of entries) {
-    const key = `${entry.employeeId}__${entry.payrollCategory}`;
+    const key = `${entry.employeeId}__${entry.payrollCategory}__${entry.payRate}`;
     const existing = summaryMap.get(key);
 
     if (existing) {
@@ -18,6 +18,7 @@ const buildSummaryRows = (entries: TimesheetEntry[], generatedAt: string): Payro
         EmployeeId: entry.employeeId,
         EmployeeName: entry.employeeName,
         PayrollCategory: entry.payrollCategory,
+        PayRate: entry.payRate,
         TotalHours: entry.hours,
         HolidayHours: entry.isHoliday ? entry.hours : 0,
       });

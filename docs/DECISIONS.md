@@ -44,6 +44,24 @@ Blackwell staff will access the tool through a web browser at a URL, not inside 
 
 ---
 
+## Payroll Submission — Holiday Rate
+
+Employees have a holiday rate in addition to base and secondary rates. It is not yet confirmed how holiday hours are handled for payroll submission.
+
+**Current assumption:** Holiday pay is time-and-a-half — a 1.5× modifier applied to whichever rate the employee was working at (base or secondary) on that day. "Holiday rate" is not a separate rate but a multiplier on the applicable rate.
+
+**Question:** Is this correct — holiday hours at base rate × 1.5, and holiday hours at secondary rate × 1.5? Or does Blackwell handle holiday pay differently?
+
+---
+
+## Payroll Submission — Rate on File
+
+Employees have up to three rates (base, secondary, holiday) plus flat rate amounts per activity.
+
+**Question:** Does the payroll service already have employee rates on file, or does Blackwell need to submit the rate along with hours each pay period?
+
+---
+
 ## Timesheet Generation is One-Way
 
 Once a timesheet tab is generated for an employee and pay period, it cannot be deleted through the dashboard. If a timesheet needs to be regenerated (e.g. activities were added after generation), the tab must be manually deleted from the employee's Google Sheet before regenerating.

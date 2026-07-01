@@ -1,9 +1,8 @@
 const PayrollCategory = {
-  Base: 'Base',
+  Regular: 'Regular',
   ETO: 'ETO',
   PTO: 'PTO',
   STO: 'STO',
-  Holiday: 'Holiday',
 } as const;
 
 type PayrollCategory = typeof PayrollCategory[keyof typeof PayrollCategory];

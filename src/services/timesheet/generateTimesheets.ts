@@ -1,7 +1,7 @@
-import tabExists from '#db/adapter/tabExists.js';
-import createOAuthWorkbook from '#db/adapter/createOAuthWorkbook.js';
-import createTabIfNotExists from '#db/adapter/createTabIfNotExists.js';
-import writeValues from '#db/adapter/writeValues.js';
+import tabExists from "#db/adapter/tabExists.js";
+import createOAuthWorkbook from "#db/adapter/createOAuthWorkbook.js";
+import createTabIfNotExists from "#db/adapter/createTabIfNotExists.js";
+import writeValues from "#db/adapter/writeValues.js";
 import readClientById from "#db/client/readClientById.js";
 import saveManifest from "#db/manifest/appendManifest.js";
 import getManifest from "#db/manifest/readManifest.js";
@@ -204,19 +204,17 @@ const generateTimesheets = async (
 
     for (const weekManifest of weekManifests) {
       for (const activityRow of weekManifest.activityRows) {
+        hourlyRowNums.push(activityRow.row);
         const activity = activityMap.get(activityRow.activityId);
-        if (!activity) continue;
-
-        if (activity.payRate === PayRate.FlatRate) {
-          flatRateRowNums.push(activityRow.row);
-        } else {
-          hourlyRowNums.push(activityRow.row);
-          if (TIME_OFF_CATEGORIES.includes(activity.payrollCategory as any)) {
-            categoryRowNums
-              .get(activity.payrollCategory)
-              ?.push(activityRow.row);
-          }
+        if (
+          activity &&
+          TIME_OFF_CATEGORIES.includes(activity.payrollCategory as any)
+        ) {
+          categoryRowNums.get(activity.payrollCategory)?.push(activityRow.row);
         }
+      }
+      for (const flatRateRow of weekManifest.flatRateRows) {
+        flatRateRowNums.push(flatRateRow.row);
       }
     }
 
@@ -230,7 +228,10 @@ const generateTimesheets = async (
         .map((activityRow) => activityRow.row);
 
       for (const dateEntry of weekManifest.dates) {
-        if (getHolidayName(new Date(dateEntry.date), payrollConfig.holidays) !== null) {
+        if (
+          getHolidayName(new Date(dateEntry.date), payrollConfig.holidays) !==
+          null
+        ) {
           const columnLetter = colLetter(dateEntry.column - 1);
           for (const rowNumber of weekHourlyRowNumbers) {
             holidayHoursCells.push(`${columnLetter}${rowNumber}`);
@@ -247,7 +248,12 @@ const generateTimesheets = async (
     };
 
     pushSummary("Total Hours Worked", sumRows(hourlyRowNums, maxDays));
-    pushSummary("Holiday Hours", holidayHoursCells.length > 0 ? `=SUM(${holidayHoursCells.join(',')})` : '0');
+    pushSummary(
+      "Holiday Hours",
+      holidayHoursCells.length > 0
+        ? `=SUM(${holidayHoursCells.join(",")})`
+        : "0",
+    );
 
     for (const category of presentTimeOffCategories) {
       pushSummary(
@@ -257,7 +263,7 @@ const generateTimesheets = async (
     }
 
     if (hasFlatRate) {
-      pushSummary("Flat Rate Shifts", countaRows(flatRateRowNums, maxDays));
+      pushSummary("Flat Rate Shifts", sumRows(flatRateRowNums, maxDays));
     }
 
     await createTabIfNotExists(
