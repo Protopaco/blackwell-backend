@@ -4,8 +4,8 @@ interface PayrollReportSummaryRow {
   EmployeeName: string;
   PayrollCategory: string;
   PayRate: string;
+  IsHoliday: boolean;
   TotalHours: number;
-  HolidayHours: number;
 }
 
 export default PayrollReportSummaryRow;
