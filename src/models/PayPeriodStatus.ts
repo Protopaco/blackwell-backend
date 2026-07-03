@@ -1,7 +1,7 @@
 const PayPeriodStatus = {
-  Draft: 'Draft',
   Pending: 'Pending',
   Open: 'Open',
+  Processed: 'Processed',
   Closed: 'Closed',
 } as const;
 

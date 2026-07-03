@@ -58,7 +58,7 @@ const getNextPayPeriod = async (clientId: string): Promise<PayPeriod | null> => 
   return {
     payPeriodId: '',
     payPeriodName: formatPayPeriodName(startDate, endDate),
-    status: PayPeriodStatus.Draft,
+    status: PayPeriodStatus.Pending,
     startDate,
     endDate,
     createdDate: '',

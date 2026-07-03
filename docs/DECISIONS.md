@@ -72,6 +72,21 @@ Employees have up to three rates (base, secondary, holiday) plus flat rate amoun
 
 ---
 
+## Pay Period Status
+
+Pay period status is descriptive, not prescriptive — it communicates where a pay period stands without locking down any actions.
+
+| Status | Trigger |
+|---|---|
+| Pending | Pay period created |
+| Open | Timesheets generated |
+| Processed | Payroll report generated (can still be regenerated) |
+| Closed | Bookkeeper clicks "Close Pay Period" button |
+
+Status only moves forward. No enforcement — a "Processed" period can still have its payroll report regenerated freely.
+
+---
+
 ## Timesheet Generation is One-Way
 
 Once a timesheet tab is generated for an employee and pay period, it cannot be deleted through the dashboard. If a timesheet needs to be regenerated (e.g. activities were added after generation), the tab must be manually deleted from the employee's Google Sheet before regenerating.
