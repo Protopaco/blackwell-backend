@@ -8,6 +8,7 @@ import writePayPeriod from '#db/payPeriod/writePayPeriod.js';
 import readPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
 import Activity from '#models/Activity.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
+import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import Guid from '#models/Guid.js';
 import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
 import PayrollReportSummaryRow from '#models/PayrollReportSummaryRow.js';
@@ -97,6 +98,11 @@ const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise
 
   await renameTab(reportFileId, PENDING_HOURS_TAB, CURRENT_HOURS_TAB);
   await renameTab(reportFileId, PENDING_PAYROLL_SUMMARY_TAB, CURRENT_PAYROLL_SUMMARY_TAB);
+
+  if (payPeriod.status !== PayPeriodStatus.Closed) {
+    await writePayPeriod(client.payPeriodRegistryFileId, { ...payPeriod, payrollReportFileId: reportFileId, status: PayPeriodStatus.Processed });
+    logger.info(`generatePayrollReport: pay period status updated to Processed`);
+  }
 
   logger.info(`generatePayrollReport: complete for pay period ${payPeriod.payPeriodName}`);
 };

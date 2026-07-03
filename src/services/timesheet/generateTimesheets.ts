@@ -6,12 +6,14 @@ import readClientById from "#db/client/readClientById.js";
 import saveManifest from "#db/manifest/appendManifest.js";
 import getManifest from "#db/manifest/readManifest.js";
 import getPayPeriodById from "#db/payPeriod/readPayPeriodById.js";
+import writePayPeriod from "#db/payPeriod/writePayPeriod.js";
 import getPayrollConfig from "#db/payrollConfig/readPayrollConfig.js";
 import updateEmployeeTimesheetFile from "#db/employee/updateEmployeeTimesheetFile.js";
 import Activity from "#models/Activity.js";
 import { EmployeeStatus } from "#models/EmployeeStatus.js";
 import Guid from "#models/Guid.js";
 import { PayRate, isFlatRate } from "#models/PayRate.js";
+import { PayPeriodStatus } from "#models/PayPeriodStatus.js";
 import { PayrollCategory } from "#models/PayrollCategory.js";
 import TimesheetManifest, { WeekManifest } from "#models/TimesheetManifest.js";
 import {
@@ -300,6 +302,11 @@ const generateTimesheets = async (
     logger.info(
       `Timesheet generated for ${employee.firstName} ${employee.lastName}`,
     );
+  }
+
+  if (payPeriod.status === PayPeriodStatus.Pending) {
+    await writePayPeriod(client.payPeriodRegistryFileId, { ...payPeriod, status: PayPeriodStatus.Open });
+    logger.info(`generateTimesheets: pay period status updated to Open`);
   }
 };
 
