@@ -18,14 +18,14 @@ const makeActivity = (
 });
 
 const mockActivities: Activity[] = [
-  makeActivity('Programs', PayRate.Base, PayrollCategory.Regular),
-  makeActivity('Admin', PayRate.Base, PayrollCategory.Regular),
-  makeActivity('Management', PayRate.Secondary, PayrollCategory.Regular),
-  makeActivity('PTO', PayRate.Base, PayrollCategory.PTO),
-  makeActivity('ETO', PayRate.Base, PayrollCategory.ETO),
-  makeActivity('STO', PayRate.Base, PayrollCategory.STO),
-  makeActivity('On-Call', PayRate.FlatRate1, PayrollCategory.Regular),
-  makeActivity('Weekend Coverage', PayRate.FlatRate2, PayrollCategory.Regular),
+  makeActivity('Programs', PayRate.HourlyPayRate1, PayrollCategory.Regular),
+  makeActivity('Admin', PayRate.HourlyPayRate1, PayrollCategory.Regular),
+  makeActivity('Management', PayRate.HourlyPayRate2, PayrollCategory.Regular),
+  makeActivity('PTO', PayRate.HourlyPayRate1, PayrollCategory.PTO),
+  makeActivity('ETO', PayRate.HourlyPayRate1, PayrollCategory.ETO),
+  makeActivity('STO', PayRate.HourlyPayRate1, PayrollCategory.STO),
+  makeActivity('On-Call', PayRate.FlatPayRate1, PayrollCategory.Regular),
+  makeActivity('Weekend Coverage', PayRate.FlatPayRate2, PayrollCategory.Regular),
 ];
 
 describe('sortActivities', () => {

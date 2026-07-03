@@ -6,7 +6,7 @@ import { PayrollCategory } from '../../src/models/PayrollCategory.js';
 import { SortedActivities } from '../../src/services/timesheet/sortActivities.js';
 import buildWeek from '../../src/services/timesheet/buildWeek.js';
 
-const makeActivity = (activityName: string, payRate: string = PayRate.Base, payrollCategory: string = PayrollCategory.Base): Activity => ({
+const makeActivity = (activityName: string, payRate: string = PayRate.HourlyPayRate1, payrollCategory: string = PayrollCategory.Regular): Activity => ({
   activityId: crypto.randomUUID(),
   activityName,
   trackSeparately: false,
@@ -38,14 +38,14 @@ const workOnly: SortedActivities = {
 
 const withTimeOff: SortedActivities = {
   workActivities: [makeActivity('Admin'), makeActivity('Programs')],
-  timeOffActivities: [makeActivity('ETO', PayRate.Base, PayrollCategory.ETO), makeActivity('PTO', PayRate.Base, PayrollCategory.PTO)],
+  timeOffActivities: [makeActivity('ETO', PayRate.HourlyPayRate1, PayrollCategory.ETO), makeActivity('PTO', PayRate.HourlyPayRate1, PayrollCategory.PTO)],
   flatRateActivities: [],
 };
 
 const withFlatRate: SortedActivities = {
   workActivities: [makeActivity('Admin'), makeActivity('Programs')],
-  timeOffActivities: [makeActivity('ETO', PayRate.Base, PayrollCategory.ETO)],
-  flatRateActivities: [makeActivity('On-Call', PayRate.FlatRate)],
+  timeOffActivities: [makeActivity('ETO', PayRate.HourlyPayRate1, PayrollCategory.ETO)],
+  flatRateActivities: [makeActivity('On-Call', PayRate.FlatPayRate1)],
 };
 
 describe('buildWeek — row count', () => {

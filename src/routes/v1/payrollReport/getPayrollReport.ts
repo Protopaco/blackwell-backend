@@ -57,7 +57,7 @@ const router = Router();
  *                       properties:
  *                         payRate:
  *                           type: string
- *                           enum: [FlatRate1, FlatRate2]
+ *                           enum: [FlatPayRate1, FlatPayRate2]
  *                         quantity:
  *                           type: number
  *       404:

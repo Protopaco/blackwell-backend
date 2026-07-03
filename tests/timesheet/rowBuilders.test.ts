@@ -21,9 +21,9 @@ const makeActivity = (activityName: string): Activity => ({
   activityId: crypto.randomUUID(),
   activityName,
   trackSeparately: false,
-  payrollCategory: PayrollCategory.Base,
+  payrollCategory: PayrollCategory.Regular,
   fundingSources: [],
-  payRate: PayRate.Base,
+  payRate: PayRate.HourlyPayRate1,
 });
 
 const makeHoliday = (date: string, name: string): Holiday => ({
