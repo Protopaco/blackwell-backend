@@ -1,10 +1,8 @@
 import createTabIfNotExists from '#db/adapter/createTabIfNotExists.js';
 import writeValues from '#db/adapter/writeValues.js';
 import EmployeeExpense from '#models/EmployeeExpense.js';
+import { EMPLOYEE_EXPENSES_TAB, EMPLOYEE_EXPENSES_HEADERS } from '#config/constants.js';
 import { logger } from '#utils/logger.js';
-
-const TAB_NAME = 'EmployeeExpenses';
-const HEADERS = ['employeeId', 'employeeName', 'activeThisPayPeriod', 'totalExpense'];
 
 // Overwrites the EmployeeExpenses tab with the current expense data. No history — safe to call repeatedly.
 const writeEmployeeExpensesTab = async (
@@ -12,9 +10,9 @@ const writeEmployeeExpensesTab = async (
   expenses: EmployeeExpense[],
 ): Promise<void> => {
   logger.debug(`writeEmployeeExpensesTab workbook=${workbookId} count=${expenses.length}`);
-  await createTabIfNotExists(workbookId, TAB_NAME);
+  await createTabIfNotExists(workbookId, EMPLOYEE_EXPENSES_TAB);
   const rows: unknown[][] = [
-    HEADERS,
+    EMPLOYEE_EXPENSES_HEADERS,
     ...expenses.map((expense) => [
       expense.employeeId,
       expense.employeeName,
@@ -22,7 +20,7 @@ const writeEmployeeExpensesTab = async (
       expense.totalExpense ?? '',
     ]),
   ];
-  await writeValues(workbookId, TAB_NAME, rows);
+  await writeValues(workbookId, EMPLOYEE_EXPENSES_TAB, rows);
 };
 
 export default writeEmployeeExpensesTab;

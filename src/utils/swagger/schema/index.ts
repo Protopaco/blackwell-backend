@@ -1,3 +1,4 @@
+import additionalExpense from './additionalExpense.js';
 import client from './client.js';
 import employee from './employee.js';
 import employeeExpense from './employeeExpense.js';
@@ -6,6 +7,7 @@ import timesheetStatusResponse from './timesheetStatusResponse.js';
 import error from './error.js';
 
 const schemas = {
+  ...additionalExpense,
   ...client,
   ...employee,
   ...employeeExpense,

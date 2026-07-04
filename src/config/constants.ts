@@ -1,9 +1,16 @@
+import type EmployeeExpense from '#models/EmployeeExpense.js';
+import type AdditionalExpense from '#models/AdditionalExpense.js';
+
 // ─── Payroll Report Tabs ──────────────────────────────────────────────────────
 
 export const CURRENT_HOURS_TAB = 'current_hours';
 export const CURRENT_PAYROLL_SUMMARY_TAB = 'current_payroll_summary';
 export const PENDING_HOURS_TAB = 'pending_hours';
 export const PENDING_PAYROLL_SUMMARY_TAB = 'pending_payroll_summary';
+export const EMPLOYEE_EXPENSES_TAB = 'EmployeeExpenses';
+export const EMPLOYEE_EXPENSES_HEADERS: (keyof EmployeeExpense)[] = ['employeeId', 'employeeName', 'activeThisPayPeriod', 'totalExpense'];
+export const ADDITIONAL_EXPENSES_TAB = 'AdditionalExpenses';
+export const ADDITIONAL_EXPENSES_HEADERS: (keyof AdditionalExpense)[] = ['expenseName', 'amount'];
 
 // ─── Timesheet Tabs ───────────────────────────────────────────────────────────
 

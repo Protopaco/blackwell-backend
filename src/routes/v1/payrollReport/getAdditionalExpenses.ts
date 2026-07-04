@@ -1,15 +1,15 @@
 import { Router, Request, Response } from 'express';
-import getEmployeeExpensesService from '#services/payrollReport/getEmployeeExpenses.js';
+import getAdditionalExpensesService from '#services/payrollReport/getAdditionalExpenses.js';
 import { logger } from '#utils/logger.js';
 
 const router = Router();
 
 /**
  * @swagger
- * /api/v1/payrollReport/{clientId}/{payPeriodId}/employee-expenses:
+ * /api/v1/payrollReport/{clientId}/{payPeriodId}/additional-expenses:
  *   get:
- *     operationId: v1GetEmployeeExpenses
- *     summary: Get employee expense records for a pay period
+ *     operationId: v1GetAdditionalExpenses
+ *     summary: Get additional expense records for a pay period
  *     tags:
  *       - PayrollReport
  *     parameters:
@@ -25,23 +25,23 @@ const router = Router();
  *           type: string
  *     responses:
  *       200:
- *         description: List of employee expense records
+ *         description: List of additional expense records
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/EmployeeExpense'
+ *                 $ref: '#/components/schemas/AdditionalExpense'
  *       404:
  *         description: Client or pay period not found
  */
-router.get('/:clientId/:payPeriodId/employee-expenses', async (req: Request, res: Response) => {
+router.get('/:clientId/:payPeriodId/additional-expenses', async (req: Request, res: Response) => {
   const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
-  logger.info(`GET /payrollReport/${clientId}/${payPeriodId}/employee-expenses — request`);
+  logger.info(`GET /payrollReport/${clientId}/${payPeriodId}/additional-expenses — request`);
 
-  const expenses = await getEmployeeExpensesService(clientId, payPeriodId);
+  const expenses = await getAdditionalExpensesService(clientId, payPeriodId);
 
-  logger.info(`GET /payrollReport/${clientId}/${payPeriodId}/employee-expenses — response 200 count=${expenses.length}`);
+  logger.info(`GET /payrollReport/${clientId}/${payPeriodId}/additional-expenses — response 200 count=${expenses.length}`);
   return res.status(200).json(expenses);
 });
 

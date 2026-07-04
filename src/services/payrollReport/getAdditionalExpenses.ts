@@ -1,13 +1,13 @@
 import readClientById from '#db/client/readClientById.js';
 import readPayPeriodById from '#db/payPeriod/readPayPeriodById.js';
-import readEmployeeExpensesTab from '#db/payrollReport/readEmployeeExpensesTab.js';
-import EmployeeExpense from '#models/EmployeeExpense.js';
+import readAdditionalExpensesTab from '#db/payrollReport/readAdditionalExpensesTab.js';
+import AdditionalExpense from '#models/AdditionalExpense.js';
 import Guid from '#models/Guid.js';
 import { logger } from '#utils/logger.js';
 import { NotFoundError } from '#utils/errors.js';
 
-const getEmployeeExpenses = async (clientId: Guid, payPeriodId: Guid): Promise<EmployeeExpense[]> => {
-  logger.info(`getEmployeeExpenses clientId=${clientId} payPeriodId=${payPeriodId}`);
+const getAdditionalExpenses = async (clientId: Guid, payPeriodId: Guid): Promise<AdditionalExpense[]> => {
+  logger.info(`getAdditionalExpenses clientId=${clientId} payPeriodId=${payPeriodId}`);
 
   const client = await readClientById(clientId);
   if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
@@ -17,7 +17,7 @@ const getEmployeeExpenses = async (clientId: Guid, payPeriodId: Guid): Promise<E
 
   if (!payPeriod.payrollReportFileId) return [];
 
-  return readEmployeeExpensesTab(payPeriod.payrollReportFileId);
+  return readAdditionalExpensesTab(payPeriod.payrollReportFileId);
 };
 
-export default getEmployeeExpenses;
+export default getAdditionalExpenses;
