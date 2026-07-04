@@ -12,7 +12,6 @@ const client = {
       payrollConfigFolderId: { type: 'string' },
       reportsFolderId: { type: 'string' },
       payrollReportFolderId: { type: 'string' },
-      allocationReportFolderId: { type: 'string' },
       timesheetsFolderId: { type: 'string' },
       payrollConfigFileId: { type: 'string' },
       payPeriodRegistryFileId: { type: 'string' },

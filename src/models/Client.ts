@@ -11,7 +11,6 @@ interface Client {
   payrollConfigFolderId: string;
   reportsFolderId: string;
   payrollReportFolderId: string;
-  allocationReportFolderId: string;
   timesheetsFolderId: string;
   payrollConfigFileId: string;
   payPeriodRegistryFileId: string;

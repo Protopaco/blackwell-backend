@@ -270,7 +270,6 @@ Employee Timesheet (one per employee)
 | payrollConfigFolderId    | ID of Payroll Config subfolder            |
 | reportsFolderId          | ID of Reports subfolder                   |
 | payrollReportFolderId    | ID of Payroll Reports subfolder           |
-| allocationReportFolderId | ID of Allocation Reports subfolder        |
 | timesheetsFolderId       | ID of Timesheets subfolder                |
 | payrollConfigFileId      | ID of the Payroll-Config spreadsheet      |
 | payPeriodRegistryFileId  | ID of the Pay-Period-Registry spreadsheet |
@@ -572,7 +571,6 @@ interface Client {
   payrollConfigFolderId: string;
   reportsFolderId: string;
   payrollReportFolderId: string;
-  allocationReportFolderId: string;
   timesheetsFolderId: string;
   payrollConfigFileId: string;
   payPeriodRegistryFileId: string;
