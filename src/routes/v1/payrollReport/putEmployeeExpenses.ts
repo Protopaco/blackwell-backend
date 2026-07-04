@@ -42,19 +42,7 @@ router.put('/:clientId/:payPeriodId/employee-expenses', async (req: Request, res
   const expense = req.body;
   logger.info(`PUT /payrollReport/${clientId}/${payPeriodId}/employee-expenses — request employeeId=${expense.employeeId}`);
 
-  try {
-    await updateEmployeeExpensesService(clientId, payPeriodId, expense);
-  } catch (error: any) {
-    if (error?.message?.startsWith('Client not found') || error?.message?.startsWith('Pay period not found') || error?.message?.startsWith('No payroll report file exists')) {
-      logger.info(`PUT /payrollReport/${clientId}/${payPeriodId}/employee-expenses — response 404: ${error.message}`);
-      return res.status(404).json({ error: 'not_found', message: error.message });
-    }
-    if (error?.message?.includes('has hours this pay period')) {
-      logger.info(`PUT /payrollReport/${clientId}/${payPeriodId}/employee-expenses — response 422: ${error.message}`);
-      return res.status(422).json({ error: 'has_hours', message: error.message });
-    }
-    throw error;
-  }
+  await updateEmployeeExpensesService(clientId, payPeriodId, expense);
 
   logger.info(`PUT /payrollReport/${clientId}/${payPeriodId}/employee-expenses — response 200`);
   return res.status(200).json({ message: 'Employee expense updated' });

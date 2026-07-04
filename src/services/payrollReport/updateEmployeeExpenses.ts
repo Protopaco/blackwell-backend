@@ -6,6 +6,7 @@ import writeEmployeeExpensesTab from '#db/payrollReport/writeEmployeeExpensesTab
 import EmployeeExpense from '#models/EmployeeExpense.js';
 import Guid from '#models/Guid.js';
 import { logger } from '#utils/logger.js';
+import { NotFoundError, UnprocessableError } from '#utils/errors.js';
 
 const updateEmployeeExpenses = async (
   clientId: Guid,
@@ -15,11 +16,11 @@ const updateEmployeeExpenses = async (
   logger.info(`updateEmployeeExpenses clientId=${clientId} payPeriodId=${payPeriodId} employeeId=${updatedExpense.employeeId}`);
 
   const client = await readClientById(clientId);
-  if (!client) throw new Error(`Client not found: ${clientId}`);
+  if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
 
   const payPeriod = await readPayPeriodById(client.payPeriodRegistryFileId, payPeriodId);
-  if (!payPeriod) throw new Error(`Pay period not found: ${payPeriodId}`);
-  if (!payPeriod.payrollReportFileId) throw new Error(`No payroll report file exists for pay period: ${payPeriodId}`);
+  if (!payPeriod) throw new NotFoundError(`Pay period not found: ${payPeriodId}`);
+  if (!payPeriod.payrollReportFileId) throw new NotFoundError(`No payroll report file exists for pay period: ${payPeriodId}`);
 
   if (!updatedExpense.activeThisPayPeriod) {
     const summaryRows = await readPayrollReportSummary(payPeriod.payrollReportFileId);
@@ -27,7 +28,7 @@ const updateEmployeeExpenses = async (
       (row) => row['EmployeeId'] === updatedExpense.employeeId && Number(row['TotalHours']) > 0,
     );
     if (hasHours) {
-      throw new Error(`Employee ${updatedExpense.employeeId} has hours this pay period and cannot be marked inactive`);
+      throw new UnprocessableError(`Employee ${updatedExpense.employeeId} has hours this pay period and cannot be marked inactive`);
     }
   }
 

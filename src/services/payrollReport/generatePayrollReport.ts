@@ -25,6 +25,7 @@ import {
   PENDING_PAYROLL_SUMMARY_TAB,
 } from '#config/constants.js';
 import { logger } from '#utils/logger.js';
+import { NotFoundError, UnprocessableError } from '#utils/errors.js';
 
 const HOURS_HEADERS: (keyof PayrollReportHoursRow)[] = [
   'GeneratedAt', 'EmployeeId', 'EmployeeName', 'ActivityName',
@@ -44,10 +45,10 @@ const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise
   logger.info(`generatePayrollReport clientId=${clientId} payPeriodId=${payPeriodId}`);
 
   const client = await readClientById(clientId);
-  if (!client) throw new Error(`Client not found: ${clientId}`);
+  if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
 
   const payPeriod = await readPayPeriodById(client.payPeriodRegistryFileId, payPeriodId);
-  if (!payPeriod) throw new Error(`Pay period not found: ${payPeriodId}`);
+  if (!payPeriod) throw new NotFoundError(`Pay period not found: ${payPeriodId}`);
 
   const payrollConfig = await readPayrollConfig(client.payrollConfigFileId);
 
@@ -71,7 +72,7 @@ const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise
   }
 
   if (allEntries.length === 0) {
-    throw new Error('No Complete timesheets found — at least one timesheet must be signed by both employee and supervisor before generating a payroll report');
+    throw new UnprocessableError('No Complete timesheets found — at least one timesheet must be signed by both employee and supervisor before generating a payroll report');
   }
 
   logger.info(`generatePayrollReport: ${allEntries.length} entries from Complete timesheets`);

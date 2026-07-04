@@ -22,6 +22,7 @@ import {
   getHolidayName,
 } from "#utils/dateUtils.js";
 import { logger } from "#utils/logger.js";
+import { NotFoundError } from "#utils/errors.js";
 import buildWeek from "./buildWeek.js";
 import applyTimesheetFormatting from "./applyTimesheetFormatting.js";
 import {
@@ -77,13 +78,13 @@ const generateTimesheets = async (
   payPeriodId: Guid,
 ): Promise<void> => {
   const client = await readClientById(clientId);
-  if (!client) throw new Error(`Client not found: ${clientId}`);
+  if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
 
   const payPeriod = await getPayPeriodById(
     client.payPeriodRegistryFileId,
     payPeriodId,
   );
-  if (!payPeriod) throw new Error(`Pay period not found: ${payPeriodId}`);
+  if (!payPeriod) throw new NotFoundError(`Pay period not found: ${payPeriodId}`);
 
   const payrollConfig = await getPayrollConfig(client.payrollConfigFileId);
 

@@ -33,16 +33,7 @@ router.post('/:clientId/:payPeriodId/generate', async (req: Request, res: Respon
   const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
   logger.info(`POST /timesheet/${clientId}/${payPeriodId}/generate — request`);
 
-  try {
-    await generateTimesheetsService(clientId, payPeriodId);
-  } catch (error: any) {
-    const ourNotFoundMessages = ['Client not found', 'Pay period not found'];
-    if (ourNotFoundMessages.some((msg) => error?.message?.startsWith(msg))) {
-      logger.info(`POST /timesheet/${clientId}/${payPeriodId}/generate — response 404: ${error.message}`);
-      return res.status(404).json({ error: 'not_found', message: error.message });
-    }
-    throw error;
-  }
+  await generateTimesheetsService(clientId, payPeriodId);
 
   logger.info(`POST /timesheet/${clientId}/${payPeriodId}/generate — response 200`);
   return res.status(200).json({ message: 'Timesheets generated' });

@@ -36,19 +36,7 @@ router.post('/:clientId/:payPeriodId/generate', async (req: Request, res: Respon
   const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
   logger.info(`POST /payrollReport/${clientId}/${payPeriodId}/generate`);
 
-  try {
-    await generatePayrollReportService(clientId, payPeriodId);
-  } catch (error: any) {
-    if (error?.message?.startsWith('Client not found') || error?.message?.startsWith('Pay period not found')) {
-      logger.info(`POST /payrollReport — response 404: ${error.message}`);
-      return res.status(404).json({ error: 'not_found', message: error.message });
-    }
-    if (error?.message?.startsWith('No Complete timesheets found')) {
-      logger.info(`POST /payrollReport — response 422: ${error.message}`);
-      return res.status(422).json({ error: 'no_complete_timesheets', message: error.message });
-    }
-    throw error;
-  }
+  await generatePayrollReportService(clientId, payPeriodId);
 
   logger.info(`POST /payrollReport — response 200`);
   return res.status(200).json({ message: 'Payroll report generated' });
