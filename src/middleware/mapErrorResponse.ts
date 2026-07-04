@@ -1,7 +1,7 @@
 import { DatabaseError } from 'pg';
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../utils/logger.js';
-import { NotFoundError, UnprocessableError } from '../utils/errors.js';
+import { logger } from '#utils/logger.js';
+import { NotFoundError, UnprocessableError } from '#utils/errors.js';
 
 // Express error handler that maps known errors to appropriate HTTP codes and returns a JSON body.
 // Registered as the last middleware in app.ts so it catches unhandled errors from all routes.

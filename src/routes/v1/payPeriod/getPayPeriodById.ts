@@ -30,16 +30,14 @@ const router = Router();
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/PayPeriod'
+ *       404:
+ *         description: Client or pay period not found
  */
 router.get("/:clientId/:payPeriodId", async (req: Request, res: Response) => {
   const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
   logger.info(`GET /payPeriod/${clientId}/${payPeriodId} — request`);
 
   const payPeriod = await getPayPeriodByIdService(clientId, payPeriodId);
-  if (!payPeriod) {
-    logger.info(`GET /payPeriod/${clientId}/${payPeriodId} — response 404`);
-    return res.status(404).json({ error: 'not_found', message: 'Pay period not found' });
-  }
 
   logger.info(`GET /payPeriod/${clientId}/${payPeriodId} — response 200`);
   return res.status(200).json(payPeriod);

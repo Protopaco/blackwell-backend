@@ -40,10 +40,6 @@ router.get('/status/:clientId/:payPeriodId', async (req: Request, res: Response)
   logger.info(`GET /timesheet/status/${clientId}/${payPeriodId}`);
 
   const statuses = await getTimesheetStatusesService(clientId, payPeriodId);
-  if (!statuses) {
-    logger.info(`GET /timesheet/status — response 404`);
-    return res.status(404).json({ error: 'not_found', message: 'Pay period not found' });
-  }
 
   logger.info(`GET /timesheet/status — response 200 count=${statuses.length}`);
   return res.status(200).json(statuses);

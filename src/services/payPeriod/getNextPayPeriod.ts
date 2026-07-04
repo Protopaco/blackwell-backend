@@ -5,6 +5,7 @@ import PayPeriod from '#models/PayPeriod.js';
 import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import { PayPeriodInterval } from '#models/PayPeriodInterval.js';
 import { logger } from '#utils/logger.js';
+import { NotFoundError } from '#utils/errors.js';
 
 const INTERVAL_DAYS: Record<string, number> = {
   [PayPeriodInterval.Weekly]: 7,
@@ -27,11 +28,11 @@ const formatPayPeriodName = (startDate: string, endDate: string): string => {
 
 // Computes the next unsaved pay period based on the client's interval setting and the most recent existing pay period end date.
 // Used by the GET /payPeriod/next route to pre-populate the create form.
-const getNextPayPeriod = async (clientId: string): Promise<PayPeriod | null> => {
+const getNextPayPeriod = async (clientId: string): Promise<PayPeriod> => {
   logger.info(`getNextPayPeriod clientId=${clientId}`);
 
   const client = await getClientById(clientId);
-  if (!client) return null;
+  if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
 
   const [settings, payPeriods] = await Promise.all([
     readSettings(client.payrollConfigFileId),

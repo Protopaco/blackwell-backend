@@ -61,7 +61,7 @@ const router = Router();
  *                         quantity:
  *                           type: number
  *       404:
- *         description: Client, pay period, or report not found
+ *         description: Client or pay period not found
  */
 router.get('/:clientId/:payPeriodId', async (req: Request, res: Response) => {
   const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };

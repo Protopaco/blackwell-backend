@@ -25,16 +25,14 @@ const router = Router();
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/PayPeriod'
+ *       404:
+ *         description: Client not found
  */
 router.get('/:clientId/next', async (req: Request, res: Response) => {
   const { clientId } = req.params as { clientId: string };
   logger.info(`GET /payPeriod/${clientId}/next — request`);
 
   const nextPayPeriod = await getNextPayPeriodService(clientId);
-  if (!nextPayPeriod) {
-    logger.info(`GET /payPeriod/${clientId}/next — response 404`);
-    return res.status(404).json({ error: 'not_found', message: 'Client not found' });
-  }
 
   logger.info(`GET /payPeriod/${clientId}/next — response 200`);
   return res.status(200).json(nextPayPeriod);

@@ -6,15 +6,13 @@ import EmployeeTimesheetStatus from '#models/EmployeeTimesheetStatus.js';
 import { logger } from '#utils/logger.js';
 
 // Returns a status entry for every active employee showing hours entered and whether each signature cell is filled.
-// Returns null if the pay period is not found.
 const getTimesheetStatuses = async (
   clientId: string,
   payPeriodId: string,
-): Promise<EmployeeTimesheetStatus[] | null> => {
+): Promise<EmployeeTimesheetStatus[]> => {
   logger.info(`getTimesheetStatuses clientId=${clientId} payPeriodId=${payPeriodId}`);
 
   const payPeriod = await getPayPeriodById(clientId, payPeriodId);
-  if (!payPeriod) return null;
 
   const employees = await getEmployees(clientId);
   const activeEmployees = employees.filter((employee) => employee.status === EmployeeStatus.Active);

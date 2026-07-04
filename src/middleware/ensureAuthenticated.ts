@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { logger } from '../utils/logger.js';
+import 'passport';
+import { logger } from '#utils/logger.js';
 
 // Express middleware that blocks unauthenticated requests with 401 — applied to any routes that require a logged-in user.
 export default (req: Request, res: Response, next: NextFunction) => {
