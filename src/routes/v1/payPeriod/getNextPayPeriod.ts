@@ -6,14 +6,14 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/payPeriod/next:
+ * /api/v1/payPeriod/{clientId}/next:
  *   get:
  *     operationId: v1GetNextPayPeriod
  *     summary: Get suggested next pay period for a client
  *     tags:
  *       - PayPeriod
  *     parameters:
- *       - in: query
+ *       - in: path
  *         name: clientId
  *         required: true
  *         schema:
@@ -26,17 +26,17 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/PayPeriod'
  */
-router.get('/next', async (req: Request, res: Response) => {
-  const { clientId } = req.query as { clientId: string };
-  logger.info(`GET /payPeriod/next — request clientId=${clientId}`);
+router.get('/:clientId/next', async (req: Request, res: Response) => {
+  const { clientId } = req.params as { clientId: string };
+  logger.info(`GET /payPeriod/${clientId}/next — request`);
 
   const nextPayPeriod = await getNextPayPeriodService(clientId);
   if (!nextPayPeriod) {
-    logger.info('GET /payPeriod/next — response 404');
+    logger.info(`GET /payPeriod/${clientId}/next — response 404`);
     return res.status(404).json({ error: 'not_found', message: 'Client not found' });
   }
 
-  logger.info('GET /payPeriod/next — response 200');
+  logger.info(`GET /payPeriod/${clientId}/next — response 200`);
   return res.status(200).json(nextPayPeriod);
 });
 

@@ -6,14 +6,14 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/payPeriod:
+ * /api/v1/payPeriod/{clientId}:
  *   get:
  *     operationId: v1GetPayPeriods
  *     summary: Get all pay periods for a client
  *     tags:
  *       - PayPeriod
  *     parameters:
- *       - in: query
+ *       - in: path
  *         name: clientId
  *         required: true
  *         schema:
@@ -28,12 +28,12 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/PayPeriod'
  */
-router.get('/', async (req: Request, res: Response) => {
-  const { clientId } = req.query as { clientId: string };
-  logger.info(`GET /payPeriod — request clientId=${clientId}`);
+router.get('/:clientId', async (req: Request, res: Response) => {
+  const { clientId } = req.params as { clientId: string };
+  logger.info(`GET /payPeriod/${clientId} — request`);
 
   const payPeriods = await getPayPeriodsService(clientId);
-  logger.info(`GET /payPeriod — response 200 count=${payPeriods.length}`);
+  logger.info(`GET /payPeriod/${clientId} — response 200 count=${payPeriods.length}`);
   return res.status(200).json(payPeriods);
 });
 

@@ -4,7 +4,7 @@ import app from "../../src/app.js";
 import { TEST_CLIENT_ID } from "../helpers/testClient.js";
 import getTestPayPeriod from "../helpers/getTestPayPeriod.js";
 
-describe("POST /api/v1/timesheet/generate", () => {
+describe("POST /api/v1/timesheet/:clientId/:payPeriodId/generate", () => {
   let payPeriodId: string;
   let payPeriodName: string;
 
@@ -16,8 +16,7 @@ describe("POST /api/v1/timesheet/generate", () => {
   // Generate can take up to ~15s on first run: OAuth file creation + formatting batchUpdate
   it("returns 200", async () => {
     const res = await request(app)
-      .post("/api/v1/timesheet/generate")
-      .send({ clientId: TEST_CLIENT_ID, payPeriodId });
+      .post(`/api/v1/timesheet/${TEST_CLIENT_ID}/${payPeriodId}/generate`);
 
     expect(res.status).toBe(200);
   }, 30_000);
@@ -38,26 +37,9 @@ describe("POST /api/v1/timesheet/generate", () => {
     }
   }, 30_000);
 
-  it("returns 400 when clientId is missing", async () => {
-    const res = await request(app)
-      .post("/api/v1/timesheet/generate")
-      .send({ payPeriodId });
-
-    expect(res.status).toBe(400);
-  });
-
-  it("returns 400 when payPeriodId is missing", async () => {
-    const res = await request(app)
-      .post("/api/v1/timesheet/generate")
-      .send({ clientId: TEST_CLIENT_ID });
-
-    expect(res.status).toBe(400);
-  });
-
   it("returns 404 for an unknown pay period", async () => {
     const res = await request(app)
-      .post("/api/v1/timesheet/generate")
-      .send({ clientId: TEST_CLIENT_ID, payPeriodId: "unknown-pay-period-id" });
+      .post(`/api/v1/timesheet/${TEST_CLIENT_ID}/unknown-pay-period-id/generate`);
 
     expect(res.status).toBe(404);
   });

@@ -6,7 +6,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/payPeriod/{payPeriodId}/close:
+ * /api/v1/payPeriod/{clientId}/{payPeriodId}/close:
  *   patch:
  *     operationId: v1ClosePayPeriod
  *     summary: Close a pay period
@@ -15,31 +15,25 @@ const router = Router();
  *       - PayPeriod
  *     parameters:
  *       - in: path
+ *         name: clientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
  *         name: payPeriodId
  *         required: true
  *         schema:
  *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [clientId]
- *             properties:
- *               clientId:
- *                 type: string
  *     responses:
  *       200:
  *         description: Pay period closed
  */
-router.patch('/:payPeriodId/close', async (req: Request, res: Response) => {
-  const { payPeriodId } = req.params as { payPeriodId: string };
-  const { clientId } = req.body;
-  logger.info(`PATCH /payPeriod/${payPeriodId}/close — request clientId=${clientId}`);
+router.patch('/:clientId/:payPeriodId/close', async (req: Request, res: Response) => {
+  const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
+  logger.info(`PATCH /payPeriod/${clientId}/${payPeriodId}/close — request`);
 
   await closePayPeriodService(clientId, payPeriodId);
-  logger.info(`PATCH /payPeriod/${payPeriodId}/close — response 200`);
+  logger.info(`PATCH /payPeriod/${clientId}/${payPeriodId}/close — response 200`);
   return res.status(200).json({ message: 'Pay period closed' });
 });
 

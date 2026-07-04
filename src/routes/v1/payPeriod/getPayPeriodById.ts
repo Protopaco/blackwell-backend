@@ -6,7 +6,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/payPeriod/{payPeriodId}:
+ * /api/v1/payPeriod/{clientId}/{payPeriodId}:
  *   get:
  *     operationId: v1GetPayPeriodById
  *     summary: Get a single pay period by ID
@@ -14,12 +14,12 @@ const router = Router();
  *       - PayPeriod
  *     parameters:
  *       - in: path
- *         name: payPeriodId
+ *         name: clientId
  *         required: true
  *         schema:
  *           type: string
- *       - in: query
- *         name: clientId
+ *       - in: path
+ *         name: payPeriodId
  *         required: true
  *         schema:
  *           type: string
@@ -31,18 +31,17 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/PayPeriod'
  */
-router.get("/:payPeriodId", async (req: Request, res: Response) => {
-  const { payPeriodId } = req.params as { payPeriodId: string };
-  const { clientId } = req.query as { clientId: string };
-  logger.info(`GET /payPeriod/${payPeriodId} — request clientId=${clientId}`);
+router.get("/:clientId/:payPeriodId", async (req: Request, res: Response) => {
+  const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
+  logger.info(`GET /payPeriod/${clientId}/${payPeriodId} — request`);
 
   const payPeriod = await getPayPeriodByIdService(clientId, payPeriodId);
   if (!payPeriod) {
-    logger.info(`GET /payPeriod/${payPeriodId} — response 404`);
+    logger.info(`GET /payPeriod/${clientId}/${payPeriodId} — response 404`);
     return res.status(404).json({ error: 'not_found', message: 'Pay period not found' });
   }
 
-  logger.info(`GET /payPeriod/${payPeriodId} — response 200`);
+  logger.info(`GET /payPeriod/${clientId}/${payPeriodId} — response 200`);
   return res.status(200).json(payPeriod);
 });
 

@@ -6,22 +6,29 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/payPeriod:
+ * /api/v1/payPeriod/{clientId}:
  *   post:
  *     operationId: v1CreatePayPeriod
  *     summary: Create a new pay period
  *     tags:
  *       - PayPeriod
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       201:
  *         description: Pay period created
  */
-router.post('/', async (req: Request, res: Response) => {
-  const { clientId, payPeriod } = req.body;
-  logger.info(`POST /payPeriod — request clientId=${clientId}`);
+router.post('/:clientId', async (req: Request, res: Response) => {
+  const { clientId } = req.params as { clientId: string };
+  const { payPeriod } = req.body;
+  logger.info(`POST /payPeriod/${clientId} — request`);
 
   await createPayPeriodService(clientId, payPeriod);
-  logger.info('POST /payPeriod — response 201');
+  logger.info(`POST /payPeriod/${clientId} — response 201`);
   return res.status(201).json({ message: 'Pay period created' });
 });
 

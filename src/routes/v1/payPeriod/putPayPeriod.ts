@@ -6,13 +6,18 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/payPeriod/{payPeriodId}:
+ * /api/v1/payPeriod/{clientId}/{payPeriodId}:
  *   put:
  *     operationId: v1UpdatePayPeriod
  *     summary: Update an existing pay period
  *     tags:
  *       - PayPeriod
  *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         schema:
+ *           type: string
  *       - in: path
  *         name: payPeriodId
  *         required: true
@@ -22,13 +27,13 @@ const router = Router();
  *       200:
  *         description: Pay period updated
  */
-router.put('/:payPeriodId', async (req: Request, res: Response) => {
-  const { payPeriodId } = req.params as { payPeriodId: string };
-  const { clientId, payPeriod } = req.body;
-  logger.info(`PUT /payPeriod/${payPeriodId} — request clientId=${clientId}`);
+router.put('/:clientId/:payPeriodId', async (req: Request, res: Response) => {
+  const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
+  const { payPeriod } = req.body;
+  logger.info(`PUT /payPeriod/${clientId}/${payPeriodId} — request`);
 
   await updatePayPeriodService(clientId, { ...payPeriod, payPeriodId });
-  logger.info(`PUT /payPeriod/${payPeriodId} — response 200`);
+  logger.info(`PUT /payPeriod/${clientId}/${payPeriodId} — response 200`);
   return res.status(200).json({ message: 'Pay period updated' });
 });
 
