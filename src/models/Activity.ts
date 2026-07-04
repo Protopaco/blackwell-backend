@@ -1,4 +1,4 @@
-import Guid from './Guid.js';
+import Guid from '#models/Guid.js';
 import { PayrollCategoryType } from './PayrollCategory.js';
 import { PayRateType } from './PayRate.js';
 

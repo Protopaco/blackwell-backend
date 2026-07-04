@@ -1,4 +1,4 @@
-import Guid from './Guid.js';
+import Guid from '#models/Guid.js';
 
 interface Client {
   clientId: Guid;
