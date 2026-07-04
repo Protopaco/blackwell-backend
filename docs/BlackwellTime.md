@@ -1198,6 +1198,149 @@ src/
 
 ---
 
+## Allocation Report
+
+### Purpose
+
+The allocation report is the primary deliverable of this system. It answers: how much did each funding source (program/grant) actually cost this pay period? All prior work — timesheet generation, payroll report, clean activity/funding source data — exists to produce accurate inputs for this report.
+
+### Core Principle
+
+**The app owns all calculation logic. The spreadsheet is the output, not the engine.** No formulas, no cross-tab references, no spreadsheet logic. The app reads data, does the math, and writes flat results to the sheet.
+
+---
+
+### Spreadsheet Storage
+
+The allocation report lives in the same Google Sheets workbook as the payroll report — one workbook per pay period, per client. This workbook contains the following tabs:
+
+**Tab order — active tabs left, archives right:**
+1. `current_hours`
+2. `current_adp_summary`
+3. `EmployeeExpenses`
+4. `PayrollExpenses`
+5. `AllocationReport`
+6. → archived tabs pushed to the right (e.g. `hrs_2026-06-15`, `payroll_2026-06-15`)
+
+Tab order is maintained by a dedicated service that reorders tabs after any write operation. Archives are always pushed to the right of active tabs.
+
+**Existing payroll tabs (written by generatePayrollReport):**
+- `current_hours` — hour detail rows per employee per activity per date
+- `current_adp_summary` — payroll summary rows grouped by employee/category/rate
+- Archived copies of the above from prior runs (e.g. `hrs_2026-06-15`, `payroll_2026-06-15`)
+
+**New allocation tabs:**
+
+#### `EmployeeExpenses` tab
+
+One row per active employee for the pay period. Written by the app when the bookkeeper submits expense data via the dashboard. **Overwritten on every save — no history, no archive.** This tab is a staging area, not an audit trail.
+
+| Column | Type | Description |
+|---|---|---|
+| `employeeId` | string | Primary key |
+| `employeeName` | string | For readability |
+| `include` | boolean | Whether to include this employee in the allocation calculation |
+| `totalExpense` | number \| null | Total compensation for the pay period (wages + taxes + everything). Null if not yet entered or employee is excluded. |
+
+Business rules enforced server-side:
+- `include` cannot be set to `false` if the employee has any hours recorded in `current_hours` for this pay period. The API rejects this with an error.
+- The allocation report cannot be generated until every active employee either has a `totalExpense` entered or has `include = false`.
+
+#### `PayrollExpenses` tab
+
+One row per org-level additional expense item. Written by the app when the bookkeeper submits additional expenses via the Allocation Report card. **Overwritten on every save — no history, no archive.** Same pattern as `EmployeeExpenses`.
+
+| Column | Type | Description |
+|---|---|---|
+| `expenseName` | string | Label for the expense (e.g. "HSA", "Benefits") |
+| `amount` | number | Dollar amount to be distributed across funding sources |
+
+These expenses are distributed proportionally across funding sources using each funding source's share of total org wages (step 6 of the calculation).
+
+---
+
+#### `AllocationReport` tab
+
+One row per funding source. Written by the app when the bookkeeper clicks "Write Allocation Report." **Overwritten every time — no history.** The calculation is always derived fresh from `current_hours` and `EmployeeExpenses`.
+
+| Column | Type | Description |
+|---|---|---|
+| `fundingSourceId` | string | Primary key |
+| `fundingSourceName` | string | For readability |
+| `totalExpense` | number | Total dollar amount allocated to this funding source |
+
+---
+
+### Inputs
+
+**From the system (already known at calculation time):**
+- Hours per employee per funding source per activity — from `current_hours` tab
+- Pay rate per employee — from payroll config (manually maintained until payroll service integration is available; known duplication, see DECISIONS.md)
+
+**Entered by bookkeeper after running payroll externally:**
+- Total compensation per employee — entered via dashboard, stored in `EmployeeExpenses` tab
+- Org-level additional expenses (e.g. HSA, benefits) — entered via dashboard, applied proportionally across funding sources
+
+---
+
+### Calculation
+
+**Per employee (only included employees):**
+1. For each funding source the employee worked in: `hours × pay rate` → weighted cost for that funding source
+2. Sum weighted costs across all of the employee's funding sources → employee total weighted cost
+3. Each funding source proportion = `funding source weighted cost / employee total weighted cost`
+4. Apply proportions to the employee's `totalExpense` → dollar amount allocated to each funding source
+
+> Proportions are based on `hours × rate`, not hours alone. A higher-paid employee contributes more cost to a funding source than a lower-paid employee working the same hours — because we are allocating expenses, not time.
+
+**Across all included employees:**
+5. Sum each funding source's dollar amounts across all employees → total org spend per funding source
+6. Compute each funding source's share of total org spend (percentages sum to 100%)
+7. For each org-level additional expense entered by the bookkeeper: apply the step 6 percentages → distributed amount per funding source
+8. Final allocation per funding source = wages allocation + sum of distributed additional expenses
+
+---
+
+### Pay Period Workflow
+
+1. **Generate Timesheets** — app generates timesheet tabs in each employee's Google Sheet
+2. **Employees fill out timesheets** — hours entered, signatures collected
+3. **Generate Payroll Report** — app reads approved hours, writes `current_hours` and `current_adp_summary` tabs. Pay period status → `Processed`.
+4. **Bookkeeper runs payroll externally** (ADP or equivalent) — outside this system
+5. **Bookkeeper enters employee expenses** — via the Employee Timesheet Status card in the dashboard. Each included employee gets a total compensation amount. Employees with no hours this period can be toggled to "ignore."
+6. **App writes allocation report** — bookkeeper clicks "Write Allocation Report." App calculates and writes `AllocationReport` tab. Bookkeeper can also enter org-level additional expenses (HSA, benefits, etc.) at this step.
+7. **Bookkeeper closes pay period** — clicks "Close Pay Period" on the Allocation Report card. Pay period status → `Closed`.
+
+---
+
+### UI — Employee Timesheet Status Card
+
+This card handles both timesheet status tracking and expense entry. It is the central card for the pay period dashboard.
+
+**Per employee row:**
+| Field | Description |
+|---|---|
+| Employee name | Display only |
+| Timesheet status | Not Started / In Progress / Complete |
+| Include/Ignore toggle | Defaults to Include. Disabled (locked to Include) if employee has hours this period. |
+| Total Expense field | Dollar amount input. Required if Include. Greyed out if Ignore. |
+
+**Card-level actions:**
+- **"Generate Timesheets" button** — generates timesheets for any employees who don't yet have one (e.g. newly added employees). Always available.
+- **"Write Allocation Report" button** — enabled only when all included employees have a totalExpense entered. Triggers the allocation calculation and writes to the sheet.
+
+---
+
+### UI — Allocation Report Card
+
+Displays the allocation output and provides the close action.
+
+- Live display of funding source allocations (recalculates as expense data is entered)
+- Fields for org-level additional expenses (HSA, benefits, etc.)
+- **"Close Pay Period" button** — final step. Enabled once the allocation report has been written. Sets pay period status to `Closed`.
+
+---
+
 ## OAuth2 File Creation
 
 The service account cannot create Google Drive files owned by a real user — files it creates count against the service account's storage quota, which is zero. To create timesheet files for new employees and payroll report files for each pay period, the system uses OAuth2 offline flow.

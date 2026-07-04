@@ -66,9 +66,11 @@ Flat rate activities need named codes that the payroll service maps to dollar am
 
 ## Payroll Submission — Rate on File
 
-Employees have up to three rates (base, secondary, holiday) plus flat rate amounts per activity.
+Employees have up to three rates (base, secondary, holiday) plus flat rate amounts per activity. Pay rates are currently stored manually in the payroll config spreadsheet and used by the app to calculate funding source cost proportions for the allocation report.
 
-**Question:** Does the payroll service already have employee rates on file, or does Blackwell need to submit the rate along with hours each pay period?
+**Question:** Does the payroll service already have employee rates on file? If so, can we pull rates from there rather than maintaining them manually in the config spreadsheet?
+
+**Current assumption:** Rates are maintained manually in the payroll config until payroll service integration is available. This is a known duplication that will be resolved when the payroll service is integrated.
 
 ---
 
