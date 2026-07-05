@@ -10,8 +10,6 @@ import Activity from '#models/Activity.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
 import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import Guid from '#models/Guid.js';
-import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
-import PayrollReportSummaryRow from '#models/PayrollReportSummaryRow.js';
 import readTimesheetDetail from '#services/timesheet/readTimesheetDetail.js';
 import readTimesheetEntries from '#services/timesheet/readTimesheetEntries.js';
 import buildArchiveTimestamp from './buildArchiveTimestamp.js';
@@ -23,19 +21,11 @@ import {
   CURRENT_PAYROLL_SUMMARY_TAB,
   PENDING_HOURS_TAB,
   PENDING_PAYROLL_SUMMARY_TAB,
+  HOURS_HEADERS,
+  SUMMARY_HEADERS,
 } from '#config/constants.js';
 import { logger } from '#utils/logger.js';
 import { NotFoundError, UnprocessableError } from '#utils/errors.js';
-
-const HOURS_HEADERS: (keyof PayrollReportHoursRow)[] = [
-  'GeneratedAt', 'EmployeeId', 'EmployeeName', 'ActivityName',
-  'PayrollCategory', 'Date', 'IsHoliday', 'Hours',
-];
-
-const SUMMARY_HEADERS: (keyof PayrollReportSummaryRow)[] = [
-  'GeneratedAt', 'EmployeeId', 'EmployeeName',
-  'PayrollCategory', 'PayRate', 'IsHoliday', 'TotalHours',
-];
 
 // Generates or regenerates the payroll report for a pay period.
 // Only processes employees whose timesheets are Complete (both signatures present).
