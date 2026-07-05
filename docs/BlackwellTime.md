@@ -1266,7 +1266,7 @@ The allocation report lives in the same Google Sheets workbook as the payroll re
 
 **Tab order — active tabs left, archives right:**
 1. `current_hours`
-2. `current_adp_summary`
+2. `current_payroll_summary`
 3. `EmployeeExpenses`
 4. `PayrollExpenses`
 5. `AllocationReport`
@@ -1276,7 +1276,7 @@ Tab order is maintained by a dedicated service that reorders tabs after any writ
 
 **Existing payroll tabs (written by generatePayrollReport):**
 - `current_hours` — hour detail rows per employee per activity per date
-- `current_adp_summary` — payroll summary rows grouped by employee/category/rate
+- `current_payroll_summary` — payroll summary rows grouped by employee/category/rate
 - Archived copies of the above from prior runs (e.g. `hrs_2026-06-15`, `payroll_2026-06-15`)
 
 **New allocation tabs:**
@@ -1355,7 +1355,7 @@ One row per funding source. Written by the app when the bookkeeper clicks "Write
 
 1. **Generate Timesheets** — app generates timesheet tabs in each employee's Google Sheet
 2. **Employees fill out timesheets** — hours entered, signatures collected
-3. **Generate Payroll Report** — app reads approved hours, writes `current_hours` and `current_adp_summary` tabs. Pay period status → `Processed`.
+3. **Generate Payroll Report** — app reads approved hours, writes `current_hours` and `current_payroll_summary` tabs. Pay period status → `Processed`.
 4. **Bookkeeper runs payroll externally** (ADP or equivalent) — outside this system
 5. **Bookkeeper enters employee expenses** — via the Employee Timesheet Status card in the dashboard. Each included employee gets a total compensation amount. Employees with no hours this period can be toggled to "ignore."
 6. **App writes allocation report** — bookkeeper clicks "Write Allocation Report." App calculates and writes `AllocationReport` tab. Bookkeeper can also enter org-level additional expenses (HSA, benefits, etc.) at this step.

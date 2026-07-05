@@ -233,8 +233,8 @@ On each run:
 2. Scan all active employee timesheets — only process employees whose timesheet is `Complete` (both employee and supervisor signatures present)
 3. If no timesheets are Complete, throw an error and do nothing
 4. If `current_hours` exists, rename it to `hrs_MMDD_HHmm` (e.g. `hrs_0626_1430`)
-5. If `current_adp_summary` exists, rename it to `adp_MMDD_HHmm` using the same timestamp
-6. Write fresh `current_hours` and `current_adp_summary` tabs with all currently-Complete employees
+5. If `current_payroll_summary` exists, rename it to `adp_MMDD_HHmm` using the same timestamp
+6. Write fresh `current_hours` and `current_payroll_summary` tabs with all currently-Complete employees
 
 > The archive tabs use the timestamp of when they were archived, not when they were originally generated. MMDD_HHmm format (e.g. `hrs_0626_1430`) is used to keep tab names short.
 

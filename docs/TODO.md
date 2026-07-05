@@ -8,10 +8,39 @@
 
 ---
 
+## Code Quality
+
+### Introduce custom error types
+Replace string-matched error handling in route handlers with typed custom errors (e.g. `NotFoundError`, `UnprocessableError`). Update middleware to map these to proper HTTP status codes. Currently all unhandled errors return 500 — this will make error handling consistent and remove the scattered `error.message.startsWith(...)` pattern across routes.
+
+---
+
+### Move HOURS_HEADERS and SUMMARY_HEADERS to constants
+`generatePayrollReport.ts` defines `HOURS_HEADERS` and `SUMMARY_HEADERS` locally. Move them to `constants.ts` alongside the other tab headers for consistency, and to make them available when the hours/summary read functions are built.
+
+---
+
+### Remove payrollReportFileId from PayPeriod API response
+`payrollReportFileId` is an internal system field — the UI has no use for it. Remove it from the `PayPeriod` swagger schema and strip it from the API response. It should remain in the internal model for service-layer use.
+
+---
+
+### Review Client/PayPeriod resolution pattern
+Every service resolves `clientId → client → payPeriodRegistryFileId → payPeriod → payrollReportFileId` from scratch on every request. We have caching to reduce Sheets API calls, but the pattern is still repetitive and fragile. Investigate a better solution — e.g. a lightweight mapping table or a resolution helper that centralizes this chain. Goal: services should not need to pass clientId and payPeriodId through multiple layers just to get to a file ID.
+
+---
+
+## Code Cleanup
+
+### Update all `import Guid from './Guid.js'` to use absolute imports
+Several model files use relative imports for Guid. Update all occurrences to `import Guid from '#models/Guid.js'` to match the codebase standard.
+
+---
+
 ## Data Model / Config
 
-### Update employee data model to include all fields, including pay rates
-Audit the employee model against all fields stored in the payroll config spreadsheet. Ensure pay rates (HourlyPayRate1, HourlyPayRate2, FlatPayRate1, FlatPayRate2) are properly typed and accessible for use in the allocation calculation.
+~~### Update employee data model to include all fields, including pay rates~~
+~~Audit the employee model against all fields stored in the payroll config spreadsheet. Ensure pay rates (HourlyPayRate1, HourlyPayRate2, FlatPayRate1, FlatPayRate2) are properly typed and accessible for use in the allocation calculation.~~
 
 ### Remove allocationReportFolderId from logic and references
 The allocation report now lives in the payroll report workbook — there is no separate allocation report folder. Remove `allocationReportFolderId` from the client model, config reads, docs, and any references in routes or services.
@@ -23,14 +52,14 @@ The allocation report now lives in the payroll report workbook — there is no s
 ### Create EmployeeExpenses tab service
 Write a service that creates/overwrites the `EmployeeExpenses` tab in the payroll report workbook. Columns: `employeeId`, `employeeName`, `include` (boolean), `totalExpense` (number | null). No history — overwrite every save.
 
-### Create PayrollExpenses tab service
-Write a service that creates/overwrites the `PayrollExpenses` tab in the payroll report workbook. Columns: `expenseName`, `amount`. No history — overwrite every save.
+### Create AdditionalExpenses tab service
+Write a service that creates/overwrites the `AdditionalExpenses` tab in the payroll report workbook. Columns: `expenseName`, `amount`. No history — overwrite every save.
 
 ### Create AllocationReport tab service
 Write a service that creates/overwrites the `AllocationReport` tab in the payroll report workbook. Columns: `fundingSourceId`, `fundingSourceName`, `totalExpense`. No history — overwrite every save.
 
 ### Create tab-order maintenance service
-After any write to the payroll report workbook, reorder tabs so active tabs are on the left and archive tabs are on the right. Active tab order: `current_hours`, `current_adp_summary`, `EmployeeExpenses`, `PayrollExpenses`, `AllocationReport`. Archive tabs follow in chronological order.
+After any write to the payroll report workbook, reorder tabs so active tabs are on the left and archive tabs are on the right. Active tab order: `current_hours`, `current_payroll_summary`, `EmployeeExpenses`, `AdditionalExpenses`, `AllocationReport`. Archive tabs follow in chronological order.
 
 ---
 
@@ -39,16 +68,16 @@ After any write to the payroll report workbook, reorder tabs so active tabs are 
 ### Create Update Employee Expenses service
 Accepts a list of employee expense records (`employeeId`, `include`, `totalExpense`). Enforces server-side rule: `include` cannot be `false` if the employee has hours in `current_hours` for this pay period. Writes to `EmployeeExpenses` tab.
 
-### Create Update PayrollExpenses service
-Accepts a list of additional org-level expense items (`expenseName`, `amount`). Writes to `PayrollExpenses` tab.
+### Create Update AdditionalExpenses service
+Accepts a list of additional org-level expense items (`expenseName`, `amount`). Writes to `AdditionalExpenses` tab.
 
 ### Create Generate Allocation Report service
-Reads `current_hours`, `EmployeeExpenses`, and `PayrollExpenses`. Runs the full allocation calculation:
+Reads `current_hours`, `EmployeeExpenses`, and `AdditionalExpenses`. Runs the full allocation calculation:
 1. Per included employee: hours × pay rate → weighted cost per funding source → proportion of total
 2. Apply proportions to employee's `totalExpense` → dollar amount per funding source
 3. Sum across all employees per funding source → total org spend per funding source
 4. Compute funding source shares of total org spend
-5. Distribute each `PayrollExpenses` item proportionally across funding sources
+5. Distribute each `AdditionalExpenses` item proportionally across funding sources
 6. Final = wages allocation + distributed additional expenses per funding source
 
 Writes results to `AllocationReport` tab. See BlackwellTime.md for full calculation detail.
@@ -63,10 +92,10 @@ Returns the current `EmployeeExpenses` data for the pay period. Used to populate
 ### PUT /v1/pay-periods/:payPeriodId/employee-expenses
 Accepts and saves employee expense data. Enforces include/ignore business rule server-side.
 
-### GET /v1/pay-periods/:payPeriodId/payroll-expenses
-Returns the current `PayrollExpenses` data for the pay period.
+### GET /v1/pay-periods/:payPeriodId/additional-expenses
+Returns the current `AdditionalExpenses` data for the pay period.
 
-### PUT /v1/pay-periods/:payPeriodId/payroll-expenses
+### PUT /v1/pay-periods/:payPeriodId/additional-expenses
 Accepts and saves org-level additional expense items.
 
 ### POST /v1/pay-periods/:payPeriodId/allocation-report
