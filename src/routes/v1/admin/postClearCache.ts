@@ -1,6 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { clearClientsCache } from '#db/client/readClients.js';
-import { clearPayrollConfigCache } from '#db/payrollConfig/readPayrollConfig.js';
+import clientsCache from '#utils/caches/clientsCache.js';
+import payrollConfigCache from '#utils/caches/payrollConfigCache.js';
+import payPeriodsCache from '#utils/caches/payPeriodsCache.js';
+import currentHoursCache from '#utils/caches/currentHoursCache.js';
+import employeeExpensesCache from '#utils/caches/employeeExpensesCache.js';
+import additionalExpensesCache from '#utils/caches/additionalExpensesCache.js';
+import allocationReportCache from '#utils/caches/allocationReportCache.js';
 import { logger } from '#utils/logger.js';
 
 const router = Router();
@@ -18,8 +23,13 @@ const router = Router();
  *         description: Cache cleared
  */
 router.post('/cache/clear', (_req: Request, res: Response) => {
-  clearClientsCache();
-  clearPayrollConfigCache();
+  clientsCache.clear();
+  payrollConfigCache.clear();
+  payPeriodsCache.clear();
+  currentHoursCache.clear();
+  employeeExpensesCache.clear();
+  additionalExpensesCache.clear();
+  allocationReportCache.clear();
   logger.info('POST /admin/cache/clear — all caches cleared');
   return res.status(200).json({ message: 'Cache cleared' });
 });

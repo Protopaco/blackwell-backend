@@ -1,7 +1,7 @@
 import readTabValues from '#db/adapter/readTabValues.js';
 import updateCells from '#db/adapter/updateCells.js';
 import { EMPLOYEES_TAB } from '#config/constants.js';
-import { invalidatePayrollConfigCache } from '#db/payrollConfig/readPayrollConfig.js';
+import payrollConfigCache from '#utils/caches/payrollConfigCache.js';
 import Guid from '#models/Guid.js';
 
 
@@ -55,7 +55,7 @@ const updateEmployeeTimesheetFile = async (
     [[timesheetFileLink]],
   );
 
-  invalidatePayrollConfigCache(payrollConfigFileId);
+  payrollConfigCache.delete(payrollConfigFileId);
 };
 
 export default updateEmployeeTimesheetFile;

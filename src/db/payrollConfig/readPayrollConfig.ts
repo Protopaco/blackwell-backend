@@ -15,9 +15,7 @@ import {
   SETTINGS_TAB,
 } from '#config/constants.js';
 import { logger } from '#utils/logger.js';
-import { createCache } from '#utils/cache.js';
-
-const cache = createCache<PayrollConfig>(5 * 60 * 1000);
+import payrollConfigCache from '#utils/caches/payrollConfigCache.js';
 
 const TAB_NAMES = {
   employees: EMPLOYEES_TAB,
@@ -45,7 +43,7 @@ const parseRows = (values: unknown[][]): Record<string, unknown>[] => {
 const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollConfig> => {
   logger.debug(`Loading payroll config from workbook: ${payrollConfigFileId}`);
 
-  const cached = cache.get(payrollConfigFileId);
+  const cached = payrollConfigCache.get(payrollConfigFileId);
   if (cached) return cached;
 
   const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
@@ -87,14 +85,8 @@ const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollCo
     settings,
   };
 
-  cache.set(payrollConfigFileId, config);
+  payrollConfigCache.set(payrollConfigFileId, config);
   return config;
 };
 
-// Clears cached config for all clients — called by the admin clear-cache endpoint.
-const clearPayrollConfigCache = (): void => cache.clear();
-// Removes the cached config for one client — called after updateEmployeeTimesheetFile so the next read is fresh.
-const invalidatePayrollConfigCache = (payrollConfigFileId: string): void => cache.delete(payrollConfigFileId);
-
-export { clearPayrollConfigCache, invalidatePayrollConfigCache };
 export default readPayrollConfig;
