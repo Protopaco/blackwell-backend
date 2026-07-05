@@ -1,0 +1,155 @@
+<svg viewBox="0 0 780 920" xmlns="http://www.w3.org/2000/svg" role="img" font-family="system-ui, sans-serif">
+  <title>Allocation Report Calculation Flow</title>
+  <desc>Diagram showing how current_hours, payroll config, employee expenses, and additional expenses combine to produce the allocation report</desc>
+
+  <!-- Background -->
+  <rect width="780" height="920" fill="#f8f9fa" rx="12"/>
+
+  <!-- SECTION LABEL: INPUTS -->
+  <text x="30" y="34" font-size="11" font-weight="600" fill="#888" letter-spacing="1.2">INPUTS</text>
+
+  <!-- current_hours box -->
+  <rect x="20" y="44" width="160" height="72" rx="8" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+  <text x="100" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#1d4ed8">current_hours</text>
+  <text x="100" y="85" text-anchor="middle" font-size="11" fill="#3b82f6">EmployeeId · ActivityName</text>
+  <text x="100" y="100" text-anchor="middle" font-size="11" fill="#3b82f6">Hours (per day)</text>
+
+  <!-- Payroll Config box -->
+  <rect x="200" y="44" width="160" height="72" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1.5"/>
+  <text x="280" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#6d28d9">Payroll Config</text>
+  <text x="280" y="85" text-anchor="middle" font-size="11" fill="#7c3aed">Activities → PayRateType</text>
+  <text x="280" y="100" text-anchor="middle" font-size="11" fill="#7c3aed">+ FundingSource %</text>
+
+  <!-- Employee model box -->
+  <rect x="380" y="44" width="160" height="72" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1.5"/>
+  <text x="460" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#6d28d9">Employees</text>
+  <text x="460" y="85" text-anchor="middle" font-size="11" fill="#7c3aed">hourlyPayRate1/2</text>
+  <text x="460" y="100" text-anchor="middle" font-size="11" fill="#7c3aed">flatPayRate1/2</text>
+
+  <!-- EmployeeExpenses box -->
+  <rect x="560" y="44" width="160" height="72" rx="8" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+  <text x="640" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">Employee</text>
+  <text x="640" y="77" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">Expenses</text>
+  <text x="640" y="94" text-anchor="middle" font-size="11" fill="#16a34a">activeThisPayPeriod</text>
+  <text x="640" y="109" text-anchor="middle" font-size="11" fill="#16a34a">totalExpense</text>
+
+  <!-- CONNECTORS: inputs to step 1 -->
+  <line x1="100" y1="116" x2="100" y2="158" stroke="#aaa" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="280" y1="116" x2="280" y2="140" stroke="#aaa" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="460" y1="116" x2="460" y2="140" stroke="#aaa" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="640" y1="116" x2="640" y2="158" stroke="#aaa" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="280" y1="140" x2="460" y2="140" stroke="#aaa" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="370" y1="140" x2="370" y2="158" stroke="#aaa" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+  <!-- SECTION LABEL: PER EMPLOYEE -->
+  <text x="30" y="152" font-size="11" font-weight="600" fill="#888" letter-spacing="1.2">PER EMPLOYEE (repeat for each active employee)</text>
+
+  <!-- Step 1 -->
+  <rect x="20" y="162" width="700" height="56" rx="8" fill="#fff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="50" y="185" font-size="12" font-weight="700" fill="#1e293b">① </text>
+  <text x="66" y="185" font-size="12" fill="#1e293b">Look up each hour row's Activity → get </text>
+  <text x="390" y="185" font-size="12" font-weight="600" fill="#6d28d9">PayRateType</text>
+  <text x="466" y="185" font-size="12" fill="#1e293b"> + </text>
+  <text x="480" y="185" font-size="12" font-weight="600" fill="#6d28d9">FundingSource %</text>
+  <text x="66" y="204" font-size="12" fill="#475569">Resolve dollar amount from employee record (e.g. PayRateType = HourlyPayRate1 → employee.hourlyPayRate1)</text>
+
+  <!-- arrow -->
+  <line x1="370" y1="218" x2="370" y2="242" stroke="#aaa" stroke-width="1.5"/>
+  <polygon points="364,238 376,238 370,248" fill="#aaa"/>
+
+  <!-- Step 2 -->
+  <rect x="20" y="248" width="700" height="56" rx="8" fill="#fff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="50" y="271" font-size="12" font-weight="700" fill="#1e293b">② </text>
+  <text x="66" y="271" font-size="12" fill="#1e293b">Cost per row = </text>
+  <text x="165" y="271" font-size="12" font-weight="600" fill="#1d4ed8">Hours × dollar rate</text>
+  <text x="290" y="271" font-size="12" fill="#1e293b">  →  split across funding sources by %</text>
+  <text x="66" y="290" font-size="12" fill="#475569">e.g. 8 hrs × $18.50 = $148.00  →  60% Grant A = $88.80  /  40% Grant B = $59.20</text>
+
+  <!-- arrow -->
+  <line x1="370" y1="304" x2="370" y2="328" stroke="#aaa" stroke-width="1.5"/>
+  <polygon points="364,324 376,324 370,334" fill="#aaa"/>
+
+  <!-- Step 3 -->
+  <rect x="20" y="334" width="700" height="56" rx="8" fill="#fff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="50" y="357" font-size="12" font-weight="700" fill="#1e293b">③ </text>
+  <text x="66" y="357" font-size="12" fill="#1e293b">Sum weighted cost across all rows per funding source  →  compute each source's proportion</text>
+  <text x="66" y="376" font-size="12" fill="#475569">Grant A proportion = Grant A weighted cost / total weighted cost across ALL sources</text>
+
+  <!-- arrow -->
+  <line x1="370" y1="390" x2="370" y2="414" stroke="#aaa" stroke-width="1.5"/>
+  <polygon points="364,410 376,410 370,420" fill="#aaa"/>
+
+  <!-- Step 4 -->
+  <rect x="20" y="420" width="700" height="56" rx="8" fill="#fff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="50" y="443" font-size="12" font-weight="700" fill="#1e293b">④ </text>
+  <text x="66" y="443" font-size="12" fill="#1e293b">Employee's allocation per funding source = </text>
+  <text x="338" y="443" font-size="12" font-weight="600" fill="#15803d">proportion × totalExpense</text>
+  <text x="66" y="462" font-size="12" fill="#475569">e.g. Grant A proportion 60% × $2,400 totalExpense = $1,440 allocated to Grant A</text>
+
+  <!-- SECTION LABEL: ORG LEVEL -->
+  <line x1="370" y1="476" x2="370" y2="498" stroke="#aaa" stroke-width="1.5"/>
+  <polygon points="364,494 376,494 370,504" fill="#aaa"/>
+  <text x="30" y="504" font-size="11" font-weight="600" fill="#888" letter-spacing="1.2">ORG LEVEL (after all employees are processed)</text>
+
+  <!-- Step 5 -->
+  <rect x="20" y="508" width="700" height="42" rx="8" fill="#fff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="50" y="531" font-size="12" font-weight="700" fill="#1e293b">⑤ </text>
+  <text x="66" y="531" font-size="12" fill="#1e293b">Sum employee allocations across all employees per funding source  →  wagesAllocation</text>
+
+  <!-- AdditionalExpenses input -->
+  <rect x="20" y="576" width="160" height="56" rx="8" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="100" y="598" text-anchor="middle" font-size="13" font-weight="700" fill="#c2410c">Additional</text>
+  <text x="100" y="613" text-anchor="middle" font-size="13" font-weight="700" fill="#c2410c">Expenses</text>
+  <text x="100" y="628" text-anchor="middle" font-size="11" fill="#ea580c">(may be empty)</text>
+
+  <!-- arrow from step 5 down -->
+  <line x1="500" y1="550" x2="500" y2="574" stroke="#aaa" stroke-width="1.5"/>
+  <polygon points="494,570 506,570 500,580" fill="#aaa"/>
+
+  <!-- arrow from AdditionalExpenses -->
+  <line x1="180" y1="604" x2="220" y2="604" stroke="#aaa" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+  <!-- Step 6 -->
+  <rect x="220" y="578" width="500" height="56" rx="8" fill="#fff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="250" y="601" font-size="12" font-weight="700" fill="#1e293b">⑥ </text>
+  <text x="266" y="601" font-size="12" fill="#1e293b">Each funding source's share = its wagesAllocation / total</text>
+  <text x="266" y="620" font-size="12" fill="#475569">Distribute each additional expense item by that share → additionalExpenses per source</text>
+
+  <!-- arrow -->
+  <line x1="370" y1="634" x2="370" y2="658" stroke="#aaa" stroke-width="1.5"/>
+  <polygon points="364,654 376,654 370,664" fill="#aaa"/>
+
+  <!-- Step 7 -->
+  <rect x="20" y="664" width="700" height="42" rx="8" fill="#fff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="50" y="687" font-size="12" font-weight="700" fill="#1e293b">⑦ </text>
+  <text x="66" y="687" font-size="12" fill="#1e293b">total = wagesAllocation + additionalExpenses   (per funding source)</text>
+
+  <!-- arrow -->
+  <line x1="370" y1="706" x2="370" y2="730" stroke="#aaa" stroke-width="1.5"/>
+  <polygon points="364,726 376,726 370,736" fill="#aaa"/>
+
+  <!-- SECTION LABEL: OUTPUT -->
+  <text x="30" y="752" font-size="11" font-weight="600" fill="#888" letter-spacing="1.2">OUTPUT</text>
+
+  <rect x="20" y="758" width="700" height="72" rx="8" fill="#fefce8" stroke="#fde047" stroke-width="2"/>
+  <text x="370" y="782" text-anchor="middle" font-size="14" font-weight="700" fill="#854d0e">AllocationReport tab — one row per funding source</text>
+  <text x="120" y="808" text-anchor="middle" font-size="12" fill="#854d0e">fundingSourceName</text>
+  <text x="310" y="808" text-anchor="middle" font-size="12" fill="#854d0e">wagesAllocation</text>
+  <text x="480" y="808" text-anchor="middle" font-size="12" fill="#854d0e">additionalExpenses</text>
+  <text x="650" y="808" text-anchor="middle" font-size="12" fill="#854d0e">total</text>
+  <line x1="210" y1="792" x2="210" y2="822" stroke="#fde047" stroke-width="1"/>
+  <line x1="400" y1="792" x2="400" y2="822" stroke="#fde047" stroke-width="1"/>
+  <line x1="578" y1="792" x2="578" y2="822" stroke="#fde047" stroke-width="1"/>
+
+  <!-- Legend -->
+  <rect x="20" y="848" width="12" height="12" rx="2" fill="#dbeafe" stroke="#93c5fd" stroke-width="1"/>
+  <text x="38" y="859" font-size="11" fill="#475569">Spreadsheet tab</text>
+  <rect x="160" y="848" width="12" height="12" rx="2" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1"/>
+  <text x="178" y="859" font-size="11" fill="#475569">Payroll config</text>
+  <rect x="290" y="848" width="12" height="12" rx="2" fill="#dcfce7" stroke="#86efac" stroke-width="1"/>
+  <text x="308" y="859" font-size="11" fill="#475569">Employee expenses</text>
+  <rect x="440" y="848" width="12" height="12" rx="2" fill="#fff7ed" stroke="#fdba74" stroke-width="1"/>
+  <text x="458" y="859" font-size="11" fill="#475569">Additional expenses</text>
+  <rect x="598" y="848" width="12" height="12" rx="2" fill="#fefce8" stroke="#fde047" stroke-width="1"/>
+  <text x="616" y="859" font-size="11" fill="#475569">Output</text>
+</svg>
