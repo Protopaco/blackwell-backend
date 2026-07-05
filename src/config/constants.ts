@@ -41,3 +41,9 @@ export const SETTINGS_TAB = 'Settings';
 // ─── Client Config Sheet Tabs ─────────────────────────────────────────────────
 
 export const CLIENTS_TAB = 'Clients';
+
+// ─── Cache TTLs ───────────────────────────────────────────────────────────────
+
+export const CACHE_TTL_SHORT_MS = 60 * 1000;
+export const CACHE_TTL_MEDIUM_MS = 5 * 60 * 1000;
+export const CACHE_TTL_LONG_MS = 30 * 60 * 1000;

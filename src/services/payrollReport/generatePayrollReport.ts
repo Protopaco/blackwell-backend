@@ -89,8 +89,8 @@ const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise
   await archivePayrollReportTab(reportFileId, CURRENT_PAYROLL_SUMMARY_TAB, `payroll_${archiveTimestamp}`);
 
   await renameTab(reportFileId, PENDING_HOURS_TAB, CURRENT_HOURS_TAB);
-  await renameTab(reportFileId, PENDING_PAYROLL_SUMMARY_TAB, CURRENT_PAYROLL_SUMMARY_TAB);
   currentHoursCache.delete(reportFileId);
+  await renameTab(reportFileId, PENDING_PAYROLL_SUMMARY_TAB, CURRENT_PAYROLL_SUMMARY_TAB);
 
   if (payPeriod.status !== PayPeriodStatus.Closed) {
     await writePayPeriod(client.payPeriodRegistryFileId, { ...payPeriod, payrollReportFileId: reportFileId, status: PayPeriodStatus.Processed });
