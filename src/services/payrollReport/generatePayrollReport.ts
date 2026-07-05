@@ -39,7 +39,7 @@ const SUMMARY_HEADERS: (keyof PayrollReportSummaryRow)[] = [
 
 // Generates or regenerates the payroll report for a pay period.
 // Only processes employees whose timesheets are Complete (both signatures present).
-// Archives existing current_hours and current_adp_summary tabs before writing fresh data.
+// Archives existing current_hours and current_payroll_summary tabs before writing fresh data.
 // Creates the report file via OAuth if it does not yet exist.
 const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise<void> => {
   logger.info(`generatePayrollReport clientId=${clientId} payPeriodId=${payPeriodId}`);

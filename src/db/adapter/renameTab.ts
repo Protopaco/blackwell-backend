@@ -1,7 +1,7 @@
 import getSheetsClient from './getSheetsClient.js';
 import { logger } from '#utils/logger.js';
 
-// Renames an existing tab — used to archive current_hours and current_adp_summary before a payroll report re-run.
+// Renames an existing tab — used to archive current_hours and current_payroll_summary before a payroll report re-run.
 const renameTab = async (workbookId: string, currentTabName: string, newTabName: string): Promise<void> => {
   logger.debug(`Renaming tab: ${currentTabName} → ${newTabName} in workbook: ${workbookId}`);
   const sheets = await getSheetsClient();

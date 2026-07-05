@@ -3,7 +3,7 @@ import writeValues from '#db/adapter/writeValues.js';
 import { logger } from '#utils/logger.js';
 
 // Creates a tab (if not exists) and writes a 2D array of values to it using USER_ENTERED input option.
-// Used to write pending_hours and pending_adp_summary before renaming to current_hours/current_adp_summary.
+// Used to write pending_hours and pending_payroll_summary before renaming to current_hours/current_payroll_summary.
 const writePayrollReportTab = async (
   workbookId: string,
   tabName: string,
