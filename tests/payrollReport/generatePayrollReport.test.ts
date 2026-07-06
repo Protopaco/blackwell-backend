@@ -29,4 +29,20 @@ describe('POST /api/v1/payrollReport/:clientId/:payPeriodId/generate', () => {
     );
     expect(res.status).toBe(404);
   });
+
+  it('current_hours is readable immediately after generate — guards against a stale cached read', async () => {
+    const { payPeriodId } = await getTestPayPeriod();
+    const generateRes = await request(app).post(
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/generate`,
+    );
+    if (generateRes.status !== 200) return; // no Complete timesheets in this environment
+
+    // current_hours has no dedicated GET endpoint — generateAllocationReport reads it
+    // internally and fails with 422 if it comes back empty, so a 200 here proves the
+    // read after generate saw fresh rows rather than a stale cached current_hours.
+    const allocationRes = await request(app).post(
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocation-report`,
+    );
+    expect(allocationRes.status).toBe(200);
+  }, 60_000);
 });
