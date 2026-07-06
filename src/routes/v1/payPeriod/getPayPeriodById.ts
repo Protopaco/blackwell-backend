@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import getPayPeriodByIdService from "#services/payPeriod/getPayPeriodById.js";
+import buildPayPeriodResponse from "#services/payPeriod/buildPayPeriodResponse.js";
 import { logger } from "#utils/logger.js";
 
 const router = Router();
@@ -40,7 +41,7 @@ router.get("/:clientId/:payPeriodId", async (req: Request, res: Response) => {
   const payPeriod = await getPayPeriodByIdService(clientId, payPeriodId);
 
   logger.info(`GET /payPeriod/${clientId}/${payPeriodId} — response 200`);
-  return res.status(200).json(payPeriod);
+  return res.status(200).json(buildPayPeriodResponse(payPeriod));
 });
 
 export default router;

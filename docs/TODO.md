@@ -20,8 +20,8 @@
 
 ---
 
-### Remove payrollReportFileId from PayPeriod API response
-`payrollReportFileId` is an internal system field — the UI has no use for it. Remove it from the `PayPeriod` swagger schema and strip it from the API response. It should remain in the internal model for service-layer use.
+~~### Remove payrollReportFileId from PayPeriod API response~~
+~~`payrollReportFileId` is an internal system field — the UI has no use for it. Remove it from the `PayPeriod` swagger schema and strip it from the API response. It should remain in the internal model for service-layer use.~~ — done via `PayPeriodResponse` model + `buildPayPeriodResponse.ts`, wired into `getPayPeriods.ts`, `getPayPeriodById.ts`, `getNextPayPeriod.ts`.
 
 ---
 
@@ -37,8 +37,13 @@ Every service resolves `clientId → client → payPeriodRegistryFileId → payP
 
 ---
 
-### Split inline row mappers into their own files
-`readClients.ts` (`mapToClient`) and `readPayPeriods.ts` (`mapToPayPeriod`) define their row-mapping function inline, unlike the payrollConfig domain where each mapper gets its own file (`mapEmployee.ts`, `mapActivity.ts`, `mapFundingSource.ts`, etc.). Extract these two for consistency with that convention.
+~~### Split inline row mappers into their own files~~
+~~`readClients.ts` (`mapToClient`) and `readPayPeriods.ts` (`mapToPayPeriod`) define their row-mapping function inline, unlike the payrollConfig domain where each mapper gets its own file (`mapEmployee.ts`, `mapActivity.ts`, `mapFundingSource.ts`, etc.). Extract these two for consistency with that convention.~~ — done as `mapClient.ts` and `mapPayPeriod.ts`.
+
+---
+
+### Revisit map*/build* naming convention
+Two naming patterns exist side by side: `map<Entity>` (raw sheet row → typed domain model, e.g. `mapEmployee`, `mapClient`, `mapPayPeriod`) and `build<Thing>` (typed data → some other output shape, e.g. `buildAllocationRows`, `buildPayrollReportResponse`, `buildPayPeriodResponse`). The split is internally consistent but was arrived at informally, not designed up front — worth a deliberate pass to confirm it holds up, especially since `build*` currently covers both trivial reshaping (`buildPayPeriodResponse`, just drops one field) and real aggregation/computation (`buildAllocationRows`). Consider whether the trivial cases should be their own convention (e.g. `to*`) instead of overloading `build*`.
 
 ---
 
@@ -109,5 +114,5 @@ Build one flagship integration test that exercises the entire pay period workflo
 
 ## Open Questions (see DECISIONS.md)
 - Confirm holiday pay is time-and-a-half modifier
-- Confirm flat rate code names
+- Confirm flat rate code names — probably unnecessary; likely additive (not a replace) if ever needed, revisit at payroll app integration
 - Confirm whether payroll service has rates on file (affects whether pay rates can be pulled automatically or must be maintained manually in payroll config)
