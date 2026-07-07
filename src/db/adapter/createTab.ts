@@ -1,0 +1,23 @@
+import getSheetsClient from './getSheetsClient.js';
+import { logger } from '#utils/logger.js';
+
+// Adds a new sheet tab to an existing workbook — throws if the tab already exists.
+const createTab = async (workbookId: string, tabName: string): Promise<void> => {
+  logger.debug(`Creating tab: ${tabName} in workbook: ${workbookId}`);
+  const sheets = await getSheetsClient();
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: workbookId,
+    requestBody: {
+      requests: [
+        {
+          addSheet: {
+            properties: { title: tabName },
+          },
+        },
+      ],
+    },
+  });
+};
+
+export default createTab;

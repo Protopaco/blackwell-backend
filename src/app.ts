@@ -2,9 +2,16 @@ import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import { pinoHttp } from 'pino-http';
-import { logger } from './utils/logger.js';
-import mapErrorResponse from './middleware/mapErrorResponse.js';
-import healthRoute from './routes/v1/health/index.js';
+import swaggerUi from 'swagger-ui-express';
+import { logger } from '#utils/logger.js';
+import { swaggerSpec } from '#utils/swagger/swaggerSpec.js';
+import mapErrorResponse from '#middleware/mapErrorResponse.js';
+import healthRoute from '#routes/v1/health/index.js';
+import clientRoute from '#routes/v1/client/index.js';
+import payPeriodRoute from '#routes/v1/payPeriod/index.js';
+import timesheetRoute from '#routes/v1/timesheet/index.js';
+import adminRoute from '#routes/v1/admin/index.js';
+import payrollReportRoute from '#routes/v1/payrollReport/index.js';
 
 dotenv.config();
 
@@ -23,7 +30,15 @@ app.use(
   }),
 );
 
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get('/openapi.json', (req, res) => res.json(swaggerSpec));
+
 app.use(`${basePath}/v1/health`, healthRoute);
+app.use(`${basePath}/v1/client`, clientRoute);
+app.use(`${basePath}/v1/payPeriod`, payPeriodRoute);
+app.use(`${basePath}/v1/timesheet`, timesheetRoute);
+app.use(`${basePath}/v1/admin`, adminRoute);
+app.use(`${basePath}/v1/payrollReport`, payrollReportRoute);
 
 app.use(mapErrorResponse);
 

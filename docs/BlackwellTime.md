@@ -21,9 +21,11 @@ Blackwell Time Dashboard (web UI for Blackwell staff)
 ```
 
 ### What Stays in Apps Script
+
 Configuration UIs — adding clients, employees, activities, funding sources, holidays, pay periods. This is already built and working. It writes configuration data to Google Sheets. The new service reads from those same sheets.
 
 ### What Lives in This Service
+
 - Timesheet generation
 - Manifest generation and storage
 - Reading approved hours
@@ -47,6 +49,7 @@ Configuration UIs — adding clients, employees, activities, funding sources, ho
 - **Other:** dotenv, cors
 
 ### Dependencies (expected)
+
 ```
 express
 typescript
@@ -64,6 +67,7 @@ googleapis
 ```
 
 ### Dev Dependencies
+
 ```
 vitest
 pino-pretty
@@ -92,6 +96,7 @@ These are non-negotiable. Every file in this project follows these rules.
 - **Logging is a shared service**
 
 ### Controlled Vocabulary Pattern
+
 ```typescript
 export const PayPeriodStatus = {
   Draft: "Draft",
@@ -99,7 +104,8 @@ export const PayPeriodStatus = {
   Closed: "Closed",
 } as const;
 
-export type PayPeriodStatus = typeof PayPeriodStatus[keyof typeof PayPeriodStatus];
+export type PayPeriodStatus =
+  (typeof PayPeriodStatus)[keyof typeof PayPeriodStatus];
 ```
 
 ---
@@ -139,9 +145,37 @@ src/
 
 - All Google Sheets access lives in `db/adapter/sheetsAdapter.ts` only
 - Everything else in `db/` calls the adapter — never Google directly
-- One file per operation (getEmployees.ts, getPayPeriodById.ts, etc.)
+- One file per operation
 - Designed to be replaced one file at a time when migrating to a real database
 - When that happens: rewrite the file to call SQL instead of the adapter — nothing else changes
+
+### Naming Conventions
+
+**`db/` layer** — data access verbs, reflect the operation against the data source:
+
+- `readX` — reads one or more records
+- `writeX` — replaces/updates existing records
+- `appendX` — adds a new record
+- `deleteX` — removes a record
+- `mapX` — maps a raw row to a typed model (shared, used by readX and readPayrollConfig)
+
+**`services/` layer** — business logic verbs, reflect intent:
+
+- `getX` — retrieves data, may apply business logic
+- `createX` — creates a new record, assigns IDs, enforces rules
+- `updateX` — updates an existing record, enforces state transitions
+
+**`routes/` layer** — named by HTTP method + resource:
+
+- `getX`, `postX`, `putX`, `deleteX`
+
+### Layer Rules
+
+- Routes call services only — never `db/` directly
+- Services call `db/` functions — never the adapter directly
+- `db/` functions call the adapter — never Google APIs directly
+- Infrastructure concerns (env vars, file IDs) live in the `db/` layer, not services or routes
+- `CLIENT_CONFIG_FILE_ID` lives only in `db/client/readClients.ts`
 
 ### sheetsAdapter Operations
 
@@ -150,20 +184,29 @@ src/
 Two levels of operations:
 
 **Workbook level:**
+
 - `createWorkbook` — creates a new Google Sheets file, returns the new workbook ID
 
 **Tab level:**
+
 - `createTab` — adds a new tab to an existing workbook
 - `readTab` — reads all rows from a tab, returns array of objects keyed by header
 - `writeTab` — writes rows to a tab in one batch call, full replacement
 - `appendRow` — appends a single row to a tab
 - `deleteTab` — deletes a tab from a workbook
+- `deleteRow` — deletes a specific row from a tab by 1-based row number
 
 > `deleteWorkbook` is intentionally omitted. Once an employee begins using their timesheet file it must be protected. Deletion at the workbook level is too dangerous.
 
 > `createTab` and `writeTab` are intentionally separate. Chaining them when needed is the responsibility of the service layer.
 
 > `writeTab` always replaces. The caller is responsible for knowing when to write. "If not exists" logic lives in the service layer, not the adapter.
+
+### Auth
+
+Uses a Google Cloud service account. Credentials are stored as a JSON string in the `GOOGLE_SERVICE_ACCOUNT_JSON` environment variable. Parsed at runtime — no file on disk, works the same locally and on Railway.
+
+Never commit the service account credentials. `service-account.json` is in `.gitignore`.
 
 ### Function Signatures
 
@@ -174,6 +217,8 @@ const readTab = async (workbookId: string, tabName: string): Promise<Record<stri
 const writeTab = async (workbookId: string, tabName: string, rows: Record<string, unknown>[]): Promise<void>
 const appendRow = async (workbookId: string, tabName: string, row: Record<string, unknown>): Promise<void>
 const deleteTab = async (workbookId: string, tabName: string): Promise<void>
+const deleteRow = async (workbookId: string, tabName: string, rowNumber: number): Promise<void>
+// rowNumber is 1-based — the adapter handles conversion to 0-based for the Sheets API
 ```
 
 ---
@@ -213,22 +258,21 @@ Employee Timesheet (one per employee)
 
 #### Clients Sheet
 
-| Column | Description |
-|---|---|
-| clientId | UUID |
-| clientName | Display name |
-| clientCode | Short code |
-| trackFundingSource | Boolean |
-| clientFolderLink | Google Drive folder URL |
-| clientFolderId | Google Drive folder ID |
-| employeePayrollFolderId | ID of Employee/Payroll subfolder |
-| payrollConfigFolderId | ID of Payroll Config subfolder |
-| reportsFolderId | ID of Reports subfolder |
-| payrollReportFolderId | ID of Payroll Reports subfolder |
-| allocationReportFolderId | ID of Allocation Reports subfolder |
-| timesheetsFolderId | ID of Timesheets subfolder |
-| payrollConfigFileId | ID of the Payroll-Config spreadsheet |
-| payPeriodRegistryFileId | ID of the Pay-Period-Registry spreadsheet |
+| Column                   | Description                               |
+| ------------------------ | ----------------------------------------- |
+| clientId                 | UUID                                      |
+| clientName               | Display name                              |
+| clientCode               | Short code                                |
+| trackFundingSource       | Boolean                                   |
+| clientFolderLink         | Google Drive folder URL                   |
+| clientFolderId           | Google Drive folder ID                    |
+| employeePayrollFolderId  | ID of Employee/Payroll subfolder          |
+| payrollConfigFolderId    | ID of Payroll Config subfolder            |
+| reportsFolderId          | ID of Reports subfolder                   |
+| payrollReportFolderId    | ID of Payroll Reports subfolder           |
+| timesheetsFolderId       | ID of Timesheets subfolder                |
+| payrollConfigFileId      | ID of the Payroll-Config spreadsheet      |
+| payPeriodRegistryFileId  | ID of the Pay-Period-Registry spreadsheet |
 
 ---
 
@@ -239,74 +283,74 @@ Created automatically when a client is added.
 
 #### Employees Sheet
 
-| Column | Description |
-|---|---|
-| EmployeeId | UUID |
-| FirstName | |
-| LastName | |
-| Position | Job title |
-| BasePayRate | Hourly rate — display only, never used in calculations |
-| SecondaryPayRate | Secondary rate — display only, never used in calculations |
-| HolidayPayRate | Holiday rate — display only, never used in calculations |
-| Email | |
-| Status | Active / Inactive |
-| TimesheetFileLink | Google Sheets URL |
-| TimesheetFileId | Google Sheets file ID |
+| Column            | Description                                             |
+| ----------------- | ------------------------------------------------------- |
+| EmployeeId        | UUID                                                    |
+| FirstName         |                                                         |
+| LastName          |                                                         |
+| Position          | Job title                                               |
+| HourlyPayRate1    | Hourly rate — display only, never used in calculations  |
+| HourlyPayRate2    | Hourly rate — display only, never used in calculations  |
+| HolidayPayRate    | Holiday rate — display only, never used in calculations |
+| Email             |                                                         |
+| Status            | Active / Inactive                                       |
+| TimesheetFileLink | Google Sheets URL                                       |
+| TimesheetFileId   | Google Sheets file ID                                   |
 
 #### Supervisors Sheet
 
-| Column | Description |
-|---|---|
-| SupervisorId | UUID |
-| SupervisorFirstName | |
-| SupervisorLastName | |
-| SupervisorEmail | |
+| Column              | Description |
+| ------------------- | ----------- |
+| SupervisorId        | UUID        |
+| SupervisorFirstName |             |
+| SupervisorLastName  |             |
+| SupervisorEmail     |             |
 
 > Supervisors are client-side managers, never Blackwell employees. There is no hard assignment between supervisors and employees — any supervisor can approve any employee's timesheet. Whoever approves signs it.
 
 #### FundingSources Sheet
 
-| Column | Description |
-|---|---|
-| FundingSourceId | UUID |
-| FundingSourceName | |
+| Column            | Description                                                                                   |
+| ----------------- | --------------------------------------------------------------------------------------------- |
+| FundingSourceId   | UUID                                                                                          |
+| FundingSourceName |                                                                                               |
 | FundingSourceCode | Optional. Accounting code for QuickBooks mapping — display name and QBO identifier may differ |
 
 #### Activities Sheet
 
-| Column | Description |
-|---|---|
-| ActivityId | UUID |
-| ActivityName | |
-| TrackSeparately | Boolean |
-| PayrollCategory | Base / ETO / PTO / STO / Holiday |
-| FundingSource1Name | — needs redesign, max 3 hardcoded |
-| FundingSource1Percentage | |
-| FundingSource2Name | |
-| FundingSource2Percentage | |
-| FundingSource3Name | |
-| FundingSource3Percentage | |
-| PayRate | Base / Secondary / Holiday / FlatRate |
-| FlatRateAmount | |
+| Column                   | Description                           |
+| ------------------------ | ------------------------------------- |
+| ActivityId               | UUID                                  |
+| ActivityName             |                                       |
+| TrackSeparately          | Boolean                               |
+| PayrollCategory          | Base / ETO / PTO / STO / Holiday      |
+| FundingSource1Name       | — needs redesign, max 3 hardcoded     |
+| FundingSource1Percentage |                                       |
+| FundingSource2Name       |                                       |
+| FundingSource2Percentage |                                       |
+| FundingSource3Name       |                                       |
+| FundingSource3Percentage |                                       |
+| PayRate                  | Base / Secondary / Holiday / FlatRate |
+| FlatRateAmount           |                                       |
 
 > ⚠️ The hardcoded FundingSource1/2/3 columns are a known limitation. Three funding sources per activity is accepted as sufficient for now. Revisit when migrating to a real database.
 
 #### Settings Sheet
 
-| Column | Description |
-|---|---|
-| TimesheetTemplate | `TotalHours` or `ClockInOut` — controls which timesheet template is generated |
-| PayPeriodInterval | Weekly / Bi-weekly / Monthly |
-| PayPeriodStartDate | Canonical date string (YYYY-MM-DD) |
+| Column             | Description                                                                   |
+| ------------------ | ----------------------------------------------------------------------------- |
+| TimesheetTemplate  | `TotalHours` or `ClockInOut` — controls which timesheet template is generated |
+| PayPeriodInterval  | Weekly / Bi-weekly / Monthly                                                  |
+| PayPeriodStartDate | Canonical date string (YYYY-MM-DD)                                            |
 
 > Settings are client-level. Set once during client setup, rarely changed. Not shared across clients.
 
 #### Holidays Sheet
 
-| Column | Description |
-|---|---|
-| HolidayId | UUID |
-| HolidayName | e.g. "MLK Day" |
+| Column      | Description                        |
+| ----------- | ---------------------------------- |
+| HolidayId   | UUID                               |
+| HolidayName | e.g. "MLK Day"                     |
 | HolidayDate | Canonical date string (YYYY-MM-DD) |
 
 > Holidays are shared across all employees for a client.
@@ -322,14 +366,14 @@ One sheet tab per calendar year (e.g. "2026").
 
 #### {Year} Sheet
 
-| Column | Description |
-|---|---|
-| PayPeriodId | UUID |
-| PayPeriodName | e.g. "06/01 - 06/14" |
-| Status | Draft / Pending / Open / Closed |
-| StartDate | Canonical date string (YYYY-MM-DD) |
-| EndDate | Canonical date string (YYYY-MM-DD) |
-| CreatedDate | |
+| Column        | Description                        |
+| ------------- | ---------------------------------- |
+| PayPeriodId   | UUID                               |
+| PayPeriodName | e.g. "06/01 - 06/14"               |
+| Status        | Draft / Pending / Open / Closed    |
+| StartDate     | Canonical date string (YYYY-MM-DD) |
+| EndDate       | Canonical date string (YYYY-MM-DD) |
+| CreatedDate   |                                    |
 
 ---
 
@@ -368,7 +412,7 @@ Summary:
 
 Columns: A = label, B-H = days of week (Mon-Sun)
 
-#### _manifest Sheet
+#### \_manifest Sheet
 
 Stores a single JSON blob describing the exact structure of the timesheet.
 Used by the service to read back approved hours without interrogating the sheet.
@@ -381,18 +425,22 @@ Structure defined in models — see `TimesheetManifest` interface.
 ## Timesheet Generation
 
 ### Core Concept
+
 Generate entire timesheet structure in memory, write to Google Sheets in one batch call. No read-after-write. No metadata lookups during generation.
 
 ### Manifest
+
 Every generated timesheet has a companion manifest stored in a hidden `_manifest` sheet tab in the same file. The manifest records exactly which row each activity landed on and which columns are dates/holidays. Used later to read back approved hours without interrogating the sheet structure.
 
 ### Idempotent Generation
+
 - If a timesheet sheet already exists for a pay period — skip it
 - If it does not exist — create it
 - Sheet and manifest are always created and deleted together — they are one unit
 - To fix a timesheet: delete the sheet + manifest, regenerate
 
 ### Generation Pipeline
+
 ```
 Trigger generation for client + pay period
   → Load all config (employees, activities, holidays, pay period, settings)
@@ -414,11 +462,13 @@ Trigger generation for client + pay period
 This service tracks **where time went**, not **what it cost**.
 
 **In scope:**
+
 - Hours by employee, activity, funding source, date
 - Allocation percentages
 - Approved hour summaries
 
 **Out of scope (belongs in ADP):**
+
 - Pay rates
 - Gross pay calculation
 - Overtime
@@ -431,6 +481,7 @@ This service tracks **where time went**, not **what it cost**.
 ## Future State
 
 When this service outgrows Google Sheets:
+
 - Replace `db/adapter/sheetsAdapter.ts` with a database adapter
 - Replace `db/` files one at a time with SQL-backed equivalents
 - Routes, services, and models stay unchanged
@@ -457,7 +508,7 @@ const EmployeeStatus = {
   Active: "Active",
   Inactive: "Inactive",
 } as const;
-type EmployeeStatus = typeof EmployeeStatus[keyof typeof EmployeeStatus];
+type EmployeeStatus = (typeof EmployeeStatus)[keyof typeof EmployeeStatus];
 
 // src/models/PayPeriodStatus.ts
 const PayPeriodStatus = {
@@ -466,14 +517,15 @@ const PayPeriodStatus = {
   Open: "Open",
   Closed: "Closed",
 } as const;
-type PayPeriodStatus = typeof PayPeriodStatus[keyof typeof PayPeriodStatus];
+type PayPeriodStatus = (typeof PayPeriodStatus)[keyof typeof PayPeriodStatus];
 
 // src/models/TimesheetTemplate.ts
 const TimesheetTemplate = {
   TotalHours: "TotalHours",
   ClockInOut: "ClockInOut",
 } as const;
-type TimesheetTemplate = typeof TimesheetTemplate[keyof typeof TimesheetTemplate];
+type TimesheetTemplate =
+  (typeof TimesheetTemplate)[keyof typeof TimesheetTemplate];
 
 // src/models/PayPeriodInterval.ts
 const PayPeriodInterval = {
@@ -481,7 +533,8 @@ const PayPeriodInterval = {
   BiWeekly: "Bi-weekly",
   Monthly: "Monthly",
 } as const;
-type PayPeriodInterval = typeof PayPeriodInterval[keyof typeof PayPeriodInterval];
+type PayPeriodInterval =
+  (typeof PayPeriodInterval)[keyof typeof PayPeriodInterval];
 
 // src/models/PayrollCategory.ts
 const PayrollCategory = {
@@ -491,7 +544,7 @@ const PayrollCategory = {
   STO: "STO",
   Holiday: "Holiday",
 } as const;
-type PayrollCategory = typeof PayrollCategory[keyof typeof PayrollCategory];
+type PayrollCategory = (typeof PayrollCategory)[keyof typeof PayrollCategory];
 
 // src/models/PayRate.ts
 const PayRate = {
@@ -500,7 +553,7 @@ const PayRate = {
   Holiday: "Holiday",
   FlatRate: "FlatRate",
 } as const;
-type PayRate = typeof PayRate[keyof typeof PayRate];
+type PayRate = (typeof PayRate)[keyof typeof PayRate];
 ```
 
 ### Domain Models
@@ -518,7 +571,6 @@ interface Client {
   payrollConfigFolderId: string;
   reportsFolderId: string;
   payrollReportFolderId: string;
-  allocationReportFolderId: string;
   timesheetsFolderId: string;
   payrollConfigFileId: string;
   payPeriodRegistryFileId: string;
@@ -530,9 +582,9 @@ interface Employee {
   firstName: string;
   lastName: string;
   position: string;
-  basePayRate: number;        // display only — never used in calculations
-  secondaryPayRate: number;   // display only — never used in calculations
-  holidayPayRate: number;     // display only — never used in calculations
+  hourlyPayRate1: number;
+  hourlyPayRate2: number;
+  holidayPayRate: number;
   email: string;
   status: EmployeeStatus;
   timesheetFileLink: string;
@@ -551,7 +603,7 @@ interface Supervisor {
 interface FundingSource {
   fundingSourceId: Guid;
   fundingSourceName: string;
-  fundingSourceCode?: string;   // optional — reserved for QuickBooks mapping
+  fundingSourceCode?: string; // optional — reserved for QuickBooks mapping
 }
 
 // src/models/Activity.ts
@@ -565,7 +617,7 @@ interface Activity {
   activityName: string;
   trackSeparately: boolean;
   payrollCategory: PayrollCategory;
-  fundingSources: ActivityFundingSource[];  // max 3, limit accepted for now
+  fundingSources: ActivityFundingSource[]; // max 3, limit accepted for now
   payRate: PayRate;
   flatRateAmount?: number;
 }
@@ -669,19 +721,23 @@ interface PayrollConfig {
 ### Functions
 
 **Batch:**
+
 ```typescript
 // src/db/getPayrollConfig.ts
 const getPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollConfig>
 ```
+
 Reads all tabs from the Payroll-Config workbook in one batch call. Used as the primary data load for timesheet generation.
 
 **client/**
+
 ```typescript
 // src/db/client/getClients.ts
 const getClients = async (clientConfigFileId: string): Promise<Client[]>
 ```
 
 **employee/**
+
 ```typescript
 // src/db/employee/getEmployees.ts
 const getEmployees = async (payrollConfigFileId: string): Promise<Employee[]>
@@ -691,37 +747,44 @@ const getEmployeeById = async (payrollConfigFileId: string, employeeId: Guid): P
 ```
 
 **supervisor/**
+
 ```typescript
 // src/db/supervisor/getSupervisors.ts
 const getSupervisors = async (payrollConfigFileId: string): Promise<Supervisor[]>
 ```
 
 **activity/**
+
 ```typescript
 // src/db/activity/getActivities.ts
 const getActivities = async (payrollConfigFileId: string): Promise<Activity[]>
 ```
+
 Responsible for collapsing FundingSource1/2/3 flat columns into the `fundingSources` array on the `Activity` model.
 
 **fundingSource/**
+
 ```typescript
 // src/db/fundingSource/getFundingSources.ts
 const getFundingSources = async (payrollConfigFileId: string): Promise<FundingSource[]>
 ```
 
 **holiday/**
+
 ```typescript
 // src/db/holiday/getHolidays.ts
 const getHolidays = async (payrollConfigFileId: string): Promise<Holiday[]>
 ```
 
 **settings/**
+
 ```typescript
 // src/db/settings/getSettings.ts
 const getSettings = async (payrollConfigFileId: string): Promise<Settings>
 ```
 
 **payPeriod/**
+
 ```typescript
 // src/db/payPeriod/getPayPeriods.ts
 const getPayPeriods = async (payPeriodRegistryFileId: string): Promise<PayPeriod[]>
@@ -731,6 +794,7 @@ const savePayPeriod = async (payPeriodRegistryFileId: string, payPeriod: PayPeri
 ```
 
 **manifest/**
+
 ```typescript
 // src/db/manifest/getManifest.ts
 const getManifest = async (timesheetFileId: string, tabName: string): Promise<TimesheetManifest | null>
@@ -755,10 +819,11 @@ Services contain all business logic. They call `db/` functions and return result
 const TimesheetStatus = {
   NotGenerated: "NotGenerated",
   Generated: "Generated",
-  Submitted: "Submitted",
-  Approved: "Approved",
+  Submitted: "Submitted", // employee has signed
+  Approved: "Approved", // supervisor has signed (but not employee)
+  Complete: "Complete", // both have signed
 } as const;
-type TimesheetStatus = typeof TimesheetStatus[keyof typeof TimesheetStatus];
+type TimesheetStatus = (typeof TimesheetStatus)[keyof typeof TimesheetStatus];
 ```
 
 ### services/timesheet/
@@ -843,6 +908,7 @@ interface PayPeriodDTO {
 ### Endpoints
 
 **timesheet/**
+
 ```
 POST /api/v1/timesheet/generate
   Body: { clientId: Guid, payPeriodId: Guid }
@@ -853,6 +919,7 @@ GET /api/v1/timesheet/status?payPeriodId=guid
 ```
 
 **payPeriod/**
+
 ```
 GET /api/v1/payPeriod?clientId=guid
   Returns all pay periods for a client.
@@ -871,12 +938,14 @@ PUT /api/v1/payPeriod/:payPeriodId
 ```
 
 **client/**
+
 ```
 GET /api/v1/client
   Returns all clients. Client creation and editing stays in Apps Script.
 ```
 
 **health/**
+
 ```
 GET /api/v1/health
 ```
@@ -892,6 +961,7 @@ PostgreSQL hosted on Railway. Starts small — just enough for auth, sessions, a
 **user_sessions** — managed automatically by connect-pg-simple. No manual definition needed.
 
 **users**
+
 ```sql
 CREATE TABLE users (
   id        SERIAL PRIMARY KEY,
@@ -902,10 +972,12 @@ CREATE TABLE users (
   createdAt TIMESTAMP NOT NULL DEFAULT NOW()
 );
 ```
+
 > `googleId` is nullable — user is added by email before first login. Populated on first successful login.
 > `active = false` disables access without losing audit history.
 
 **audit_log**
+
 ```sql
 CREATE TABLE audit_log (
   id        SERIAL PRIMARY KEY,
@@ -915,10 +987,12 @@ CREATE TABLE audit_log (
   createdAt TIMESTAMP NOT NULL DEFAULT NOW()
 );
 ```
+
 > `userId` is nullable — login rejection events may not have a user record to reference.
 > `payload` is JSONB for flexibility — stores relevant context (clientId, payPeriodId, email, etc.).
 
 ### Phase 2 Tables (future)
+
 When Google Sheets is replaced — clients, employees, activities, pay periods, time entries, etc. Each `db/` file gets rewritten one at a time to point at these tables instead of the Sheets adapter.
 
 ### Database Setup Project
@@ -967,12 +1041,12 @@ src/db/
 ```
 
 Each file follows this pattern:
+
 ```typescript
 const getUserByEmail = async (email: string): Promise<User | null> => {
-  const { rows } = await pool.query(
-    'SELECT * FROM get_user_by_email($1)',
-    [email]
-  );
+  const { rows } = await pool.query("SELECT * FROM get_user_by_email($1)", [
+    email,
+  ]);
   return rows[0] ?? null;
 };
 
@@ -994,7 +1068,7 @@ const AuditAction = {
   PayPeriodCreated: "PAY_PERIOD_CREATED",
   PayPeriodUpdated: "PAY_PERIOD_UPDATED",
 } as const;
-type AuditAction = typeof AuditAction[keyof typeof AuditAction];
+type AuditAction = (typeof AuditAction)[keyof typeof AuditAction];
 ```
 
 ## Auth
@@ -1010,6 +1084,7 @@ The `users` table is the approved users list. Access is explicitly granted by ma
 To add a user: manually run an insert script with their email address.
 
 ### Auth Flow
+
 ```
 User clicks "Sign in with Google"
   → Google OAuth callback
@@ -1020,6 +1095,7 @@ User clicks "Sign in with Google"
 ```
 
 ### Middleware
+
 ```typescript
 // src/middleware/ensureAuthenticated.ts
 // Same pattern as Babeonym — checks req.user, returns 401 if not present
@@ -1030,6 +1106,7 @@ User clicks "Sign in with Google"
 ## Web UI — Dashboard
 
 ### Stack
+
 - **React + Vite + TypeScript**
 - **MUI (Material UI)** — components and theming, same as Babeonym
 - **React Router** — client side routing
@@ -1037,11 +1114,13 @@ User clicks "Sign in with Google"
 - **OpenAPI generated client** — typed API client generated from backend Swagger spec
 
 ### Design Philosophy
+
 Use MUI primitives — don't over-customize. But don't skimp on details. Loading spinners, skeleton loaders, status chips, subtle transitions, success/error toasts. These details give the app weight and build trust with Blackwell.
 
 ### App Shell
 
 **App Bar (persistent across all pages)**
+
 - Logo / app title
 - Client selector dropdown — shows current client, hidden on Client List page
 - Current user display
@@ -1061,14 +1140,17 @@ Unauthenticated users are redirected to `/login`. After login, redirected back t
 ### Pages
 
 **Login**
+
 - Sign in with Google button
 - Clean, minimal
 
 **Client List**
+
 - List of clients
 - Click to navigate to Pay Period List
 
 **Pay Period List**
+
 - Header showing selected client
 - List of pay periods with color coded status chips
   - Draft = grey
@@ -1077,6 +1159,7 @@ Unauthenticated users are redirected to `/login`. After login, redirected back t
 - Create Pay Period button — pre-populates form with suggested next period, Blackwell confirms
 
 **Pay Period Detail**
+
 - Header showing client + pay period name
 - Employee list with timesheet status chips per employee
   - Not Generated = red outline
@@ -1095,6 +1178,7 @@ Unauthenticated users are redirected to `/login`. After login, redirected back t
 One context — selected client. Pay period flows from URL params. Everything else is local component state or direct API calls. Much simpler than Babeonym.
 
 ### UX Details Worth Getting Right
+
 - Timesheet generation shows progress indicator with status message — "Generating timesheets for [client]..."
 - Color coded status chips on pay periods and timesheets for instant visual scanning
 - Loading spinners / skeleton loaders while API calls are in flight
@@ -1161,4 +1245,162 @@ src/
   router.tsx
   App.tsx
   main.tsx
+
+---
+
+## Allocation Report
+
+### Purpose
+
+The allocation report is the primary deliverable of this system. It answers: how much did each funding source (program/grant) actually cost this pay period? All prior work — timesheet generation, payroll report, clean activity/funding source data — exists to produce accurate inputs for this report.
+
+### Core Principle
+
+**The app owns all calculation logic. The spreadsheet is the output, not the engine.** No formulas, no cross-tab references, no spreadsheet logic. The app reads data, does the math, and writes flat results to the sheet.
+
+---
+
+### Spreadsheet Storage
+
+The allocation report lives in the same Google Sheets workbook as the payroll report — one workbook per pay period, per client. This workbook contains the following tabs:
+
+**Tab order — active tabs left, archives right:**
+1. `current_hours`
+2. `current_payroll_summary`
+3. `EmployeeExpenses`
+4. `PayrollExpenses`
+5. `AllocationReport`
+6. → archived tabs pushed to the right (e.g. `hrs_2026-06-15`, `payroll_2026-06-15`)
+
+Tab order is maintained by a dedicated service that reorders tabs after any write operation. Archives are always pushed to the right of active tabs.
+
+**Existing payroll tabs (written by generatePayrollReport):**
+- `current_hours` — hour detail rows per employee per activity per date
+- `current_payroll_summary` — payroll summary rows grouped by employee/category/rate
+- Archived copies of the above from prior runs (e.g. `hrs_2026-06-15`, `payroll_2026-06-15`)
+
+**New allocation tabs:**
+
+#### `EmployeeExpenses` tab
+
+One row per active employee for the pay period. Written by the app when the bookkeeper submits expense data via the dashboard. **Overwritten on every save — no history, no archive.** This tab is a staging area, not an audit trail.
+
+| Column | Type | Description |
+|---|---|---|
+| `employeeId` | string | Primary key |
+| `employeeName` | string | For readability |
+| `include` | boolean | Whether to include this employee in the allocation calculation |
+| `totalExpense` | number \| null | Total compensation for the pay period (wages + taxes + everything). Null if not yet entered or employee is excluded. |
+
+Business rules enforced server-side:
+- `include` cannot be set to `false` if the employee has any hours recorded in `current_hours` for this pay period. The API rejects this with an error.
+- The allocation report cannot be generated until every active employee either has a `totalExpense` entered or has `include = false`.
+
+#### `PayrollExpenses` tab
+
+One row per org-level additional expense item. Written by the app when the bookkeeper submits additional expenses via the Allocation Report card. **Overwritten on every save — no history, no archive.** Same pattern as `EmployeeExpenses`.
+
+| Column | Type | Description |
+|---|---|---|
+| `expenseName` | string | Label for the expense (e.g. "HSA", "Benefits") |
+| `amount` | number | Dollar amount to be distributed across funding sources |
+
+These expenses are distributed proportionally across funding sources using each funding source's share of total org wages (step 6 of the calculation).
+
+---
+
+#### `AllocationReport` tab
+
+One row per funding source. Written by the app when the bookkeeper clicks "Write Allocation Report." **Overwritten every time — no history.** The calculation is always derived fresh from `current_hours` and `EmployeeExpenses`.
+
+| Column | Type | Description |
+|---|---|---|
+| `fundingSourceId` | string | Primary key |
+| `fundingSourceName` | string | For readability |
+| `totalExpense` | number | Total dollar amount allocated to this funding source |
+
+---
+
+### Inputs
+
+**From the system (already known at calculation time):**
+- Hours per employee per funding source per activity — from `current_hours` tab
+- Pay rate per employee — from payroll config (manually maintained until payroll service integration is available; known duplication, see DECISIONS.md)
+
+**Entered by bookkeeper after running payroll externally:**
+- Total compensation per employee — entered via dashboard, stored in `EmployeeExpenses` tab
+- Org-level additional expenses (e.g. HSA, benefits) — entered via dashboard, applied proportionally across funding sources
+
+---
+
+### Calculation
+
+**Per employee (only included employees):**
+1. For each funding source the employee worked in: `hours × pay rate` → weighted cost for that funding source
+2. Sum weighted costs across all of the employee's funding sources → employee total weighted cost
+3. Each funding source proportion = `funding source weighted cost / employee total weighted cost`
+4. Apply proportions to the employee's `totalExpense` → dollar amount allocated to each funding source
+
+> Proportions are based on `hours × rate`, not hours alone. A higher-paid employee contributes more cost to a funding source than a lower-paid employee working the same hours — because we are allocating expenses, not time.
+
+**Across all included employees:**
+5. Sum each funding source's dollar amounts across all employees → total org spend per funding source
+6. Compute each funding source's share of total org spend (percentages sum to 100%)
+7. For each org-level additional expense entered by the bookkeeper: apply the step 6 percentages → distributed amount per funding source
+8. Final allocation per funding source = wages allocation + sum of distributed additional expenses
+
+---
+
+### Pay Period Workflow
+
+1. **Generate Timesheets** — app generates timesheet tabs in each employee's Google Sheet
+2. **Employees fill out timesheets** — hours entered, signatures collected
+3. **Generate Payroll Report** — app reads approved hours, writes `current_hours` and `current_payroll_summary` tabs. Pay period status → `Processed`.
+4. **Bookkeeper runs payroll externally** (ADP or equivalent) — outside this system
+5. **Bookkeeper enters employee expenses** — via the Employee Timesheet Status card in the dashboard. Each included employee gets a total compensation amount. Employees with no hours this period can be toggled to "ignore."
+6. **App writes allocation report** — bookkeeper clicks "Write Allocation Report." App calculates and writes `AllocationReport` tab. Bookkeeper can also enter org-level additional expenses (HSA, benefits, etc.) at this step.
+7. **Bookkeeper closes pay period** — clicks "Close Pay Period" on the Allocation Report card. Pay period status → `Closed`.
+
+---
+
+### UI — Employee Timesheet Status Card
+
+This card handles both timesheet status tracking and expense entry. It is the central card for the pay period dashboard.
+
+**Per employee row:**
+| Field | Description |
+|---|---|
+| Employee name | Display only |
+| Timesheet status | Not Started / In Progress / Complete |
+| Include/Ignore toggle | Defaults to Include. Disabled (locked to Include) if employee has hours this period. |
+| Total Expense field | Dollar amount input. Required if Include. Greyed out if Ignore. |
+
+**Card-level actions:**
+- **"Generate Timesheets" button** — generates timesheets for any employees who don't yet have one (e.g. newly added employees). Always available.
+- **"Write Allocation Report" button** — enabled only when all included employees have a totalExpense entered. Triggers the allocation calculation and writes to the sheet.
+
+---
+
+### UI — Allocation Report Card
+
+Displays the allocation output and provides the close action.
+
+- Live display of funding source allocations (recalculates as expense data is entered)
+- Fields for org-level additional expenses (HSA, benefits, etc.)
+- **"Close Pay Period" button** — final step. Enabled once the allocation report has been written. Sets pay period status to `Closed`.
+
+---
+
+## OAuth2 File Creation
+
+The service account cannot create Google Drive files owned by a real user — files it creates count against the service account's storage quota, which is zero. To create timesheet files for new employees and payroll report files for each pay period, the system uses OAuth2 offline flow.
+
+### Setup (one-time)
+
+1. Create an OAuth2 Client ID in Google Cloud Console (type: Desktop App)
+2. Run a one-time local authorization script that opens a browser and asks for consent
+3. Store the resulting `refresh_token` in the environment as `GOOGLE_OAUTH_REFRESH_TOKEN`
+4. The system uses this token to make Drive file creation calls on behalf of the real user
+
+All other API calls (Sheets reads/writes) remain on the service account. Only file creation uses OAuth.
 ```

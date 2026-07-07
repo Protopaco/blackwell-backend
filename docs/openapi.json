@@ -1,0 +1,693 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Blackwell Time API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Client": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientName": {
+            "type": "string"
+          },
+          "clientCode": {
+            "type": "string"
+          },
+          "trackFundingSource": {
+            "type": "boolean"
+          },
+          "clientFolderLink": {
+            "type": "string"
+          },
+          "clientFolderId": {
+            "type": "string"
+          },
+          "employeePayrollFolderId": {
+            "type": "string"
+          },
+          "payrollConfigFolderId": {
+            "type": "string"
+          },
+          "reportsFolderId": {
+            "type": "string"
+          },
+          "payrollReportFolderId": {
+            "type": "string"
+          },
+          "allocationReportFolderId": {
+            "type": "string"
+          },
+          "timesheetsFolderId": {
+            "type": "string"
+          },
+          "payrollConfigFileId": {
+            "type": "string"
+          },
+          "payPeriodRegistryFileId": {
+            "type": "string"
+          }
+        }
+      },
+      "Employee": {
+        "type": "object",
+        "properties": {
+          "employeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Jane"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Smith"
+          },
+          "position": {
+            "type": "string",
+            "example": "Program Director"
+          },
+          "hourlyPayRate1": {
+            "type": "number",
+            "example": 25.96
+          },
+          "hourlyPayRate2": {
+            "type": "number",
+            "example": 36
+          },
+          "holidayPayRate": {
+            "type": "number",
+            "example": 38.94
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "jane.smith@example.org"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Inactive"
+            ]
+          },
+          "timesheetFileId": {
+            "type": "string",
+            "example": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+          },
+          "timesheetFileLink": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/edit"
+          }
+        }
+      },
+      "PayPeriod": {
+        "type": "object",
+        "properties": {
+          "payPeriodId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "payPeriodName": {
+            "type": "string",
+            "example": "06/01 - 06/14"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Pending",
+              "Open",
+              "Processed",
+              "Closed"
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-06-01"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-06-14"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "EmployeeTimesheetStatus": {
+        "type": "object",
+        "properties": {
+          "employeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeName": {
+            "type": "string",
+            "example": "Morgan Haynes"
+          },
+          "timesheetFileId": {
+            "type": "string"
+          },
+          "timesheetFileLink": {
+            "type": "string",
+            "example": "https://docs.google.com/spreadsheets/d/..."
+          },
+          "totalHours": {
+            "type": "number",
+            "nullable": true,
+            "example": 72.5
+          },
+          "employeeSigned": {
+            "type": "boolean"
+          },
+          "supervisorSigned": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "not_found"
+          },
+          "message": {
+            "type": "string",
+            "example": "The requested resource was not found"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/timesheet/generate": {
+      "post": {
+        "operationId": "v1GenerateTimesheets",
+        "summary": "Generate timesheets for all active employees for a pay period",
+        "tags": [
+          "Timesheet"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "clientId",
+                  "payPeriodId"
+                ],
+                "properties": {
+                  "clientId": {
+                    "type": "string"
+                  },
+                  "payPeriodId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Timesheets generated"
+          },
+          "400": {
+            "description": "Missing required fields"
+          },
+          "404": {
+            "description": "Client or pay period not found"
+          }
+        }
+      }
+    },
+    "/api/v1/timesheet/status/{clientId}/{payPeriodId}": {
+      "get": {
+        "operationId": "v1GetTimesheetStatus",
+        "summary": "Get timesheet status for all active employees for a pay period",
+        "tags": [
+          "Timesheet"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Per-employee timesheet status including hours and signature state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeTimesheetStatus"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pay period not found"
+          }
+        }
+      }
+    },
+    "/api/v1/payrollReport/{clientId}/{payPeriodId}/generate": {
+      "post": {
+        "operationId": "v1GeneratePayrollReport",
+        "summary": "Generate or regenerate the payroll report for a pay period",
+        "description": "Only processes timesheets that are Complete (both employee and supervisor signed). Archives the previous report tabs and writes fresh data.",
+        "tags": [
+          "PayrollReport"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payroll report generated successfully"
+          },
+          "404": {
+            "description": "Client or pay period not found"
+          },
+          "422": {
+            "description": "No Complete timesheets found"
+          }
+        }
+      }
+    },
+    "/api/v1/payrollReport/{clientId}/{payPeriodId}": {
+      "get": {
+        "operationId": "v1GetPayrollReport",
+        "summary": "Get the current payroll summary for a pay period grouped by employee",
+        "tags": [
+          "PayrollReport"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payroll report grouped by employee, with hourly and flat rate entries separated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "employeeName": {
+                        "type": "string"
+                      },
+                      "hourly": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "payrollCategory": {
+                              "type": "string",
+                              "enum": [
+                                "Regular",
+                                "ETO",
+                                "PTO",
+                                "STO"
+                              ]
+                            },
+                            "payRate": {
+                              "type": "string",
+                              "enum": [
+                                "Base",
+                                "Secondary"
+                              ]
+                            },
+                            "isHoliday": {
+                              "type": "boolean"
+                            },
+                            "totalHours": {
+                              "type": "number"
+                            }
+                          }
+                        }
+                      },
+                      "flatRate": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "payRate": {
+                              "type": "string",
+                              "enum": [
+                                "FlatPayRate1",
+                                "FlatPayRate2"
+                              ]
+                            },
+                            "quantity": {
+                              "type": "number"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client, pay period, or report not found"
+          }
+        }
+      }
+    },
+    "/api/v1/payPeriod/{payPeriodId}": {
+      "put": {
+        "operationId": "v1UpdatePayPeriod",
+        "summary": "Update an existing pay period",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pay period updated"
+          }
+        }
+      },
+      "get": {
+        "operationId": "v1GetPayPeriodById",
+        "summary": "Get a single pay period by ID",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pay period",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPeriod"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payPeriod": {
+      "post": {
+        "operationId": "v1CreatePayPeriod",
+        "summary": "Create a new pay period",
+        "tags": [
+          "PayPeriod"
+        ],
+        "responses": {
+          "201": {
+            "description": "Pay period created"
+          }
+        }
+      },
+      "get": {
+        "operationId": "v1GetPayPeriods",
+        "summary": "Get all pay periods for a client",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of pay periods",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PayPeriod"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payPeriod/{payPeriodId}/close": {
+      "patch": {
+        "operationId": "v1ClosePayPeriod",
+        "summary": "Close a pay period",
+        "description": "Sets the pay period status to Closed. No-op if already Closed.",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "clientId"
+                ],
+                "properties": {
+                  "clientId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pay period closed"
+          }
+        }
+      }
+    },
+    "/api/v1/payPeriod/next": {
+      "get": {
+        "operationId": "v1GetNextPayPeriod",
+        "summary": "Get suggested next pay period for a client",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Suggested next pay period",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPeriod"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "v1Health",
+        "summary": "Health check",
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is healthy"
+          }
+        }
+      }
+    },
+    "/api/v1/client": {
+      "get": {
+        "operationId": "v1GetClients",
+        "summary": "Get all clients",
+        "tags": [
+          "Client"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of clients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Client"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/client/{clientId}/employees": {
+      "get": {
+        "operationId": "v1GetClientEmployees",
+        "summary": "Get all employees for a client",
+        "tags": [
+          "Client"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of employees",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Employee"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/cache/clear": {
+      "post": {
+        "operationId": "v1ClearCache",
+        "summary": "Clear all in-memory caches and force fresh reads from Google Sheets",
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Cache cleared"
+          }
+        }
+      }
+    }
+  },
+  "tags": []
+}
