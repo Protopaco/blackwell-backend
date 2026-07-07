@@ -12,6 +12,40 @@
   ],
   "components": {
     "schemas": {
+      "AdditionalExpense": {
+        "type": "object",
+        "properties": {
+          "expenseName": {
+            "type": "string",
+            "example": "HSA"
+          },
+          "amount": {
+            "type": "number",
+            "example": 8400
+          }
+        }
+      },
+      "AllocationReportRow": {
+        "type": "object",
+        "properties": {
+          "fundingSourceName": {
+            "type": "string",
+            "example": "Federal Grant"
+          },
+          "wagesAllocation": {
+            "type": "number",
+            "example": 14250
+          },
+          "additionalExpenses": {
+            "type": "number",
+            "example": 1843.75
+          },
+          "total": {
+            "type": "number",
+            "example": 16093.75
+          }
+        }
+      },
       "Client": {
         "type": "object",
         "properties": {
@@ -44,9 +78,6 @@
             "type": "string"
           },
           "payrollReportFolderId": {
-            "type": "string"
-          },
-          "allocationReportFolderId": {
             "type": "string"
           },
           "timesheetsFolderId": {
@@ -114,6 +145,27 @@
           }
         }
       },
+      "EmployeeExpense": {
+        "type": "object",
+        "properties": {
+          "employeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeName": {
+            "type": "string",
+            "example": "Jane Smith"
+          },
+          "activeThisPayPeriod": {
+            "type": "boolean"
+          },
+          "totalExpense": {
+            "type": "number",
+            "nullable": true,
+            "example": 2326.92
+          }
+        }
+      },
       "PayPeriod": {
         "type": "object",
         "properties": {
@@ -178,6 +230,16 @@
           },
           "supervisorSigned": {
             "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NotGenerated",
+              "Generated",
+              "Submitted",
+              "Approved",
+              "Complete"
+            ]
           }
         }
       },
@@ -197,41 +259,34 @@
     }
   },
   "paths": {
-    "/api/v1/timesheet/generate": {
+    "/api/v1/timesheet/{clientId}/{payPeriodId}/generate": {
       "post": {
         "operationId": "v1GenerateTimesheets",
         "summary": "Generate timesheets for all active employees for a pay period",
         "tags": [
           "Timesheet"
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "clientId",
-                  "payPeriodId"
-                ],
-                "properties": {
-                  "clientId": {
-                    "type": "string"
-                  },
-                  "payPeriodId": {
-                    "type": "string"
-                  }
-                }
-              }
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
-        },
+        ],
         "responses": {
           "200": {
             "description": "Timesheets generated"
-          },
-          "400": {
-            "description": "Missing required fields"
           },
           "404": {
             "description": "Client or pay period not found"
@@ -284,6 +339,188 @@
         }
       }
     },
+    "/api/v1/payrollReport/{clientId}/{payPeriodId}/employee-expenses": {
+      "put": {
+        "operationId": "v1UpdateEmployeeExpenses",
+        "summary": "Update a single employee expense record for a pay period",
+        "tags": [
+          "PayrollReport"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeExpense"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Employee expense updated"
+          },
+          "404": {
+            "description": "Client, pay period, or payroll report not found"
+          },
+          "422": {
+            "description": "Employee has hours this pay period and cannot be marked inactive"
+          }
+        }
+      },
+      "get": {
+        "operationId": "v1GetEmployeeExpenses",
+        "summary": "Get employee expense records for a pay period",
+        "tags": [
+          "PayrollReport"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of employee expense records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeExpense"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client or pay period not found"
+          }
+        }
+      }
+    },
+    "/api/v1/payrollReport/{clientId}/{payPeriodId}/additional-expenses": {
+      "put": {
+        "operationId": "v1UpdateAdditionalExpenses",
+        "summary": "Save additional expense records for a pay period",
+        "tags": [
+          "PayrollReport"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AdditionalExpense"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Additional expenses saved"
+          },
+          "404": {
+            "description": "Client, pay period, or payroll report not found"
+          }
+        }
+      },
+      "get": {
+        "operationId": "v1GetAdditionalExpenses",
+        "summary": "Get additional expense records for a pay period",
+        "tags": [
+          "PayrollReport"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of additional expense records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdditionalExpense"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client or pay period not found"
+          }
+        }
+      }
+    },
     "/api/v1/payrollReport/{clientId}/{payPeriodId}/generate": {
       "post": {
         "operationId": "v1GeneratePayrollReport",
@@ -319,6 +556,98 @@
           },
           "422": {
             "description": "No Complete timesheets found"
+          }
+        }
+      }
+    },
+    "/api/v1/payrollReport/{clientId}/{payPeriodId}/allocation-report": {
+      "post": {
+        "operationId": "v1GenerateAllocationReport",
+        "summary": "Generate or regenerate the allocation report for a pay period",
+        "description": "Reads current_hours, EmployeeExpenses, and AdditionalExpenses to calculate funding source allocations. Overwrites the AllocationReport tab and returns the results.",
+        "tags": [
+          "PayrollReport"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Allocation report generated successfully. Returns one row per funding source.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AllocationReportRow"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client or pay period not found"
+          },
+          "422": {
+            "description": "Payroll report not yet generated, or no hours data found"
+          }
+        }
+      },
+      "get": {
+        "operationId": "v1GetAllocationReport",
+        "summary": "Get the allocation report for a pay period",
+        "tags": [
+          "PayrollReport"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Allocation report rows, one per funding source. Empty array if report has not been generated yet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AllocationReportRow"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client or pay period not found"
           }
         }
       }
@@ -416,12 +745,12 @@
             }
           },
           "404": {
-            "description": "Client, pay period, or report not found"
+            "description": "Client or pay period not found"
           }
         }
       }
     },
-    "/api/v1/payPeriod/{payPeriodId}": {
+    "/api/v1/payPeriod/{clientId}/{payPeriodId}": {
       "put": {
         "operationId": "v1UpdatePayPeriod",
         "summary": "Update an existing pay period",
@@ -429,6 +758,14 @@
           "PayPeriod"
         ],
         "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "in": "path",
             "name": "payPeriodId",
@@ -453,15 +790,15 @@
         "parameters": [
           {
             "in": "path",
-            "name": "payPeriodId",
+            "name": "clientId",
             "required": true,
             "schema": {
               "type": "string"
             }
           },
           {
-            "in": "query",
-            "name": "clientId",
+            "in": "path",
+            "name": "payPeriodId",
             "required": true,
             "schema": {
               "type": "string"
@@ -478,16 +815,29 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Client or pay period not found"
           }
         }
       }
     },
-    "/api/v1/payPeriod": {
+    "/api/v1/payPeriod/{clientId}": {
       "post": {
         "operationId": "v1CreatePayPeriod",
         "summary": "Create a new pay period",
         "tags": [
           "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "201": {
@@ -503,7 +853,7 @@
         ],
         "parameters": [
           {
-            "in": "query",
+            "in": "path",
             "name": "clientId",
             "required": true,
             "schema": {
@@ -528,7 +878,7 @@
         }
       }
     },
-    "/api/v1/payPeriod/{payPeriodId}/close": {
+    "/api/v1/payPeriod/{clientId}/{payPeriodId}/close": {
       "patch": {
         "operationId": "v1ClosePayPeriod",
         "summary": "Close a pay period",
@@ -539,6 +889,14 @@
         "parameters": [
           {
             "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
             "name": "payPeriodId",
             "required": true,
             "schema": {
@@ -546,24 +904,6 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "clientId"
-                ],
-                "properties": {
-                  "clientId": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Pay period closed"
@@ -571,7 +911,7 @@
         }
       }
     },
-    "/api/v1/payPeriod/next": {
+    "/api/v1/payPeriod/{clientId}/next": {
       "get": {
         "operationId": "v1GetNextPayPeriod",
         "summary": "Get suggested next pay period for a client",
@@ -580,7 +920,7 @@
         ],
         "parameters": [
           {
-            "in": "query",
+            "in": "path",
             "name": "clientId",
             "required": true,
             "schema": {
@@ -598,6 +938,9 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Client not found"
           }
         }
       }

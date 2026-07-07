@@ -9,6 +9,7 @@ const timesheetStatusResponse = {
       totalHours: { type: 'number', nullable: true, example: 72.5 },
       employeeSigned: { type: 'boolean' },
       supervisorSigned: { type: 'boolean' },
+      status: { type: 'string', enum: ['NotGenerated', 'Generated', 'Submitted', 'Approved', 'Complete'] },
     },
   },
 };

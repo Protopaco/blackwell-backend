@@ -1,11 +1,14 @@
 import getPayPeriodById from '#services/payPeriod/getPayPeriodById.js';
 import getEmployees from '#services/employee/getEmployees.js';
 import readTimesheetDetail from '#services/timesheet/readTimesheetDetail.js';
+import deriveTimesheetStatus from '#services/timesheet/deriveTimesheetStatus.js';
+import readCurrentHoursTab from '#db/payrollReport/readCurrentHoursTab.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
 import EmployeeTimesheetStatus from '#models/EmployeeTimesheetStatus.js';
 import { logger } from '#utils/logger.js';
 
-// Returns a status entry for every active employee showing hours entered and whether each signature cell is filled.
+// Returns a status entry for every active employee showing hours entered, signature state, and a derived
+// five-state TimesheetStatus (NotGenerated/Generated/Submitted/Approved/Complete).
 const getTimesheetStatuses = async (
   clientId: string,
   payPeriodId: string,
@@ -17,9 +20,20 @@ const getTimesheetStatuses = async (
   const employees = await getEmployees(clientId);
   const activeEmployees = employees.filter((employee) => employee.status === EmployeeStatus.Active);
 
+  const currentHoursRows = payPeriod.payrollReportFileId
+    ? await readCurrentHoursTab(payPeriod.payrollReportFileId)
+    : [];
+  const employeeIdsInCurrentHours = new Set(currentHoursRows.map((row) => row.EmployeeId));
+
   return Promise.all(
     activeEmployees.map(async (employee) => {
       const detail = await readTimesheetDetail(employee.timesheetFileId, payPeriod.payPeriodName);
+      const status = deriveTimesheetStatus({
+        totalHours: detail.totalHours,
+        employeeSigned: detail.employeeSigned,
+        supervisorSigned: detail.supervisorSigned,
+        includedInCurrentHours: employeeIdsInCurrentHours.has(employee.employeeId),
+      });
       return {
         employeeId: employee.employeeId,
         employeeName: `${employee.firstName} ${employee.lastName}`,
@@ -28,6 +42,7 @@ const getTimesheetStatuses = async (
         totalHours: detail.totalHours,
         employeeSigned: detail.employeeSigned,
         supervisorSigned: detail.supervisorSigned,
+        status,
       };
     }),
   );
