@@ -1,5 +1,5 @@
-import HourlyEntry from './HourlyEntry.js';
-import FlatRateEntry from './FlatRateEntry.js';
+import HourlyEntry from "#models/HourlyEntry.js";
+import FlatRateEntry from "#models/FlatRateEntry.js";
 
 interface EmployeePayrollSummary {
   employeeName: string;
