@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import Activity from '../../src/models/Activity.js';
-import Holiday from '../../src/models/Holiday.js';
-import { PayRate } from '../../src/models/PayRate.js';
-import { PayrollCategory } from '../../src/models/PayrollCategory.js';
-import { SortedActivities } from '../../src/services/timesheet/sortActivities.js';
-import buildWeek from '../../src/services/timesheet/buildWeek.js';
+import Activity from '#models/Activity.js';
+import Holiday from '#models/Holiday.js';
+import { PayRate } from '#models/PayRate.js';
+import { PayrollCategory } from '#models/PayrollCategory.js';
+import { SortedActivities } from '#services/timesheet/sortActivities.js';
+import buildWeek from '#services/timesheet/buildWeek.js';
 
 const makeActivity = (activityName: string, payRate: string = PayRate.HourlyPayRate1, payrollCategory: string = PayrollCategory.Regular): Activity => ({
   activityId: crypto.randomUUID(),

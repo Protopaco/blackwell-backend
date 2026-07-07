@@ -4,18 +4,25 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['tests/**/*.test.ts'],
-    setupFiles: ['tests/setup.ts'],
-    // Run test files sequentially and pause between them so the Google Sheets API
-    // read quota (60 req/min) has time to recover after API-heavy tests like generate.
-    pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          include: ['tests/unit/**/*.test.ts'],
+        },
       },
-    },
-    sequence: {
-      concurrent: false,
-    },
+      {
+        extends: true,
+        test: {
+          name: 'integration',
+          include: ['tests/integration/**/*.test.ts'],
+          setupFiles: ['tests/integration/setup.ts'],
+          // Run test files sequentially — without this the Google Sheets API quota
+          // (60 req/min) gets exhausted across concurrent workers.
+          fileParallelism: false,
+        },
+      },
+    ],
   },
 });

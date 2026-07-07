@@ -1,5 +1,5 @@
 import request from 'supertest';
-import app from '../../src/app.js';
+import app from '#app.js';
 import { TEST_CLIENT_ID } from './testClient.js';
 
 const getTestPayPeriod = async (): Promise<{ payPeriodId: string; payPeriodName: string }> => {

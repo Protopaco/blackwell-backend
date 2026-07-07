@@ -46,6 +46,56 @@
           }
         }
       },
+      "Activity": {
+        "type": "object",
+        "properties": {
+          "activityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "activityName": {
+            "type": "string",
+            "example": "Job Coaching"
+          },
+          "trackSeparately": {
+            "type": "boolean"
+          },
+          "payrollCategory": {
+            "type": "string",
+            "enum": [
+              "Regular",
+              "ETO",
+              "PTO",
+              "STO"
+            ]
+          },
+          "fundingSources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fundingSourceName": {
+                  "type": "string",
+                  "example": "Federal Grant"
+                },
+                "percentage": {
+                  "type": "number",
+                  "example": 50
+                }
+              }
+            }
+          },
+          "payRate": {
+            "type": "string",
+            "enum": [
+              "HourlyPayRate1",
+              "HourlyPayRate2",
+              "FlatPayRate1",
+              "FlatPayRate2"
+            ]
+          }
+        }
+      },
       "Client": {
         "type": "object",
         "properties": {
@@ -88,6 +138,44 @@
           },
           "payPeriodRegistryFileId": {
             "type": "string"
+          }
+        }
+      },
+      "ClientSummary": {
+        "type": "object",
+        "properties": {
+          "employees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Employee"
+            }
+          },
+          "supervisors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Supervisor"
+            }
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            }
+          },
+          "fundingSources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FundingSource"
+            }
+          },
+          "holidays": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Holiday"
+            }
+          },
+          "settings": {
+            "$ref": "#/components/schemas/Settings"
           }
         }
       },
@@ -166,6 +254,41 @@
           }
         }
       },
+      "FundingSource": {
+        "type": "object",
+        "properties": {
+          "fundingSourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fundingSourceName": {
+            "type": "string",
+            "example": "Federal Grant"
+          },
+          "fundingSourceCode": {
+            "type": "string",
+            "example": "FG-100"
+          }
+        }
+      },
+      "Holiday": {
+        "type": "object",
+        "properties": {
+          "holidayId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "holidayName": {
+            "type": "string",
+            "example": "Labor Day"
+          },
+          "holidayDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-09-07"
+          }
+        }
+      },
       "PayPeriod": {
         "type": "object",
         "properties": {
@@ -199,6 +322,53 @@
           "createdDate": {
             "type": "string",
             "format": "date"
+          }
+        }
+      },
+      "Settings": {
+        "type": "object",
+        "properties": {
+          "timeInputMethod": {
+            "type": "string",
+            "enum": [
+              "TotalHours",
+              "ClockInOut"
+            ]
+          },
+          "payPeriodInterval": {
+            "type": "string",
+            "enum": [
+              "Weekly",
+              "Bi-Weekly",
+              "Monthly"
+            ]
+          },
+          "payPeriodStartDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-05"
+          }
+        }
+      },
+      "Supervisor": {
+        "type": "object",
+        "properties": {
+          "supervisorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "supervisorFirstName": {
+            "type": "string",
+            "example": "Alex"
+          },
+          "supervisorLastName": {
+            "type": "string",
+            "example": "Rivera"
+          },
+          "supervisorEmail": {
+            "type": "string",
+            "format": "email",
+            "example": "alex.rivera@example.org"
           }
         }
       },
@@ -979,6 +1149,40 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/client/{clientId}/summary": {
+      "get": {
+        "operationId": "v1GetClientSummary",
+        "summary": "Get a summary of a client's payroll config (employees, supervisors, activities, funding sources, holidays, settings)",
+        "tags": [
+          "Client"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client not found"
           }
         }
       }

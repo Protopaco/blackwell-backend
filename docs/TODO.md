@@ -66,7 +66,15 @@ Two naming patterns exist side by side: `map<Entity>` (raw sheet row → typed d
 ~~### Create AllocationReport tab service~~ — done as `writeAllocationReportTab.ts` (columns ended up as `wagesAllocation`/`additionalExpenses`/`total` instead of a single `totalExpense`)
 
 ### Create tab-order maintenance service
-After any write to the payroll report workbook, reorder tabs so active tabs are on the left and archive tabs are on the right. Active tab order: `current_hours`, `current_payroll_summary`, `EmployeeExpenses`, `AdditionalExpenses`, `AllocationReport`. Archive tabs follow in chronological order. Confirmed not built — no reorder/tab-index logic exists anywhere in `src`.
+~~Shared low-level piece done~~: `reorderTabs.ts` (`src/db/adapter/`) takes a workbook ID + an ordered list of tab names and reorders them in one batched Sheets API call (fetch tab metadata → map name→sheetId → one `batchUpdate` with `updateSheetProperties.index` per tab). Built as a generic adapter since the mechanics don't care what kind of workbook it is — may have other uses beyond the two below.
+
+Still to build — two domain-specific policy functions that compute the order and call `reorderTabs`, plus wiring:
+
+**Payroll report workbook** — active tabs left, archives right: `current_hours`, `current_payroll_summary`, `EmployeeExpenses`, `AdditionalExpenses`, `AllocationReport`, filtered to whichever exist yet (`AllocationReport` doesn't until the bookkeeper gets that far). Archive tabs (`hrs_MMDD_HHmm`/`payroll_MMDD_HHmm` pairs) sorted by their timestamp suffix, not plain alphabetical — a plain name sort would separate same-run pairs since `h` < `p`. Call sites: `writeAllocationReportTab.ts`, `writeEmployeeExpensesTab.ts`, `writeAdditionalExpensesTab.ts`, `writePayrollReportTab.ts`/`generatePayrollReport.ts` — wherever a new tab is created or an old one gets archived. Do **not** hook into the shared `createTab`/`createTabIfNotExists` adapter — it's also used for timesheet tabs, which have no such rule.
+
+**Timesheet workbook** — newest pay period left, `_manifest` pinned to the far right (internal bookkeeping, never shown). Sort by the real `PayPeriod.startDate` (descending), not by parsing `payPeriodName` — we already have the actual date, no need to parse the display string. Call site: `generateTimesheets.ts`, after each new pay-period tab is created.
+
+Deferred until after the test suite refactor (see `## Testing`) — needs its own test coverage and shouldn't add load to the currently flaky, quota-constrained suite in the meantime.
 
 ---
 
@@ -99,11 +107,11 @@ Still fully untested: `payPeriodsCache` invalidation (`writePayPeriod.ts`) and `
 
 ---
 
-### Split test suite into unit vs. integration
-Right now everything runs together under one `vitest` invocation, sequential (`fileParallelism: false`) because of the shared 60 req/min Google Sheets quota. But the suite actually mixes two very different kinds of tests: pure-logic tests with no external dependency (`buildAllocationRows`, `dateUtils`, `buildWeek`, `sortActivities`, `rowBuilders`) and real integration tests that hit the live Google Sheets API end-to-end (client/payPeriod/payrollReport/timesheet tests). Split into:
-- **Unit suite** — no external calls, safe to run on every save/commit, can be fully parallel.
-- **Integration suite** — hits real Sheets API, needs credentials/test-client setup, run on demand only.
-Likely needs a second vitest config (or projects setup) and separate npm scripts (e.g. `test:unit` / `test:integration`).
+~~### Split test suite into unit vs. integration~~
+~~Right now everything runs together under one `vitest` invocation, sequential (`fileParallelism: false`) because of the shared 60 req/min Google Sheets quota. But the suite actually mixes two very different kinds of tests: pure-logic tests with no external dependency (`buildAllocationRows`, `dateUtils`, `buildWeek`, `sortActivities`, `rowBuilders`) and real integration tests that hit the live Google Sheets API end-to-end (client/payPeriod/payrollReport/timesheet tests). Split into:~~
+~~- **Unit suite** — no external calls, safe to run on every save/commit, can be fully parallel.~~
+~~- **Integration suite** — hits real Sheets API, needs credentials/test-client setup, run on demand only.~~
+~~Likely needs a second vitest config (or projects setup) and separate npm scripts (e.g. `test:unit` / `test:integration`).~~ — done via Vitest 4 `test.projects` in `vitest.config.ts` (`unit` project: parallel, no setup file; `integration` project: sequential, `tests/integration/setup.ts` for env). Files physically moved to `tests/unit/` (6 files, 81 tests, includes `health.test.ts` — reclassified since it has no live API dependency despite using `supertest`) and `tests/integration/` (11 files, 44 tests, plus the shared `helpers/` fixtures and `setup.ts`). `npm test` now runs unit-only by default; `npm run test:integration` is separate and on-demand. Note: this only stops integration flakiness from blocking the default/build run — it does not fix the underlying flakiness itself (shared mutable `TEST_CLIENT_ID` fixture, no retry/backoff), which is still open, see "Assess cache-invalidation test coverage" above and the flagship end-to-end test below.
 
 ---
 
@@ -121,8 +129,8 @@ Build one flagship integration test that exercises the entire pay period workflo
 
 ## Client Summary
 
-### Add client summary/config data endpoint
-Client Summary page needs: current pay period, number of employees, timesheet template, pay period interval. The template (`Settings.timeInputMethod`) and interval (`Settings.payPeriodInterval`) already exist in `PayrollConfig`/`Settings` but nothing exposes them via a GET endpoint today — `readPayrollConfig` is only used internally by generation services. Need a new endpoint (e.g. `GET /client/:clientId/summary`) that surfaces this data. Open question: is "current pay period" derived from the existing `GET /payPeriod` list (most recent non-Closed), or does it need its own resolution logic?
+~~### Add client summary/config data endpoint~~
+~~Client Summary page needs: current pay period, number of employees, timesheet template, pay period interval. The template (`Settings.timeInputMethod`) and interval (`Settings.payPeriodInterval`) already exist in `PayrollConfig`/`Settings` but nothing exposes them via a GET endpoint today — `readPayrollConfig` is only used internally by generation services. Need a new endpoint (e.g. `GET /client/:clientId/summary`) that surfaces this data. Open question: is "current pay period" derived from the existing `GET /payPeriod` list (most recent non-Closed), or does it need its own resolution logic?~~ — done via `getClientSummary.ts` / `GET /client/:clientId/summary`. Scope ended up broader than originally planned: returns the full active-employee list plus supervisors/activities/fundingSources/holidays/settings from `PayrollConfig`, not just the four original fields. Pay period data was deliberately left out — multiple non-Closed pay periods can coexist, so there's no single "current" one to resolve; the UI can call `GET /payPeriod/:clientId` if it needs that.
 
 ---
 

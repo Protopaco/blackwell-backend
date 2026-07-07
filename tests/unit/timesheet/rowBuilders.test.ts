@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import Activity from '../../src/models/Activity.js';
-import { PayRate } from '../../src/models/PayRate.js';
-import { PayrollCategory } from '../../src/models/PayrollCategory.js';
-import Holiday from '../../src/models/Holiday.js';
+import Activity from '#models/Activity.js';
+import { PayRate } from '#models/PayRate.js';
+import { PayrollCategory } from '#models/PayrollCategory.js';
+import Holiday from '#models/Holiday.js';
 import {
   colLetter,
   buildHeaderRow,
@@ -15,7 +15,7 @@ import {
   buildDailyTotalRow,
   buildSummaryRow,
   buildSignatureRow,
-} from '../../src/services/timesheet/rowBuilders.js';
+} from '#services/timesheet/rowBuilders.js';
 
 const makeActivity = (activityName: string): Activity => ({
   activityId: crypto.randomUUID(),

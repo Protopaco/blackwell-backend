@@ -5,8 +5,8 @@ import {
   formatDateHeader,
   getDayOfWeek,
   getHolidayName,
-} from '../../src/utils/dateUtils.js';
-import Holiday from '../../src/models/Holiday.js';
+} from '#utils/dateUtils.js';
+import Holiday from '#models/Holiday.js';
 
 describe('getDatesBetween', () => {
   it('returns all dates between start and end inclusive', () => {

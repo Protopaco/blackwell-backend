@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
-import app from '../../src/app.js';
+import app from '#app.js';
 import { TEST_CLIENT_ID } from '../helpers/testClient.js';
 
 describe('GET /api/v1/client/:clientId/summary', () => {

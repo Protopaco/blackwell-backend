@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import sortActivities from '../../src/services/timesheet/sortActivities.js';
-import Activity from '../../src/models/Activity.js';
-import { PayRate, isFlatRate } from '../../src/models/PayRate.js';
-import { PayrollCategory } from '../../src/models/PayrollCategory.js';
+import sortActivities from '#services/timesheet/sortActivities.js';
+import Activity from '#models/Activity.js';
+import { PayRate, isFlatRate } from '#models/PayRate.js';
+import { PayrollCategory } from '#models/PayrollCategory.js';
 
 const makeActivity = (
   activityName: string,

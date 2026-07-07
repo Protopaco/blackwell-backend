@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import buildAllocationRows from '../../src/services/payrollReport/buildAllocationRows.js';
-import Employee from '../../src/models/Employee.js';
-import Activity, { ActivityFundingSource } from '../../src/models/Activity.js';
-import EmployeeExpense from '../../src/models/EmployeeExpense.js';
-import AdditionalExpense from '../../src/models/AdditionalExpense.js';
-import PayrollReportHoursRow from '../../src/models/PayrollReportHoursRow.js';
-import { PayRate } from '../../src/models/PayRate.js';
-import { PayrollCategory } from '../../src/models/PayrollCategory.js';
-import { EmployeeStatus } from '../../src/models/EmployeeStatus.js';
+import buildAllocationRows from '#services/payrollReport/buildAllocationRows.js';
+import Employee from '#models/Employee.js';
+import Activity, { ActivityFundingSource } from '#models/Activity.js';
+import EmployeeExpense from '#models/EmployeeExpense.js';
+import AdditionalExpense from '#models/AdditionalExpense.js';
+import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
+import { PayRate } from '#models/PayRate.js';
+import { PayrollCategory } from '#models/PayrollCategory.js';
+import { EmployeeStatus } from '#models/EmployeeStatus.js';
 
 // ─── Factories ────────────────────────────────────────────────────────────────
 
