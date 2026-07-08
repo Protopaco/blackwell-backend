@@ -1,6 +1,9 @@
 import createTabIfNotExists from '#db/adapter/createTabIfNotExists.js';
 import clearTabContent from '#db/adapter/clearTabContent.js';
 import writeValues from '#db/adapter/writeValues.js';
+import listTabNames from '#db/adapter/listTabNames.js';
+import reorderTabs from '#db/adapter/reorderTabs.js';
+import sortPayrollReportTabs from '#services/payrollReport/sortPayrollReportTabs.js';
 import AdditionalExpense from '#models/AdditionalExpense.js';
 import { ADDITIONAL_EXPENSES_TAB, ADDITIONAL_EXPENSES_HEADERS } from '#config/constants.js';
 import { logger } from '#utils/logger.js';
@@ -20,6 +23,9 @@ const writeAdditionalExpensesTab = async (
   ];
   await writeValues(workbookId, ADDITIONAL_EXPENSES_TAB, rows);
   additionalExpensesCache.delete(workbookId);
+
+  const tabNames = await listTabNames(workbookId);
+  await reorderTabs(workbookId, sortPayrollReportTabs(tabNames));
 };
 
 export default writeAdditionalExpensesTab;

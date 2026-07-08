@@ -65,16 +65,16 @@ Two naming patterns exist side by side: `map<Entity>` (raw sheet row → typed d
 
 ~~### Create AllocationReport tab service~~ — done as `writeAllocationReportTab.ts` (columns ended up as `wagesAllocation`/`additionalExpenses`/`total` instead of a single `totalExpense`)
 
-### Create tab-order maintenance service
-~~Shared low-level piece done~~: `reorderTabs.ts` (`src/db/adapter/`) takes a workbook ID + an ordered list of tab names and reorders them in one batched Sheets API call (fetch tab metadata → map name→sheetId → one `batchUpdate` with `updateSheetProperties.index` per tab). Built as a generic adapter since the mechanics don't care what kind of workbook it is — may have other uses beyond the two below.
+~~### Create tab-order maintenance service~~
+~~Shared low-level piece~~: `reorderTabs.ts` (`src/db/adapter/`) takes a workbook ID + an ordered list of tab names and reorders them in one batched Sheets API call (fetch tab metadata → map name→sheetId → one `batchUpdate` with `updateSheetProperties.index` per tab). Built as a generic adapter since the mechanics don't care what kind of workbook it is. Paired with a new `listTabNames.ts` adapter (returns every current tab title — nothing existed for this before, only single-tab lookups).
 
-Still to build — two domain-specific policy functions that compute the order and call `reorderTabs`, plus wiring:
+Two domain-specific policy functions compute the order and call `reorderTabs` — both pure functions, unit-tested, no live API needed:
 
-**Payroll report workbook** — active tabs left, archives right: `current_hours`, `current_payroll_summary`, `EmployeeExpenses`, `AdditionalExpenses`, `AllocationReport`, filtered to whichever exist yet (`AllocationReport` doesn't until the bookkeeper gets that far). Archive tabs (`hrs_MMDD_HHmm`/`payroll_MMDD_HHmm` pairs) sorted by their timestamp suffix, not plain alphabetical — a plain name sort would separate same-run pairs since `h` < `p`. Call sites: `writeAllocationReportTab.ts`, `writeEmployeeExpensesTab.ts`, `writeAdditionalExpensesTab.ts`, `writePayrollReportTab.ts`/`generatePayrollReport.ts` — wherever a new tab is created or an old one gets archived. Do **not** hook into the shared `createTab`/`createTabIfNotExists` adapter — it's also used for timesheet tabs, which have no such rule.
+~~**Payroll report workbook**~~ — done as `sortPayrollReportTabs.ts` (`src/services/payrollReport/`). Active tabs left (`current_hours`, `current_payroll_summary`, `EmployeeExpenses`, `AdditionalExpenses`, `AllocationReport`, filtered to whichever exist), archive tabs right sorted by timestamp descending — most recently archived closest to the active tabs — with `hrs_`/`payroll_` same-run pairs kept adjacent (`hrs_` first). Wired into `writeAllocationReportTab.ts`, `writeEmployeeExpensesTab.ts`, `writeAdditionalExpensesTab.ts`, and `generatePayrollReport.ts` (once, after its archive/rename dance settles into a final tab state).
 
-**Timesheet workbook** — newest pay period left, `_manifest` pinned to the far right (internal bookkeeping, never shown). Sort by the real `PayPeriod.startDate` (descending), not by parsing `payPeriodName` — we already have the actual date, no need to parse the display string. Call site: `generateTimesheets.ts`, after each new pay-period tab is created.
+~~**Timesheet workbook**~~ — done as `sortTimesheetTabs.ts` (`src/services/timesheet/`). Pay period tabs newest-first by the real `PayPeriod.startDate`, `_manifest` pinned last. Wired into `generateTimesheets.ts`, once per employee after their new pay-period tab and manifest entry are written.
 
-Deferred until after the test suite refactor (see `## Testing`) — needs its own test coverage and shouldn't add load to the currently flaky, quota-constrained suite in the meantime.
+Both use the naming convention correction from the map*/build* discussion below: named `sort*` (matching the existing `sortActivities.ts` precedent — take a list, apply ordering rules, return it organized), not `build*` (which is reserved for reshaping into a genuinely different output type, not just reordering the same list).
 
 ---
 
@@ -101,14 +101,16 @@ Deferred until after the test suite refactor (see `## Testing`) — needs its ow
 
 ---
 
-### Assess cache-invalidation test coverage
-Decision made: keep the two existing flaky integration tests (`allocationReport.test.ts`, `generatePayrollReport.test.ts`) as-is rather than lightening them — they verify something a mock can't (real Sheets write → real read sees fresh data, no eventual-consistency gap), which is a different and stronger claim than wiring correctness. Their occasional quota-flakiness is more acceptable now that wiring has separate, always-run coverage (below).
+~~### Assess cache-invalidation test coverage~~
+~~Decision made: keep the two existing flaky integration tests (`allocationReport.test.ts`, `generatePayrollReport.test.ts`) as-is rather than lightening them — they verify something a mock can't (real Sheets write → real read sees fresh data, no eventual-consistency gap), which is a different and stronger claim than wiring correctness. Their occasional quota-flakiness is more acceptable now that wiring has separate, always-run coverage (below).~~
 
 ~~Still fully untested: `payPeriodsCache` invalidation (`writePayPeriod.ts`) and `payrollConfigCache` invalidation (`updateEmployeeTimesheetFile.ts`)~~ — closed. Every invalidation site turned out to be the same trivial shape (one `<cache>.delete(key)` call right after a successful write), so wiring got unit-tested by mocking the underlying Sheets adapter calls (`vi.mock()`), with zero quota cost: `tests/unit/db/writeAdditionalExpensesTab.test.ts`, `writeEmployeeExpensesTab.test.ts`, `writeAllocationReportTab.test.ts`, `writePayPeriod.test.ts`, `updateEmployeeTimesheetFile.test.ts`. Also surfaced a gap not previously documented here: `employeeExpensesCache`/the whole `employee-expenses` endpoint pair had **zero** test coverage of any kind (not even integration) — now has unit wiring coverage at least.
 
-`currentHoursCache` (invalidated inside `generatePayrollReport.ts`) was deliberately **not** given an equivalent unit test — that function has ~10 dependencies (`readClientById`, `readPayPeriodById`, `readPayrollConfig`, `readTimesheetDetail`, `readTimesheetEntries`, `createOAuthWorkbook`, `writePayPeriod`, `writePayrollReportTab`, `archivePayrollReportTab`, `renameTab`) that would all need mocking to reach one assertion — disproportionate effort for the existing integration test's marginal value.
+~~`currentHoursCache` (invalidated inside `generatePayrollReport.ts`) was deliberately **not** given an equivalent unit test~~ — user confirmed passing on it: that function has ~10 dependencies (`readClientById`, `readPayPeriodById`, `readPayrollConfig`, `readTimesheetDetail`, `readTimesheetEntries`, `createOAuthWorkbook`, `writePayPeriod`, `writePayrollReportTab`, `archivePayrollReportTab`, `renameTab`) that would all need mocking to reach one assertion — disproportionate effort for the existing integration test's marginal value.
 
-**Deferred, not built now**: real integration-level round-trip tests (POST/PUT → GET reflects fresh data through the live API, same style as `additionalExpenses.test.ts`) for `employeeExpensesCache`, `payPeriodsCache`, and `payrollConfigCache` — these three now have unit-level wiring coverage but, unlike `additionalExpensesCache`/`allocationReportCache`/`currentHoursCache`, no true end-to-end verification against real Sheets. Pick this up later.
+~~`clientsCache` has no invalidation coverage~~ — confirmed there's nothing to test: no code anywhere writes to the `Clients` tab (`src/db/client/` has only reads, no `POST`/`PUT`/`PATCH`/`DELETE` route exists under `/client`). Client create/edit is unbuilt "phase two" work — when it gets built, its tests (including `clientsCache` invalidation) come with it as part of that feature, not before.
+
+Deferred, not built now: real integration-level round-trip tests (POST/PUT → GET reflects fresh data through the live API, same style as `additionalExpenses.test.ts`) for `employeeExpensesCache`, `payPeriodsCache`, and `payrollConfigCache` — these three now have unit-level wiring coverage but, unlike `additionalExpensesCache`/`allocationReportCache`/`currentHoursCache`, no true end-to-end verification against real Sheets. Pick this up later.
 
 ---
 

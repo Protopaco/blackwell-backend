@@ -1,5 +1,7 @@
 import createOAuthWorkbook from '#db/adapter/createOAuthWorkbook.js';
 import renameTab from '#db/adapter/renameTab.js';
+import listTabNames from '#db/adapter/listTabNames.js';
+import reorderTabs from '#db/adapter/reorderTabs.js';
 import readClientById from '#db/client/readClientById.js';
 import archivePayrollReportTab from '#db/payrollReport/archivePayrollReportTab.js';
 import writePayrollReportTab from '#db/payrollReport/writePayrollReportTab.js';
@@ -7,6 +9,7 @@ import readPayPeriodById from '#db/payPeriod/readPayPeriodById.js';
 import writePayPeriod from '#db/payPeriod/writePayPeriod.js';
 import readPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
 import currentHoursCache from '#utils/caches/currentHoursCache.js';
+import sortPayrollReportTabs from './sortPayrollReportTabs.js';
 import Activity from '#models/Activity.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
 import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
@@ -91,6 +94,9 @@ const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise
   await renameTab(reportFileId, PENDING_HOURS_TAB, CURRENT_HOURS_TAB);
   currentHoursCache.delete(reportFileId);
   await renameTab(reportFileId, PENDING_PAYROLL_SUMMARY_TAB, CURRENT_PAYROLL_SUMMARY_TAB);
+
+  const tabNames = await listTabNames(reportFileId);
+  await reorderTabs(reportFileId, sortPayrollReportTabs(tabNames));
 
   if (payPeriod.status !== PayPeriodStatus.Closed) {
     await writePayPeriod(client.payPeriodRegistryFileId, { ...payPeriod, payrollReportFileId: reportFileId, status: PayPeriodStatus.Processed });
