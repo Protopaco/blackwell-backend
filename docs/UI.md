@@ -58,7 +58,15 @@ This card handles both timesheet status tracking and expense entry for the alloc
 
 **Per employee row:**
 - Employee name
-- Timesheet status (Not Started / In Progress / Complete)
+- Timesheet status — one of five states, from `GET /timesheet/status/:clientId/:payPeriodId` (`status` field, backed by the `TimesheetStatus` model):
+  | Status | Meaning |
+  |---|---|
+  | `NotGenerated` | No timesheet tab exists yet for this employee/pay period |
+  | `Generated` | Timesheet exists, employee hasn't signed yet |
+  | `Submitted` | Employee has signed, supervisor hasn't |
+  | `Approved` | Both signed, but not yet reflected in a generated payroll report |
+  | `Complete` | Both signed and included in the most recently generated payroll report's `current_hours` |
+  FE display grouping (e.g. collapsing to fewer visual states) is a FE design decision, not dictated by the backend.
 - Include/Ignore toggle — defaults to Include; locked to Include if the employee has hours this period (enforced server-side)
 - Total Expense field — dollar amount input (wages + taxes + everything, entered after bookkeeper runs payroll externally); required if Include, greyed out if Ignore
 

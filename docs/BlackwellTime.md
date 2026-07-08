@@ -1,5 +1,7 @@
 # Blackwell Time — Project Documentation
 
+> **⚠️ For implementation details (function names, model shapes, enum values, routes, folder structure), see `docs/ARCHITECTURE.md` instead.** This document was written early, before most of the implementation, and its architecture/model/db/services/routes sections have drifted significantly from the actual code (e.g. `PayPeriodStatus`, `PayrollCategory`, and `PayRate` enum values below are all outdated). Its conceptual sections — timesheet generation philosophy, manifest concept, scope boundary, business rules — are still accurate and useful. When in doubt about anything code-level, trust `ARCHITECTURE.md` or the code itself over this file.
+
 ## Project Overview
 
 A Node/TypeScript backend service that automates timesheet generation and payroll cost allocation for Blackwell Bookkeeping. Blackwell manages payroll for multiple nonprofit clients. The current process is entirely manual — timesheets are built by hand in Google Sheets, formulas are manually maintained, holidays are manually applied, and cost allocation is done in spreadsheets.
