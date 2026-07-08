@@ -1,4 +1,5 @@
 import Guid from '#models/Guid.js';
+import { TimesheetStatusType } from '#models/TimesheetStatus.js';
 
 interface EmployeeTimesheetStatus {
   employeeId: Guid;
@@ -8,6 +9,7 @@ interface EmployeeTimesheetStatus {
   totalHours: number | null;
   employeeSigned: boolean;
   supervisorSigned: boolean;
+  status: TimesheetStatusType;
 }
 
 export default EmployeeTimesheetStatus;

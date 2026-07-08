@@ -1,4 +1,4 @@
-import { google } from 'googleapis';
+import readTabs from '#db/adapter/readTabs.js';
 import PayrollConfig from '#models/PayrollConfig.js';
 import mapEmployee from '#db/employee/mapEmployee.js';
 import mapSupervisor from '#db/supervisor/mapSupervisor.js';
@@ -26,43 +26,13 @@ const TAB_NAMES = {
   holidays: HOLIDAYS_TAB,
 };
 
-const parseRows = (values: unknown[][]): Record<string, unknown>[] => {
-  if (!values || values.length <= 1) return [];
-  const headers = values[0] as string[];
-  return values.slice(1).map((row) => {
-    const record: Record<string, unknown> = {};
-    headers.forEach((header, index) => {
-      record[header] = (row as unknown[])[index] ?? '';
-    });
-    return record;
-  });
-};
-
-// Loads all config tabs (employees, activities, settings, etc.) in one batchGet call and caches the result for 5 minutes.
+// Loads all config tabs (employees, activities, settings, etc.) in one batched call and caches the result for 5 minutes.
 // Used by generateTimesheets and other services that need full client config in a single read.
 const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollConfig> => {
   logger.debug(`Loading payroll config from workbook: ${payrollConfigFileId}`);
 
   const cached = payrollConfigCache.get(payrollConfigFileId);
   if (cached) return cached;
-
-  const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (!serviceAccountJson) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is not set');
-
-  const auth = new google.auth.GoogleAuth({
-    credentials: JSON.parse(serviceAccountJson),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
-
-  const sheets = google.sheets({ version: 'v4', auth });
-  const ranges = Object.values(TAB_NAMES);
-
-  const response = await sheets.spreadsheets.values.batchGet({
-    spreadsheetId: payrollConfigFileId,
-    ranges,
-  });
-
-  const valueRanges = response.data.valueRanges ?? [];
 
   const [
     employeeRows,
@@ -71,7 +41,7 @@ const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollCo
     activityRows,
     settingsRows,
     holidayRows,
-  ] = valueRanges.map((vr) => parseRows((vr.values as unknown[][]) ?? []));
+  ] = await readTabs(payrollConfigFileId, Object.values(TAB_NAMES));
 
   const settings = settingsRows.length > 0 ? mapSettings(settingsRows[0]) : null;
   if (!settings) throw new Error('Settings not found in Payroll Config');

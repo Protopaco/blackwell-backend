@@ -62,6 +62,8 @@ Flat rate activities need named codes that the payroll service maps to dollar am
 - What flat rate activity types does Blackwell actually have (e.g. on-call, meetings)?
 - Does the payroll service support named flat rate codes, or does it take a dollar amount directly?
 
+**Note:** Probably unnecessary to resolve now — `FlatPayRate1`/`FlatPayRate2` as generic slots may be the right permanent design, not something to replace. If the payroll service needs named codes, that would likely be additive (a name/label mapped onto these slots) rather than renaming/replacing them. Revisit when payroll app integration work begins.
+
 ---
 
 ## Payroll Submission — Rate on File

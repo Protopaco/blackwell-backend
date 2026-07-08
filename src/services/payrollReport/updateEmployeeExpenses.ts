@@ -1,5 +1,4 @@
-import readClientById from '#db/client/readClientById.js';
-import readPayPeriodById from '#db/payPeriod/readPayPeriodById.js';
+import getPayPeriodById from '#services/payPeriod/getPayPeriodById.js';
 import readPayrollReportSummary from '#db/payrollReport/readPayrollReportSummary.js';
 import readEmployeeExpensesTab from '#db/payrollReport/readEmployeeExpensesTab.js';
 import writeEmployeeExpensesTab from '#db/payrollReport/writeEmployeeExpensesTab.js';
@@ -15,16 +14,12 @@ const updateEmployeeExpenses = async (
 ): Promise<void> => {
   logger.info(`updateEmployeeExpenses clientId=${clientId} payPeriodId=${payPeriodId} employeeId=${updatedExpense.employeeId}`);
 
-  const client = await readClientById(clientId);
-  if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
-
-  const payPeriod = await readPayPeriodById(client.payPeriodRegistryFileId, payPeriodId);
-  if (!payPeriod) throw new NotFoundError(`Pay period not found: ${payPeriodId}`);
+  const payPeriod = await getPayPeriodById(clientId, payPeriodId);
   if (!payPeriod.payrollReportFileId) throw new NotFoundError(`No payroll report file exists for pay period: ${payPeriodId}`);
 
   if (!updatedExpense.activeThisPayPeriod) {
     const summaryRows = await readPayrollReportSummary(payPeriod.payrollReportFileId);
-    const hasHours = summaryRows.some(
+    const hasHours = (summaryRows ?? []).some(
       (row) => row['EmployeeId'] === updatedExpense.employeeId && Number(row['TotalHours']) > 0,
     );
     if (hasHours) {
@@ -32,7 +27,7 @@ const updateEmployeeExpenses = async (
     }
   }
 
-  const existingExpenses = await readEmployeeExpensesTab(payPeriod.payrollReportFileId);
+  const existingExpenses = (await readEmployeeExpensesTab(payPeriod.payrollReportFileId)) ?? [];
   const index = existingExpenses.findIndex((expense) => expense.employeeId === updatedExpense.employeeId);
 
   if (index >= 0) {

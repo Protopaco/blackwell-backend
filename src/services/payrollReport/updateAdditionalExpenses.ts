@@ -1,5 +1,4 @@
-import readClientById from '#db/client/readClientById.js';
-import readPayPeriodById from '#db/payPeriod/readPayPeriodById.js';
+import getPayPeriodById from '#services/payPeriod/getPayPeriodById.js';
 import writeAdditionalExpensesTab from '#db/payrollReport/writeAdditionalExpensesTab.js';
 import AdditionalExpense from '#models/AdditionalExpense.js';
 import Guid from '#models/Guid.js';
@@ -13,11 +12,7 @@ const updateAdditionalExpenses = async (
 ): Promise<void> => {
   logger.info(`updateAdditionalExpenses clientId=${clientId} payPeriodId=${payPeriodId} count=${expenses.length}`);
 
-  const client = await readClientById(clientId);
-  if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
-
-  const payPeriod = await readPayPeriodById(client.payPeriodRegistryFileId, payPeriodId);
-  if (!payPeriod) throw new NotFoundError(`Pay period not found: ${payPeriodId}`);
+  const payPeriod = await getPayPeriodById(clientId, payPeriodId);
   if (!payPeriod.payrollReportFileId) throw new NotFoundError(`No payroll report file exists for pay period: ${payPeriodId}`);
 
   await writeAdditionalExpensesTab(payPeriod.payrollReportFileId, expenses);
