@@ -4,12 +4,11 @@ import createTabIfNotExists from "#db/adapter/createTabIfNotExists.js";
 import writeValues from "#db/adapter/writeValues.js";
 import listTabNames from "#db/adapter/listTabNames.js";
 import reorderTabs from "#db/adapter/reorderTabs.js";
-import readClientById from "#db/client/readClientById.js";
 import saveManifest from "#db/manifest/appendManifest.js";
 import getManifest from "#db/manifest/readManifest.js";
-import getPayPeriodById from "#db/payPeriod/readPayPeriodById.js";
 import getPayPeriods from "#db/payPeriod/readPayPeriods.js";
 import writePayPeriod from "#db/payPeriod/writePayPeriod.js";
+import getClientAndPayPeriod from "#services/payPeriod/getClientAndPayPeriod.js";
 import getPayrollConfig from "#db/payrollConfig/readPayrollConfig.js";
 import updateEmployeeTimesheetFile from "#db/employee/updateEmployeeTimesheetFile.js";
 import Activity from "#models/Activity.js";
@@ -25,7 +24,6 @@ import {
   getHolidayName,
 } from "#utils/dateUtils.js";
 import { logger } from "#utils/logger.js";
-import { NotFoundError } from "#utils/errors.js";
 import buildWeek from "./buildWeek.js";
 import applyTimesheetFormatting from "./applyTimesheetFormatting.js";
 import sortTimesheetTabs from "./sortTimesheetTabs.js";
@@ -81,14 +79,7 @@ const generateTimesheets = async (
   clientId: Guid,
   payPeriodId: Guid,
 ): Promise<void> => {
-  const client = await readClientById(clientId);
-  if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
-
-  const payPeriod = await getPayPeriodById(
-    client.payPeriodRegistryFileId,
-    payPeriodId,
-  );
-  if (!payPeriod) throw new NotFoundError(`Pay period not found: ${payPeriodId}`);
+  const { client, payPeriod } = await getClientAndPayPeriod(clientId, payPeriodId);
 
   const payrollConfig = await getPayrollConfig(client.payrollConfigFileId);
 

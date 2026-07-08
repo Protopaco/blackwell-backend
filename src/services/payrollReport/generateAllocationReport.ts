@@ -1,5 +1,4 @@
-import readClientById from '#db/client/readClientById.js';
-import readPayPeriodById from '#db/payPeriod/readPayPeriodById.js';
+import getClientAndPayPeriod from '#services/payPeriod/getClientAndPayPeriod.js';
 import readPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
 import readCurrentHoursTab from '#db/payrollReport/readCurrentHoursTab.js';
 import readEmployeeExpensesTab from '#db/payrollReport/readEmployeeExpensesTab.js';
@@ -8,17 +7,13 @@ import writeAllocationReportTab from '#db/payrollReport/writeAllocationReportTab
 import AllocationReportRow from '#models/AllocationReportRow.js';
 import Guid from '#models/Guid.js';
 import { logger } from '#utils/logger.js';
-import { NotFoundError, UnprocessableError } from '#utils/errors.js';
+import { UnprocessableError } from '#utils/errors.js';
 import buildAllocationRows from './buildAllocationRows.js';
 
 const generateAllocationReport = async (clientId: Guid, payPeriodId: Guid): Promise<AllocationReportRow[]> => {
   logger.info(`generateAllocationReport clientId=${clientId} payPeriodId=${payPeriodId}`);
 
-  const client = await readClientById(clientId);
-  if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
-
-  const payPeriod = await readPayPeriodById(client.payPeriodRegistryFileId, payPeriodId);
-  if (!payPeriod) throw new NotFoundError(`Pay period not found: ${payPeriodId}`);
+  const { client, payPeriod } = await getClientAndPayPeriod(clientId, payPeriodId);
 
   if (!payPeriod.payrollReportFileId) {
     throw new UnprocessableError('Cannot generate allocation report — payroll report has not been generated yet for this pay period');

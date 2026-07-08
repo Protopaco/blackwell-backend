@@ -2,11 +2,10 @@ import createOAuthWorkbook from '#db/adapter/createOAuthWorkbook.js';
 import renameTab from '#db/adapter/renameTab.js';
 import listTabNames from '#db/adapter/listTabNames.js';
 import reorderTabs from '#db/adapter/reorderTabs.js';
-import readClientById from '#db/client/readClientById.js';
 import archivePayrollReportTab from '#db/payrollReport/archivePayrollReportTab.js';
 import writePayrollReportTab from '#db/payrollReport/writePayrollReportTab.js';
-import readPayPeriodById from '#db/payPeriod/readPayPeriodById.js';
 import writePayPeriod from '#db/payPeriod/writePayPeriod.js';
+import getClientAndPayPeriod from '#services/payPeriod/getClientAndPayPeriod.js';
 import readPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
 import currentHoursCache from '#utils/caches/currentHoursCache.js';
 import sortPayrollReportTabs from './sortPayrollReportTabs.js';
@@ -29,7 +28,7 @@ import {
   SUMMARY_HEADERS,
 } from '#config/constants.js';
 import { logger } from '#utils/logger.js';
-import { NotFoundError, UnprocessableError } from '#utils/errors.js';
+import { UnprocessableError } from '#utils/errors.js';
 
 // Generates or regenerates the payroll report for a pay period.
 // Only processes employees whose timesheets are Complete (both signatures present).
@@ -38,11 +37,7 @@ import { NotFoundError, UnprocessableError } from '#utils/errors.js';
 const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise<void> => {
   logger.info(`generatePayrollReport clientId=${clientId} payPeriodId=${payPeriodId}`);
 
-  const client = await readClientById(clientId);
-  if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
-
-  const payPeriod = await readPayPeriodById(client.payPeriodRegistryFileId, payPeriodId);
-  if (!payPeriod) throw new NotFoundError(`Pay period not found: ${payPeriodId}`);
+  const { client, payPeriod } = await getClientAndPayPeriod(clientId, payPeriodId);
 
   const payrollConfig = await readPayrollConfig(client.payrollConfigFileId);
 
