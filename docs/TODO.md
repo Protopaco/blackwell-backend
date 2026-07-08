@@ -96,14 +96,19 @@ Deferred until after the test suite refactor (see `## Testing`) — needs its ow
 
 ## Testing
 
-### Unit tests for allocation calculation
-The allocation math is complex enough to warrant thorough unit tests. Cover: proportion calculation, expense distribution, ignored employees, employees with no hours in a funding source, org-level expense distribution, edge cases (single employee, single funding source, zero expenses).
+~~### Unit tests for allocation calculation~~
+~~The allocation math is complex enough to warrant thorough unit tests. Cover: proportion calculation, expense distribution, ignored employees, employees with no hours in a funding source, org-level expense distribution, edge cases (single employee, single funding source, zero expenses).~~ — done, `buildAllocationRows.test.ts` (24 tests) already covers all of this: proportion calculation, expense distribution, ignored/inactive employees, zero-hours edge cases, rounding/remainder handling, and sort order. Item was just never struck through.
 
 ---
 
 ### Assess cache-invalidation test coverage
-The 7-cache refactor (`src/utils/caches/*`) added `invalidate`-on-write coverage in `additionalExpenses.test.ts` (already existed, exercises write→read correctly). Two new tests were added to check the same thing for `allocationReportCache` and `currentHoursCache` (`allocationReport.test.ts`, `generatePayrollReport.test.ts`), but each adds a full generate-then-verify Sheets API cycle to an already quota-constrained suite (60 req/min, `fileParallelism: false`). Two consecutive local runs each produced different, non-overlapping failures (generic 500s, one raw destructure crash in `getTestPayPeriod()`) — looks like pre-existing quota flakiness made more likely by the added load, not a bug in the invalidation logic itself. Come back and decide: keep the two new tests as-is and accept the flakiness, lighten them (drop the chained second call), or move this kind of check into the unit-test suite instead (see below) so it doesn't compete for Sheets API quota at all.
-Still fully untested: `payPeriodsCache` invalidation (`writePayPeriod.ts`) and `payrollConfigCache` invalidation (`updateEmployeeTimesheetFile.ts`) — no test calls either function today. Pre-existing gap, not introduced by the refactor.
+Decision made: keep the two existing flaky integration tests (`allocationReport.test.ts`, `generatePayrollReport.test.ts`) as-is rather than lightening them — they verify something a mock can't (real Sheets write → real read sees fresh data, no eventual-consistency gap), which is a different and stronger claim than wiring correctness. Their occasional quota-flakiness is more acceptable now that wiring has separate, always-run coverage (below).
+
+~~Still fully untested: `payPeriodsCache` invalidation (`writePayPeriod.ts`) and `payrollConfigCache` invalidation (`updateEmployeeTimesheetFile.ts`)~~ — closed. Every invalidation site turned out to be the same trivial shape (one `<cache>.delete(key)` call right after a successful write), so wiring got unit-tested by mocking the underlying Sheets adapter calls (`vi.mock()`), with zero quota cost: `tests/unit/db/writeAdditionalExpensesTab.test.ts`, `writeEmployeeExpensesTab.test.ts`, `writeAllocationReportTab.test.ts`, `writePayPeriod.test.ts`, `updateEmployeeTimesheetFile.test.ts`. Also surfaced a gap not previously documented here: `employeeExpensesCache`/the whole `employee-expenses` endpoint pair had **zero** test coverage of any kind (not even integration) — now has unit wiring coverage at least.
+
+`currentHoursCache` (invalidated inside `generatePayrollReport.ts`) was deliberately **not** given an equivalent unit test — that function has ~10 dependencies (`readClientById`, `readPayPeriodById`, `readPayrollConfig`, `readTimesheetDetail`, `readTimesheetEntries`, `createOAuthWorkbook`, `writePayPeriod`, `writePayrollReportTab`, `archivePayrollReportTab`, `renameTab`) that would all need mocking to reach one assertion — disproportionate effort for the existing integration test's marginal value.
+
+**Deferred, not built now**: real integration-level round-trip tests (POST/PUT → GET reflects fresh data through the live API, same style as `additionalExpenses.test.ts`) for `employeeExpensesCache`, `payPeriodsCache`, and `payrollConfigCache` — these three now have unit-level wiring coverage but, unlike `additionalExpensesCache`/`allocationReportCache`/`currentHoursCache`, no true end-to-end verification against real Sheets. Pick this up later.
 
 ---
 
