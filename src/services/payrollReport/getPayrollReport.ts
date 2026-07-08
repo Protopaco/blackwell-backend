@@ -14,7 +14,7 @@ const getPayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise<Payr
   if (!payPeriod.payrollReportFileId) return null;
 
   const rawRows = await readPayrollReportSummary(payPeriod.payrollReportFileId);
-  if (rawRows.length === 0) return null;
+  if (!rawRows || rawRows.length === 0) return null;
 
   return buildPayrollReportResponse(rawRows);
 };

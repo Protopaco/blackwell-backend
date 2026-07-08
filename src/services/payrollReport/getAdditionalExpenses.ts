@@ -11,7 +11,7 @@ const getAdditionalExpenses = async (clientId: Guid, payPeriodId: Guid): Promise
 
   if (!payPeriod.payrollReportFileId) return [];
 
-  return readAdditionalExpensesTab(payPeriod.payrollReportFileId);
+  return (await readAdditionalExpensesTab(payPeriod.payrollReportFileId)) ?? [];
 };
 
 export default getAdditionalExpenses;

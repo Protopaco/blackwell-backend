@@ -11,7 +11,7 @@ const getAllocationReport = async (clientId: Guid, payPeriodId: Guid): Promise<A
 
   if (!payPeriod.payrollReportFileId) return [];
 
-  return readAllocationReportTab(payPeriod.payrollReportFileId);
+  return (await readAllocationReportTab(payPeriod.payrollReportFileId)) ?? [];
 };
 
 export default getAllocationReport;

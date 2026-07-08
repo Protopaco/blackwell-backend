@@ -28,14 +28,14 @@ const generateAllocationReport = async (clientId: Guid, payPeriodId: Guid): Prom
     readAdditionalExpensesTab(reportFileId),
   ]);
 
-  if (hoursRows.length === 0) {
+  if (!hoursRows || hoursRows.length === 0) {
     throw new UnprocessableError('Cannot generate allocation report — no hours data found in current_hours tab');
   }
 
   const activityMap = new Map(payrollConfig.activities.map((activity) => [activity.activityName, activity]));
   const employeeMap = new Map(payrollConfig.employees.map((employee) => [employee.employeeId, employee]));
 
-  const rows = buildAllocationRows(hoursRows, employeeExpenses, additionalExpenses, activityMap, employeeMap);
+  const rows = buildAllocationRows(hoursRows, employeeExpenses ?? [], additionalExpenses ?? [], activityMap, employeeMap);
 
   await writeAllocationReportTab(reportFileId, rows);
 

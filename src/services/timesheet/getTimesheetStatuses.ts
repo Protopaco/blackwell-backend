@@ -23,7 +23,7 @@ const getTimesheetStatuses = async (
   const currentHoursRows = payPeriod.payrollReportFileId
     ? await readCurrentHoursTab(payPeriod.payrollReportFileId)
     : [];
-  const employeeIdsInCurrentHours = new Set(currentHoursRows.map((row) => row.EmployeeId));
+  const employeeIdsInCurrentHours = new Set((currentHoursRows ?? []).map((row) => row.EmployeeId));
 
   return Promise.all(
     activeEmployees.map(async (employee) => {

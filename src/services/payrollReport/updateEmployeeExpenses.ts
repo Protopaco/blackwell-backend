@@ -19,7 +19,7 @@ const updateEmployeeExpenses = async (
 
   if (!updatedExpense.activeThisPayPeriod) {
     const summaryRows = await readPayrollReportSummary(payPeriod.payrollReportFileId);
-    const hasHours = summaryRows.some(
+    const hasHours = (summaryRows ?? []).some(
       (row) => row['EmployeeId'] === updatedExpense.employeeId && Number(row['TotalHours']) > 0,
     );
     if (hasHours) {
@@ -27,7 +27,7 @@ const updateEmployeeExpenses = async (
     }
   }
 
-  const existingExpenses = await readEmployeeExpensesTab(payPeriod.payrollReportFileId);
+  const existingExpenses = (await readEmployeeExpensesTab(payPeriod.payrollReportFileId)) ?? [];
   const index = existingExpenses.findIndex((expense) => expense.employeeId === updatedExpense.employeeId);
 
   if (index >= 0) {
