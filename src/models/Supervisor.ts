@@ -1,10 +1,10 @@
-import Guid from '#models/Guid.js';
+import Guid from "#models/Guid.js";
 
 interface Supervisor {
   supervisorId: Guid;
-  supervisorFirstName: string;
-  supervisorLastName: string;
-  supervisorEmail: string;
+  firstName: string;
+  lastName: string;
+  email: string;
 }
 
 export default Supervisor;

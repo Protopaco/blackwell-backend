@@ -357,15 +357,15 @@
             "type": "string",
             "format": "uuid"
           },
-          "supervisorFirstName": {
+          "firstName": {
             "type": "string",
             "example": "Alex"
           },
-          "supervisorLastName": {
+          "lastName": {
             "type": "string",
             "example": "Rivera"
           },
-          "supervisorEmail": {
+          "email": {
             "type": "string",
             "format": "email",
             "example": "alex.rivera@example.org"
