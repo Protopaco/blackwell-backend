@@ -304,9 +304,9 @@ Created automatically when a client is added.
 | Column       | Description |
 | ------------ | ----------- |
 | SupervisorId | UUID        |
-| firstName    |             |
-| lastName     |             |
-| email        |             |
+| FirstName    |             |
+| LastName     |             |
+| Email        |             |
 
 > Supervisors are client-side managers, never Blackwell employees. There is no hard assignment between supervisors and employees — any supervisor can approve any employee's timesheet. Whoever approves signs it.
 
