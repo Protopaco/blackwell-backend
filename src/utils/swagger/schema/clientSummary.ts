@@ -23,6 +23,10 @@ const clientSummary = {
         items: { $ref: '#/components/schemas/Holiday' },
       },
       settings: { $ref: '#/components/schemas/Settings' },
+      payPeriods: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/PayPeriod' },
+      },
     },
   },
 };

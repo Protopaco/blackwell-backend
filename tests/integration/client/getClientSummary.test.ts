@@ -13,6 +13,7 @@ describe('GET /api/v1/client/:clientId/summary', () => {
     expect(Array.isArray(res.body.fundingSources)).toBe(true);
     expect(Array.isArray(res.body.holidays)).toBe(true);
     expect(res.body.settings).toBeTypeOf('object');
+    expect(Array.isArray(res.body.payPeriods)).toBe(true);
   });
 
   it('returns only active employees, with expected fields', async () => {
@@ -44,8 +45,39 @@ describe('GET /api/v1/client/:clientId/summary', () => {
     expect(res.body.settings).toHaveProperty('payPeriodStartDate');
   });
 
+  it('returns supervisors with expected fields', async () => {
+    const res = await request(app).get(`/api/v1/client/${TEST_CLIENT_ID}/summary`);
+
+    expect(res.body.supervisors.length).toBeGreaterThan(0);
+    const supervisor = res.body.supervisors[0];
+    expect(supervisor).toHaveProperty('supervisorId');
+    expect(supervisor).toHaveProperty('firstName');
+    expect(supervisor).toHaveProperty('lastName');
+    expect(supervisor).toHaveProperty('email');
+  });
+
+  it('returns non-Closed pay periods, stripped of the internal payrollReportFileId', async () => {
+    const res = await request(app).get(`/api/v1/client/${TEST_CLIENT_ID}/summary`);
+
+    expect(res.body.payPeriods.length).toBeGreaterThan(0);
+    for (const payPeriod of res.body.payPeriods) {
+      expect(payPeriod.status).not.toBe('Closed');
+      expect(payPeriod).not.toHaveProperty('payrollReportFileId');
+    }
+
+    const payPeriod = res.body.payPeriods[0];
+    expect(payPeriod).toHaveProperty('payPeriodId');
+    expect(payPeriod).toHaveProperty('payPeriodName');
+    expect(payPeriod).toHaveProperty('status');
+    expect(payPeriod).toHaveProperty('startDate');
+    expect(payPeriod).toHaveProperty('endDate');
+    expect(payPeriod).toHaveProperty('createdDate');
+  });
+
   it('returns 404 for unknown client', async () => {
-    const res = await request(app).get('/api/v1/client/00000000-0000-0000-0000-000000000000/summary');
+    const res = await request(app).get(
+      '/api/v1/client/00000000-0000-0000-0000-000000000000/summary',
+    );
     expect(res.status).toBe(404);
   });
 });

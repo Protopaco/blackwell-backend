@@ -61,15 +61,15 @@ Imports: everything in `src/` uses `#`-prefixed subpath imports (`#services/...`
 
 ## Naming conventions
 
-| Verb | Layer | Meaning |
-|---|---|---|
-| `map<Entity>` | `db/<domain>/` | Raw sheet row (`Record<string, unknown>`) → typed domain model. First time data becomes a real type. e.g. `mapEmployee`, `mapClient`, `mapPayPeriod`. |
-| `read<Thing>` / `write<Thing>` / `append<Thing>` / `delete<Thing>` | `db/adapter/`, `db/<domain>/` | Data-access verbs, reflect the operation against the data source. |
-| `build<Thing>` | `services/<domain>/` | Typed data → a different/computed output shape, regardless of computation complexity (trivial reshape or real aggregation both qualify). e.g. `buildAllocationRows`, `buildPayrollReportResponse`, `buildHoursRows`. |
-| `sort<Thing>` | `services/<domain>/` | Reorder a list without changing its shape. e.g. `sortPayrollReportTabs`, `sortTimesheetTabs`, `sortActivities`. |
-| `get<Thing>` | `services/<domain>/` | Retrieves data, may apply business logic, may throw `NotFoundError`. e.g. `getClientById`, `getPayPeriodById`, `getClientAndPayPeriod`. |
-| `create<Thing>` / `update<Thing>` | `services/<domain>/` | Creates/updates with business rules (ID assignment, state-transition enforcement). |
-| `get`/`post`/`put`/`patch`/`delete` + resource | `routes/v1/` | Named by HTTP method + resource, one file each. |
+| Verb                                                               | Layer                         | Meaning                                                                                                                                                                                                              |
+| ------------------------------------------------------------------ | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `map<Entity>`                                                      | `db/<domain>/`                | Raw sheet row (`Record<string, unknown>`) → typed domain model. First time data becomes a real type. e.g. `mapEmployee`, `mapClient`, `mapPayPeriod`.                                                                |
+| `read<Thing>` / `write<Thing>` / `append<Thing>` / `delete<Thing>` | `db/adapter/`, `db/<domain>/` | Data-access verbs, reflect the operation against the data source.                                                                                                                                                    |
+| `build<Thing>`                                                     | `services/<domain>/`          | Typed data → a different/computed output shape, regardless of computation complexity (trivial reshape or real aggregation both qualify). e.g. `buildAllocationRows`, `buildPayrollReportResponse`, `buildHoursRows`. |
+| `sort<Thing>`                                                      | `services/<domain>/`          | Reorder a list without changing its shape. e.g. `sortPayrollReportTabs`, `sortTimesheetTabs`, `sortActivities`.                                                                                                      |
+| `get<Thing>`                                                       | `services/<domain>/`          | Retrieves data, may apply business logic, may throw `NotFoundError`. e.g. `getClientById`, `getPayPeriodById`, `getClientAndPayPeriod`.                                                                              |
+| `create<Thing>` / `update<Thing>`                                  | `services/<domain>/`          | Creates/updates with business rules (ID assignment, state-transition enforcement).                                                                                                                                   |
+| `get`/`post`/`put`/`patch`/`delete` + resource                     | `routes/v1/`                  | Named by HTTP method + resource, one file each.                                                                                                                                                                      |
 
 This 5-verb split (`map`/`build`/`sort`/`get`/`create`+`update`) was deliberately revisited on 2026-07-08 and confirmed to hold up — don't introduce a 6th verb (`to*`/`from*`/`resolve*` were all considered and rejected) without a similarly deliberate reason; the existing split already has a crisp, mechanical rule for each category.
 
@@ -115,24 +115,29 @@ Vitest 4, using `test.projects` in `vitest.config.ts`:
 ## Data model — the four Google Sheets file types
 
 **Client-Config** (one file, shared across all clients — file ID in `CLIENT_CONFIG_FILE_ID` env var)
+
 - `Clients` tab: `ClientId`, `ClientName`, `ClientCode`, `TrackFundingSource` (bool), `ClientFolderLink`, `ClientFolderId`, `EmployeePayrollFolderId`, `PayrollConfigFolderId`, `ReportFolderId`, `PayrollReportFolderId`, `TimesheetFolderId`, `PayrollConfigFileId`, `PayPeriodRegistryFileId`
 
 **Payroll-Config** (one per client, file ID = `Client.payrollConfigFileId`) — read in one batched call by `readPayrollConfig.ts` via `db/adapter/readTabs.ts`
+
 - `Employees`: `EmployeeId`, `FirstName`, `LastName`, `Position`, `HourlyPayRate1`, `HourlyPayRate2`, `FlatPayRate1`, `FlatPayRate2`, `HolidayPayRate`, `Email`, `Status` (`Active`/`Inactive`), `TimesheetFileLink`, `TimesheetFileId`. Pay rates ARE used in calculations (allocation proportion weighting via `buildAllocationRows.ts`) — not display-only.
-- `Supervisors`: `SupervisorId`, `SupervisorFirstName`, `SupervisorLastName`, `SupervisorEmail`. No hard assignment to employees — any supervisor can approve any employee's timesheet.
+- `Supervisors`: `SupervisorId`, `FirstName`, `LastName`, `Email`. No hard assignment to employees — any supervisor can approve any employee's timesheet.
 - `FundingSources`: `FundingSourceId`, `FundingSourceName`, `FundingSourceCode` (optional, QuickBooks mapping)
 - `Activities`: `ActivityId`, `ActivityName`, `TrackSeparately` (bool), `PayrollCategory` (`Regular`/`ETO`/`PTO`/`STO`), `FundingSource1Name`/`Percentage` through `FundingSource3Name`/`Percentage` (hardcoded max 3, known limitation), `PayRate` (`HourlyPayRate1`/`HourlyPayRate2`/`FlatPayRate1`/`FlatPayRate2`)
 - `Settings`: `TimesheetTemplate` (maps to `Settings.timeInputMethod` in code — deliberate rename, common confusion point), `PayPeriodInterval` (`Weekly`/`Bi-Weekly`/`Monthly`), `PayPeriodStartDate`
 - `Holidays`: `HolidayId`, `HolidayName`, `HolidayDate`
 
 **Pay-Period-Registry** (one per client, file ID = `Client.payPeriodRegistryFileId`) — one tab per calendar year (e.g. `"2026"`)
+
 - Columns: `PayPeriodId`, `PayPeriodName` (e.g. `"06/01 - 06/14"`), `Status` (`Pending`→`Open`→`Processed`→`Closed`, forward-only, no enforcement), `StartDate`, `EndDate`, `CreatedDate`, `PayrollReportFileId` (empty string until first report generation)
 
 **Employee Timesheet** (one per employee, file ID = `Employee.timesheetFileId`, created on first timesheet generation)
+
 - One tab per pay period, named by `PayPeriodName`. Ordered newest-first via `sortTimesheetTabs.ts` (sorts by the real `PayPeriod.startDate`, not by parsing the tab name).
 - One `_manifest` tab (`MANIFEST_TAB` constant), pinned to the far right — internal bookkeeping (JSON blob per pay period describing exact row/column layout), never shown to users. Structure: `TimesheetManifest` model.
 
 **Payroll Report workbook** (one per pay period, once generated — file ID = `PayPeriod.payrollReportFileId`)
+
 - Active tabs (left, in this order, filtered to whichever exist): `current_hours`, `current_payroll_summary`, `EmployeeExpenses`, `AdditionalExpenses`, `AllocationReport`
 - Archive tabs (right): `hrs_MMDD_HHmm` / `payroll_MMDD_HHmm` pairs (same timestamp per run), sorted newest-first, pairs kept adjacent. Ordering enforced by `sortPayrollReportTabs.ts` after any write, via the shared `reorderTabs.ts`/`listTabNames.ts` adapters.
 - `EmployeeExpenses` columns: `employeeId`, `employeeName`, `activeThisPayPeriod`, `totalExpense` (nullable — not yet entered vs. entered as zero)

@@ -260,21 +260,21 @@ Employee Timesheet (one per employee)
 
 #### Clients Sheet
 
-| Column                   | Description                               |
-| ------------------------ | ----------------------------------------- |
-| clientId                 | UUID                                      |
-| clientName               | Display name                              |
-| clientCode               | Short code                                |
-| trackFundingSource       | Boolean                                   |
-| clientFolderLink         | Google Drive folder URL                   |
-| clientFolderId           | Google Drive folder ID                    |
-| employeePayrollFolderId  | ID of Employee/Payroll subfolder          |
-| payrollConfigFolderId    | ID of Payroll Config subfolder            |
-| reportsFolderId          | ID of Reports subfolder                   |
-| payrollReportFolderId    | ID of Payroll Reports subfolder           |
-| timesheetsFolderId       | ID of Timesheets subfolder                |
-| payrollConfigFileId      | ID of the Payroll-Config spreadsheet      |
-| payPeriodRegistryFileId  | ID of the Pay-Period-Registry spreadsheet |
+| Column                  | Description                               |
+| ----------------------- | ----------------------------------------- |
+| clientId                | UUID                                      |
+| clientName              | Display name                              |
+| clientCode              | Short code                                |
+| trackFundingSource      | Boolean                                   |
+| clientFolderLink        | Google Drive folder URL                   |
+| clientFolderId          | Google Drive folder ID                    |
+| employeePayrollFolderId | ID of Employee/Payroll subfolder          |
+| payrollConfigFolderId   | ID of Payroll Config subfolder            |
+| reportsFolderId         | ID of Reports subfolder                   |
+| payrollReportFolderId   | ID of Payroll Reports subfolder           |
+| timesheetsFolderId      | ID of Timesheets subfolder                |
+| payrollConfigFileId     | ID of the Payroll-Config spreadsheet      |
+| payPeriodRegistryFileId | ID of the Pay-Period-Registry spreadsheet |
 
 ---
 
@@ -301,12 +301,12 @@ Created automatically when a client is added.
 
 #### Supervisors Sheet
 
-| Column              | Description |
-| ------------------- | ----------- |
-| SupervisorId        | UUID        |
-| SupervisorFirstName |             |
-| SupervisorLastName  |             |
-| SupervisorEmail     |             |
+| Column       | Description |
+| ------------ | ----------- |
+| SupervisorId | UUID        |
+| FirstName    |             |
+| LastName     |             |
+| Email        |             |
 
 > Supervisors are client-side managers, never Blackwell employees. There is no hard assignment between supervisors and employees — any supervisor can approve any employee's timesheet. Whoever approves signs it.
 
@@ -596,9 +596,9 @@ interface Employee {
 // src/models/Supervisor.ts
 interface Supervisor {
   supervisorId: Guid;
-  supervisorFirstName: string;
-  supervisorLastName: string;
-  supervisorEmail: string;
+  firstName: string;
+  lastName: string;
+  email: string;
 }
 
 // src/models/FundingSource.ts

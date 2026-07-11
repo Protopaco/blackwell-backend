@@ -4,6 +4,7 @@ import Activity from './Activity.js';
 import FundingSource from './FundingSource.js';
 import Holiday from './Holiday.js';
 import Settings from './Settings.js';
+import PayPeriodResponse from './PayPeriodResponse.js';
 
 interface ClientSummary {
   employees: Employee[];
@@ -12,6 +13,7 @@ interface ClientSummary {
   fundingSources: FundingSource[];
   holidays: Holiday[];
   settings: Settings;
+  payPeriods: PayPeriodResponse[];
 }
 
 export default ClientSummary;
