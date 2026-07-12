@@ -5,6 +5,7 @@ import client from './client.js';
 import clientSummary from './clientSummary.js';
 import employee from './employee.js';
 import employeeExpense from './employeeExpense.js';
+import employeeExpenseUpdate from './employeeExpenseUpdate.js';
 import fundingSource from './fundingSource.js';
 import holiday from './holiday.js';
 import payPeriod from './payPeriod.js';
@@ -21,6 +22,7 @@ const schemas = {
   ...clientSummary,
   ...employee,
   ...employeeExpense,
+  ...employeeExpenseUpdate,
   ...fundingSource,
   ...holiday,
   ...payPeriod,
