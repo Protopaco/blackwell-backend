@@ -401,6 +401,11 @@
             "nullable": true,
             "example": 72.5
           },
+          "flatRateQuantity": {
+            "type": "number",
+            "nullable": true,
+            "example": 2
+          },
           "employeeSigned": {
             "type": "boolean"
           },

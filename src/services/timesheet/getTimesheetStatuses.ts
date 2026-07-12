@@ -40,6 +40,7 @@ const getTimesheetStatuses = async (
         timesheetFileId: employee.timesheetFileId,
         timesheetFileLink: employee.timesheetFileLink,
         totalHours: detail.totalHours,
+        flatRateQuantity: detail.flatRateQuantity,
         employeeSigned: detail.employeeSigned,
         supervisorSigned: detail.supervisorSigned,
         status,
