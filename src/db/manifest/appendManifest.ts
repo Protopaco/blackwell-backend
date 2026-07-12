@@ -2,7 +2,7 @@ import createTabIfNotExists from '#db/adapter/createTabIfNotExists.js';
 import readTabValues from '#db/adapter/readTabValues.js';
 import updateCells from '#db/adapter/updateCells.js';
 import appendRow from '#db/adapter/appendRow.js';
-import { MANIFEST_TAB } from '#config/constants.js';
+import { MANIFEST_TAB, MANIFEST_HEADERS } from '#config/constants.js';
 import TimesheetManifest from '#models/TimesheetManifest.js';
 
 // Writes a timesheet manifest entry to the _manifest tab (creating it if needed) and overwrites
@@ -24,7 +24,7 @@ const appendManifest = async (timesheetFileId: string, manifest: TimesheetManife
       [[manifest.tabName, serialised]],
     );
   } else {
-    await appendRow(timesheetFileId, MANIFEST_TAB, {
+    await appendRow(timesheetFileId, MANIFEST_TAB, MANIFEST_HEADERS, {
       tabName: manifest.tabName,
       manifest: serialised,
     });

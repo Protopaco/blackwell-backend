@@ -10,19 +10,22 @@ const { existingSupervisor } = vi.hoisted(() => ({
   } as Supervisor,
 }));
 
-vi.mock('#db/adapter/writeTab.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('#db/adapter/overwriteTabRows.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#db/supervisor/readSupervisors.js', () => ({ default: vi.fn().mockResolvedValue([existingSupervisor]) }));
 
 import writeSupervisors from '#db/supervisor/writeSupervisors.js';
-import writeTab from '#db/adapter/writeTab.js';
+import overwriteTabRows from '#db/adapter/overwriteTabRows.js';
 
 describe('writeSupervisors', () => {
   it('writes the updated supervisor in place of the matching existing record', async () => {
     await writeSupervisors('config-1', { ...existingSupervisor, lastName: 'Renamed' });
 
-    expect(writeTab).toHaveBeenCalledWith('config-1', 'Supervisors', [
-      { SupervisorId: 's1', FirstName: 'Alex', LastName: 'Renamed', Email: 'alex.rivera@example.org' },
-    ]);
+    expect(overwriteTabRows).toHaveBeenCalledWith(
+      'config-1',
+      'Supervisors',
+      ['SupervisorId', 'FirstName', 'LastName', 'Email'],
+      [{ SupervisorId: 's1', FirstName: 'Alex', LastName: 'Renamed', Email: 'alex.rivera@example.org' }],
+    );
   });
 
   it('throws NotFoundError when the supervisorId does not match any existing supervisor', async () => {

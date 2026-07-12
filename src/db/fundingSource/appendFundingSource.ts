@@ -1,5 +1,5 @@
 import appendRow from '#db/adapter/appendRow.js';
-import { FUNDING_SOURCES_TAB } from '#config/constants.js';
+import { FUNDING_SOURCES_TAB, FUNDING_SOURCES_HEADERS } from '#config/constants.js';
 import FundingSource from '#models/FundingSource.js';
 
 // Appends a new funding source row to the FundingSources tab.
@@ -13,7 +13,7 @@ const appendFundingSource = async (
     FundingSourceCode: fundingSource.fundingSourceCode ?? '',
   };
 
-  await appendRow(payrollConfigFileId, FUNDING_SOURCES_TAB, row);
+  await appendRow(payrollConfigFileId, FUNDING_SOURCES_TAB, FUNDING_SOURCES_HEADERS, row);
 };
 
 export default appendFundingSource;

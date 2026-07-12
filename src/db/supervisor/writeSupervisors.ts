@@ -1,6 +1,6 @@
-import writeTab from '#db/adapter/writeTab.js';
+import overwriteTabRows from '#db/adapter/overwriteTabRows.js';
 import readSupervisors from '#db/supervisor/readSupervisors.js';
-import { SUPERVISORS_TAB } from '#config/constants.js';
+import { SUPERVISORS_TAB, SUPERVISORS_HEADERS } from '#config/constants.js';
 import Supervisor from '#models/Supervisor.js';
 import { NotFoundError } from '#utils/errors.js';
 
@@ -25,7 +25,7 @@ const writeSupervisors = async (
     Email: supervisor.email,
   }));
 
-  await writeTab(payrollConfigFileId, SUPERVISORS_TAB, rows);
+  await overwriteTabRows(payrollConfigFileId, SUPERVISORS_TAB, SUPERVISORS_HEADERS, rows);
 };
 
 export default writeSupervisors;

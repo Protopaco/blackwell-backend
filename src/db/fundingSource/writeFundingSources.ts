@@ -1,6 +1,6 @@
-import writeTab from '#db/adapter/writeTab.js';
+import overwriteTabRows from '#db/adapter/overwriteTabRows.js';
 import readFundingSources from '#db/fundingSource/readFundingSources.js';
-import { FUNDING_SOURCES_TAB } from '#config/constants.js';
+import { FUNDING_SOURCES_TAB, FUNDING_SOURCES_HEADERS } from '#config/constants.js';
 import FundingSource from '#models/FundingSource.js';
 import { NotFoundError } from '#utils/errors.js';
 
@@ -25,7 +25,7 @@ const writeFundingSources = async (
     FundingSourceCode: fundingSource.fundingSourceCode ?? '',
   }));
 
-  await writeTab(payrollConfigFileId, FUNDING_SOURCES_TAB, rows);
+  await overwriteTabRows(payrollConfigFileId, FUNDING_SOURCES_TAB, FUNDING_SOURCES_HEADERS, rows);
 };
 
 export default writeFundingSources;

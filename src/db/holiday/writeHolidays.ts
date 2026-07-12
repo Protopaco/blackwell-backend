@@ -1,6 +1,6 @@
-import writeTab from '#db/adapter/writeTab.js';
+import overwriteTabRows from '#db/adapter/overwriteTabRows.js';
 import readHolidays from '#db/holiday/readHolidays.js';
-import { HOLIDAYS_TAB } from '#config/constants.js';
+import { HOLIDAYS_TAB, HOLIDAYS_HEADERS } from '#config/constants.js';
 import Holiday from '#models/Holiday.js';
 import { NotFoundError } from '#utils/errors.js';
 
@@ -22,7 +22,7 @@ const writeHolidays = async (
     HolidayDate: holiday.holidayDate,
   }));
 
-  await writeTab(payrollConfigFileId, HOLIDAYS_TAB, rows);
+  await overwriteTabRows(payrollConfigFileId, HOLIDAYS_TAB, HOLIDAYS_HEADERS, rows);
 };
 
 export default writeHolidays;

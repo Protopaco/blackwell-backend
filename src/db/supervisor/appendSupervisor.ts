@@ -1,5 +1,5 @@
 import appendRow from '#db/adapter/appendRow.js';
-import { SUPERVISORS_TAB } from '#config/constants.js';
+import { SUPERVISORS_TAB, SUPERVISORS_HEADERS } from '#config/constants.js';
 import Supervisor from '#models/Supervisor.js';
 
 // Appends a new supervisor row to the Supervisors tab.
@@ -11,7 +11,7 @@ const appendSupervisor = async (payrollConfigFileId: string, supervisor: Supervi
     Email: supervisor.email,
   };
 
-  await appendRow(payrollConfigFileId, SUPERVISORS_TAB, row);
+  await appendRow(payrollConfigFileId, SUPERVISORS_TAB, SUPERVISORS_HEADERS, row);
 };
 
 export default appendSupervisor;

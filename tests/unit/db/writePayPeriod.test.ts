@@ -13,7 +13,7 @@ const { existingPayPeriod } = vi.hoisted(() => ({
   } as PayPeriod,
 }));
 
-vi.mock('#db/adapter/writeTab.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('#db/adapter/overwriteTabRows.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#db/payPeriod/readPayPeriods.js', () => ({ default: vi.fn().mockResolvedValue([existingPayPeriod]) }));
 
 import writePayPeriod from '#db/payPeriod/writePayPeriod.js';
