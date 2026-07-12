@@ -35,6 +35,10 @@ const router = Router();
  *                 properties:
  *                   employeeName:
  *                     type: string
+ *                   totalHours:
+ *                     type: number
+ *                   totalFlatRate:
+ *                     type: number
  *                   hourly:
  *                     type: array
  *                     items:
