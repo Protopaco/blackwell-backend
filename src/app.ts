@@ -13,6 +13,7 @@ import timesheetRoute from '#routes/v1/timesheet/index.js';
 import adminRoute from '#routes/v1/admin/index.js';
 import payrollReportRoute from '#routes/v1/payrollReport/index.js';
 import holidayRoute from '#routes/v1/holiday/index.js';
+import supervisorRoute from '#routes/v1/supervisor/index.js';
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use(`${basePath}/v1/timesheet`, timesheetRoute);
 app.use(`${basePath}/v1/admin`, adminRoute);
 app.use(`${basePath}/v1/payrollReport`, payrollReportRoute);
 app.use(`${basePath}/v1/holiday`, holidayRoute);
+app.use(`${basePath}/v1/supervisor`, supervisorRoute);
 
 app.use(mapErrorResponse);
 

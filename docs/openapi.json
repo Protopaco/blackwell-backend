@@ -534,6 +534,158 @@
         }
       }
     },
+    "/api/v1/supervisor/{clientId}/{supervisorId}": {
+      "put": {
+        "operationId": "v1UpdateSupervisor",
+        "summary": "Update an existing supervisor",
+        "description": "supervisorId is taken from the path — ignored if present in the request body.",
+        "tags": [
+          "Supervisor"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "supervisorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Supervisor"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Supervisor updated"
+          },
+          "404": {
+            "description": "Client or supervisor not found"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "v1DeleteSupervisor",
+        "summary": "Delete a supervisor",
+        "tags": [
+          "Supervisor"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "supervisorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supervisor deleted"
+          },
+          "404": {
+            "description": "Client or supervisor not found"
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/{clientId}": {
+      "post": {
+        "operationId": "v1CreateSupervisor",
+        "summary": "Create a new supervisor",
+        "description": "supervisorId is server-generated — ignored if present in the request body.",
+        "tags": [
+          "Supervisor"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Supervisor"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Supervisor created"
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        }
+      },
+      "get": {
+        "operationId": "v1GetSupervisors",
+        "summary": "Get all supervisors for a client",
+        "tags": [
+          "Supervisor"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of supervisors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Supervisor"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        }
+      }
+    },
     "/api/v1/payrollReport/{clientId}/{payPeriodId}/employeeExpenses/batch": {
       "put": {
         "operationId": "v1UpdateEmployeeExpensesBatch",
