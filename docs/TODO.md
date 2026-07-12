@@ -47,6 +47,12 @@
 
 ---
 
+### Alphabetize Swagger route groups and endpoints
+
+The generated OpenAPI spec's tag/group order (and endpoint order within each group) currently just follows registration order — `app.use(...)` order in `app.ts` for groups, `router.use(...)` order in each resource's `index.ts` for endpoints within a group — not any deliberate ordering. Noted as "pretty chaotic" while browsing `/api/docs` during the PayrollConfig CRUD work. Worth a pass to reorder both alphabetically: route group registration in `app.ts` (currently health, client, payPeriod, timesheet, admin, payrollReport, holiday, supervisor — not alphabetical), and the `router.use(...)` calls within each group's `index.ts`. Purely cosmetic/organizational, no functional change — low priority, revisit once all PayrollConfig CRUD entities exist so it's a single pass instead of repeated churn.
+
+---
+
 ## Data Model / Config
 
 ~~### Update employee data model to include all fields, including pay rates~~
