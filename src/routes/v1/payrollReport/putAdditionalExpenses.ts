@@ -6,7 +6,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/payrollReport/{clientId}/{payPeriodId}/additional-expenses:
+ * /api/v1/payrollReport/{clientId}/{payPeriodId}/additionalExpenses:
  *   put:
  *     operationId: v1UpdateAdditionalExpenses
  *     summary: Save additional expense records for a pay period
@@ -37,14 +37,14 @@ const router = Router();
  *       404:
  *         description: Client, pay period, or payroll report not found
  */
-router.put('/:clientId/:payPeriodId/additional-expenses', async (req: Request, res: Response) => {
+router.put('/:clientId/:payPeriodId/additionalExpenses', async (req: Request, res: Response) => {
   const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
   const expenses = req.body;
-  logger.info(`PUT /payrollReport/${clientId}/${payPeriodId}/additional-expenses — request count=${expenses.length}`);
+  logger.info(`PUT /payrollReport/${clientId}/${payPeriodId}/additionalExpenses — request count=${expenses.length}`);
 
   await updateAdditionalExpensesService(clientId, payPeriodId, expenses);
 
-  logger.info(`PUT /payrollReport/${clientId}/${payPeriodId}/additional-expenses — response 200`);
+  logger.info(`PUT /payrollReport/${clientId}/${payPeriodId}/additionalExpenses — response 200`);
   return res.status(200).json({ message: 'Additional expenses saved' });
 });
 

@@ -6,7 +6,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/payrollReport/{clientId}/{payPeriodId}/allocation-report:
+ * /api/v1/payrollReport/{clientId}/{payPeriodId}/allocationReport:
  *   get:
  *     operationId: v1GetAllocationReport
  *     summary: Get the allocation report for a pay period
@@ -35,13 +35,13 @@ const router = Router();
  *       404:
  *         description: Client or pay period not found
  */
-router.get('/:clientId/:payPeriodId/allocation-report', async (req: Request, res: Response) => {
+router.get('/:clientId/:payPeriodId/allocationReport', async (req: Request, res: Response) => {
   const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
-  logger.info(`GET /payrollReport/${clientId}/${payPeriodId}/allocation-report — request`);
+  logger.info(`GET /payrollReport/${clientId}/${payPeriodId}/allocationReport — request`);
 
   const rows = await getAllocationReportService(clientId, payPeriodId);
 
-  logger.info(`GET /payrollReport/${clientId}/${payPeriodId}/allocation-report — response 200 count=${rows.length}`);
+  logger.info(`GET /payrollReport/${clientId}/${payPeriodId}/allocationReport — response 200 count=${rows.length}`);
   return res.status(200).json(rows);
 });
 

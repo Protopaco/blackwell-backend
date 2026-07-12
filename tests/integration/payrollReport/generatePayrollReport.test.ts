@@ -41,7 +41,7 @@ describe('POST /api/v1/payrollReport/:clientId/:payPeriodId/generate', () => {
     // internally and fails with 422 if it comes back empty, so a 200 here proves the
     // read after generate saw fresh rows rather than a stale cached current_hours.
     const allocationRes = await request(app).post(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocation-report`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocationReport`,
     );
     expect(allocationRes.status).toBe(200);
   }, 60_000);

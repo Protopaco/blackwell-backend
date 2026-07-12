@@ -6,7 +6,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/payrollReport/{clientId}/{payPeriodId}/employee-expenses:
+ * /api/v1/payrollReport/{clientId}/{payPeriodId}/employeeExpenses:
  *   put:
  *     operationId: v1UpdateEmployeeExpenses
  *     summary: Update a single employee expense record for a pay period
@@ -37,14 +37,14 @@ const router = Router();
  *       422:
  *         description: Employee has hours this pay period and cannot be marked inactive
  */
-router.put('/:clientId/:payPeriodId/employee-expenses', async (req: Request, res: Response) => {
+router.put('/:clientId/:payPeriodId/employeeExpenses', async (req: Request, res: Response) => {
   const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
   const expense = req.body;
-  logger.info(`PUT /payrollReport/${clientId}/${payPeriodId}/employee-expenses — request employeeId=${expense.employeeId}`);
+  logger.info(`PUT /payrollReport/${clientId}/${payPeriodId}/employeeExpenses — request employeeId=${expense.employeeId}`);
 
   await updateEmployeeExpensesService(clientId, payPeriodId, expense);
 
-  logger.info(`PUT /payrollReport/${clientId}/${payPeriodId}/employee-expenses — response 200`);
+  logger.info(`PUT /payrollReport/${clientId}/${payPeriodId}/employeeExpenses — response 200`);
   return res.status(200).json({ message: 'Employee expense updated' });
 });
 

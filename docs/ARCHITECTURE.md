@@ -162,7 +162,7 @@ Don't flag these as gaps — they're deliberate, not missed:
 
 ## Endpoint reference
 
-Don't maintain a hand-written route list here — it'll drift the same way `BlackwellTime.md`'s did. `docs/openapi.json` is the generated, always-accurate source of truth (regenerated via `npm run generate` from the `@swagger` JSDoc blocks above each route handler — run this after adding or changing a schema so it stays in sync). Current resources: `client` (list, `:clientId/employees`, `:clientId/summary`), `payPeriod` (list, `next`, `:payPeriodId`, create, update, close), `timesheet` (generate, status), `payrollReport` (get report, generate, employee-expenses get/put, additional-expenses get/put, allocation-report get/generate), `admin` (`cache/clear`), `health`.
+Don't maintain a hand-written route list here — it'll drift the same way `BlackwellTime.md`'s did. `docs/openapi.json` is the generated, always-accurate source of truth (regenerated via `npm run generate` from the `@swagger` JSDoc blocks above each route handler — run this after adding or changing a schema so it stays in sync). Current resources: `client` (list, `:clientId/employees`, `:clientId/summary`), `payPeriod` (list, `next`, `:payPeriodId`, create, update, close), `timesheet` (generate, status), `payrollReport` (get report, generate, employeeExpenses get/put/batch, additionalExpenses get/put, allocationReport get/generate), `admin` (`cache/clear`), `health`.
 
 ---
 

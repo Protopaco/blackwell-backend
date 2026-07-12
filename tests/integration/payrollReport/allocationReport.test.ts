@@ -4,11 +4,11 @@ import app from '#app.js';
 import { TEST_CLIENT_ID } from '../helpers/testClient.js';
 import getTestPayPeriod from '../helpers/getTestPayPeriod.js';
 
-describe('GET /api/v1/payrollReport/:clientId/:payPeriodId/allocation-report', () => {
+describe('GET /api/v1/payrollReport/:clientId/:payPeriodId/allocationReport', () => {
   it('returns 200 with an array for a valid client and pay period', async () => {
     const { payPeriodId } = await getTestPayPeriod();
     const res = await request(app).get(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocation-report`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocationReport`,
     );
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
@@ -17,7 +17,7 @@ describe('GET /api/v1/payrollReport/:clientId/:payPeriodId/allocation-report', (
   it('returns rows with the correct shape when data exists', async () => {
     const { payPeriodId } = await getTestPayPeriod();
     const res = await request(app).get(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocation-report`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocationReport`,
     );
     expect(res.status).toBe(200);
     for (const row of res.body) {
@@ -33,7 +33,7 @@ describe('GET /api/v1/payrollReport/:clientId/:payPeriodId/allocation-report', (
 
   it('returns 404 for an unknown pay period', async () => {
     const res = await request(app).get(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/unknown-pay-period-id/allocation-report`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/unknown-pay-period-id/allocationReport`,
     );
     expect(res.status).toBe(404);
   }, 30_000);
@@ -41,17 +41,17 @@ describe('GET /api/v1/payrollReport/:clientId/:payPeriodId/allocation-report', (
   it('returns 404 for an unknown client', async () => {
     const { payPeriodId } = await getTestPayPeriod();
     const res = await request(app).get(
-      `/api/v1/payrollReport/unknown-client-id/${payPeriodId}/allocation-report`,
+      `/api/v1/payrollReport/unknown-client-id/${payPeriodId}/allocationReport`,
     );
     expect(res.status).toBe(404);
   }, 30_000);
 });
 
-describe('POST /api/v1/payrollReport/:clientId/:payPeriodId/allocation-report', () => {
+describe('POST /api/v1/payrollReport/:clientId/:payPeriodId/allocationReport', () => {
   it('returns 200 with allocation rows, or 422 if preconditions are not met', async () => {
     const { payPeriodId } = await getTestPayPeriod();
     const res = await request(app).post(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocation-report`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocationReport`,
     );
     // 200 = report generated. 422 = payroll report not yet generated or no hours data.
     expect([200, 422]).toContain(res.status);
@@ -61,7 +61,7 @@ describe('POST /api/v1/payrollReport/:clientId/:payPeriodId/allocation-report', 
   it('returns rows with the correct shape on success', async () => {
     const { payPeriodId } = await getTestPayPeriod();
     const res = await request(app).post(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocation-report`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocationReport`,
     );
     if (res.status !== 200) return;
     expect(Array.isArray(res.body)).toBe(true);
@@ -78,7 +78,7 @@ describe('POST /api/v1/payrollReport/:clientId/:payPeriodId/allocation-report', 
 
   it('returns 404 for an unknown pay period', async () => {
     const res = await request(app).post(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/unknown-pay-period-id/allocation-report`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/unknown-pay-period-id/allocationReport`,
     );
     expect(res.status).toBe(404);
   }, 30_000);
@@ -86,7 +86,7 @@ describe('POST /api/v1/payrollReport/:clientId/:payPeriodId/allocation-report', 
   it('returns 404 for an unknown client', async () => {
     const { payPeriodId } = await getTestPayPeriod();
     const res = await request(app).post(
-      `/api/v1/payrollReport/unknown-client-id/${payPeriodId}/allocation-report`,
+      `/api/v1/payrollReport/unknown-client-id/${payPeriodId}/allocationReport`,
     );
     expect(res.status).toBe(404);
   }, 30_000);
@@ -94,12 +94,12 @@ describe('POST /api/v1/payrollReport/:clientId/:payPeriodId/allocation-report', 
   it('GET reflects the freshly generated report immediately after POST — guards against stale cache', async () => {
     const { payPeriodId } = await getTestPayPeriod();
     const postRes = await request(app).post(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocation-report`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocationReport`,
     );
     if (postRes.status !== 200) return; // preconditions not met in this environment
 
     const getRes = await request(app).get(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocation-report`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/allocationReport`,
     );
     expect(getRes.status).toBe(200);
     expect(getRes.body).toEqual(postRes.body);

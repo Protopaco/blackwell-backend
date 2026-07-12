@@ -90,7 +90,7 @@ Both use the naming convention correction from the map*/build* discussion below:
 
 ~~## Allocation Report — Endpoints~~
 
-~~All 6 endpoints done~~ — GET/PUT employee-expenses, GET/PUT additional-expenses, GET/POST allocation-report, all live under `/payrollReport/:clientId/:payPeriodId/...` (routes ended up nested under client+pay period rather than the `/pay-periods/:payPeriodId/...` path originally sketched here).
+~~All 6 endpoints done~~ — GET/PUT employeeExpenses, GET/PUT additionalExpenses, GET/POST allocationReport, all live under `/payrollReport/:clientId/:payPeriodId/...` (routes ended up nested under client+pay period rather than the `/pay-periods/:payPeriodId/...` path originally sketched here).
 
 ---
 
@@ -104,7 +104,7 @@ Both use the naming convention correction from the map*/build* discussion below:
 ~~### Assess cache-invalidation test coverage~~
 ~~Decision made: keep the two existing flaky integration tests (`allocationReport.test.ts`, `generatePayrollReport.test.ts`) as-is rather than lightening them — they verify something a mock can't (real Sheets write → real read sees fresh data, no eventual-consistency gap), which is a different and stronger claim than wiring correctness. Their occasional quota-flakiness is more acceptable now that wiring has separate, always-run coverage (below).~~
 
-~~Still fully untested: `payPeriodsCache` invalidation (`writePayPeriod.ts`) and `payrollConfigCache` invalidation (`updateEmployeeTimesheetFile.ts`)~~ — closed. Every invalidation site turned out to be the same trivial shape (one `<cache>.delete(key)` call right after a successful write), so wiring got unit-tested by mocking the underlying Sheets adapter calls (`vi.mock()`), with zero quota cost: `tests/unit/db/writeAdditionalExpensesTab.test.ts`, `writeEmployeeExpensesTab.test.ts`, `writeAllocationReportTab.test.ts`, `writePayPeriod.test.ts`, `updateEmployeeTimesheetFile.test.ts`. Also surfaced a gap not previously documented here: `employeeExpensesCache`/the whole `employee-expenses` endpoint pair had **zero** test coverage of any kind (not even integration) — now has unit wiring coverage at least.
+~~Still fully untested: `payPeriodsCache` invalidation (`writePayPeriod.ts`) and `payrollConfigCache` invalidation (`updateEmployeeTimesheetFile.ts`)~~ — closed. Every invalidation site turned out to be the same trivial shape (one `<cache>.delete(key)` call right after a successful write), so wiring got unit-tested by mocking the underlying Sheets adapter calls (`vi.mock()`), with zero quota cost: `tests/unit/db/writeAdditionalExpensesTab.test.ts`, `writeEmployeeExpensesTab.test.ts`, `writeAllocationReportTab.test.ts`, `writePayPeriod.test.ts`, `updateEmployeeTimesheetFile.test.ts`. Also surfaced a gap not previously documented here: `employeeExpensesCache`/the whole `employeeExpenses` endpoint pair had **zero** test coverage of any kind (not even integration) — now has unit wiring coverage at least.
 
 ~~`currentHoursCache` (invalidated inside `generatePayrollReport.ts`) was deliberately **not** given an equivalent unit test~~ — user confirmed passing on it: that function has ~10 dependencies (`readClientById`, `readPayPeriodById`, `readPayrollConfig`, `readTimesheetDetail`, `readTimesheetEntries`, `createOAuthWorkbook`, `writePayPeriod`, `writePayrollReportTab`, `archivePayrollReportTab`, `renameTab`) that would all need mocking to reach one assertion — disproportionate effort for the existing integration test's marginal value.
 

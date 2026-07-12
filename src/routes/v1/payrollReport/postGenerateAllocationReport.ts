@@ -6,7 +6,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/payrollReport/{clientId}/{payPeriodId}/allocation-report:
+ * /api/v1/payrollReport/{clientId}/{payPeriodId}/allocationReport:
  *   post:
  *     operationId: v1GenerateAllocationReport
  *     summary: Generate or regenerate the allocation report for a pay period
@@ -38,13 +38,13 @@ const router = Router();
  *       422:
  *         description: Payroll report not yet generated, or no hours data found
  */
-router.post('/:clientId/:payPeriodId/allocation-report', async (req: Request, res: Response) => {
+router.post('/:clientId/:payPeriodId/allocationReport', async (req: Request, res: Response) => {
   const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
-  logger.info(`POST /payrollReport/${clientId}/${payPeriodId}/allocation-report — request`);
+  logger.info(`POST /payrollReport/${clientId}/${payPeriodId}/allocationReport — request`);
 
   const rows = await generateAllocationReportService(clientId, payPeriodId);
 
-  logger.info(`POST /payrollReport/${clientId}/${payPeriodId}/allocation-report — response 200 count=${rows.length}`);
+  logger.info(`POST /payrollReport/${clientId}/${payPeriodId}/allocationReport — response 200 count=${rows.length}`);
   return res.status(200).json(rows);
 });
 

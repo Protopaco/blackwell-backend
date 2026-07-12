@@ -582,7 +582,7 @@
         }
       }
     },
-    "/api/v1/payrollReport/{clientId}/{payPeriodId}/employee-expenses": {
+    "/api/v1/payrollReport/{clientId}/{payPeriodId}/employeeExpenses": {
       "put": {
         "operationId": "v1UpdateEmployeeExpenses",
         "summary": "Update a single employee expense record for a pay period",
@@ -673,7 +673,7 @@
         }
       }
     },
-    "/api/v1/payrollReport/{clientId}/{payPeriodId}/additional-expenses": {
+    "/api/v1/payrollReport/{clientId}/{payPeriodId}/additionalExpenses": {
       "put": {
         "operationId": "v1UpdateAdditionalExpenses",
         "summary": "Save additional expense records for a pay period",
@@ -803,7 +803,7 @@
         }
       }
     },
-    "/api/v1/payrollReport/{clientId}/{payPeriodId}/allocation-report": {
+    "/api/v1/payrollReport/{clientId}/{payPeriodId}/allocationReport": {
       "post": {
         "operationId": "v1GenerateAllocationReport",
         "summary": "Generate or regenerate the allocation report for a pay period",
