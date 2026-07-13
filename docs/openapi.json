@@ -10,6 +10,44 @@
       "description": "Development server"
     }
   ],
+  "tags": [
+    {
+      "name": "Activity"
+    },
+    {
+      "name": "Admin"
+    },
+    {
+      "name": "Client"
+    },
+    {
+      "name": "Employee"
+    },
+    {
+      "name": "FundingSource"
+    },
+    {
+      "name": "Health"
+    },
+    {
+      "name": "Holiday"
+    },
+    {
+      "name": "PayPeriod"
+    },
+    {
+      "name": "PayrollReport"
+    },
+    {
+      "name": "Settings"
+    },
+    {
+      "name": "Supervisor"
+    },
+    {
+      "name": "Timesheet"
+    }
+  ],
   "components": {
     "schemas": {
       "AdditionalExpense": {
@@ -2280,6 +2318,5 @@
         }
       }
     }
-  },
-  "tags": []
+  }
 }

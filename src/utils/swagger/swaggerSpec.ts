@@ -18,6 +18,22 @@ const swaggerOptions = {
         description: 'Development server',
       },
     ],
+    // Controls Swagger UI's group display order — Swagger UI does not sort tags automatically,
+    // it displays them in this declared order. Keep alphabetical; add new resources in place.
+    tags: [
+      { name: 'Activity' },
+      { name: 'Admin' },
+      { name: 'Client' },
+      { name: 'Employee' },
+      { name: 'FundingSource' },
+      { name: 'Health' },
+      { name: 'Holiday' },
+      { name: 'PayPeriod' },
+      { name: 'PayrollReport' },
+      { name: 'Settings' },
+      { name: 'Supervisor' },
+      { name: 'Timesheet' },
+    ],
     components: {
       schemas,
     },
