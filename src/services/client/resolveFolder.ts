@@ -2,12 +2,8 @@ import parseDriveLink from '#utils/parseDriveLink.js';
 import folderExists from '#db/adapter/folderExists.js';
 import driveChildExists from '#db/adapter/driveChildExists.js';
 import createFolder from '#db/adapter/createFolder.js';
+import FolderInput from '#models/FolderInput.js';
 import { NotFoundError, UnprocessableError } from '#utils/errors.js';
-
-interface FolderInput {
-  link?: string;
-  createNew?: boolean;
-}
 
 // Resolves a folder input to a real, verified folder ID — either an existing folder (verified via
 // folderExists) or a newly-created one (checked for a name collision first, so we never silently
@@ -42,4 +38,3 @@ const resolveFolder = async (
 };
 
 export default resolveFolder;
-export type { FolderInput };

@@ -77,6 +77,14 @@ export const CLIENT_HEADERS = [
   'PayPeriodRegistryFileId',
 ];
 
+// ─── Client Provisioning — Drive folder/file names ────────────────────────────
+
+export const EMPLOYEE_PAYROLL_FOLDER_NAME = 'Employee Payroll';
+export const PAYROLL_CONFIG_FOLDER_NAME = 'Payroll Config';
+export const PAYROLL_REPORT_FOLDER_NAME = 'Payroll Report';
+export const PAYROLL_CONFIG_FILE_NAME = 'Payroll Config';
+export const PAY_PERIOD_REGISTRY_FILE_NAME = 'Pay Period Registry';
+
 // ─── Cache TTLs ───────────────────────────────────────────────────────────────
 
 export const CACHE_TTL_SHORT_MS = 60 * 1000;
