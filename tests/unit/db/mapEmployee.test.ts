@@ -10,8 +10,6 @@ describe('mapEmployee', () => {
       Position: 'Program Director',
       HourlyPayRate1: '25.96',
       HourlyPayRate2: '36',
-      FlatPayRate1: '100',
-      FlatPayRate2: '150',
       HolidayPayRate: '38.94',
       Email: 'jane.smith@example.org',
       Status: 'Active',
@@ -25,8 +23,6 @@ describe('mapEmployee', () => {
       position: 'Program Director',
       hourlyPayRate1: 25.96,
       hourlyPayRate2: 36,
-      flatPayRate1: 100,
-      flatPayRate2: 150,
       holidayPayRate: 38.94,
       email: 'jane.smith@example.org',
       status: 'Active',
@@ -51,19 +47,15 @@ describe('mapEmployee', () => {
       expect(mapEmployee({ HourlyPayRate1: '0' }).hourlyPayRate1).toBe(0);
     });
 
-    it('applies the same fallback independently to all four pay rate fields', () => {
+    it('applies the same fallback independently to all three pay rate fields', () => {
       const employee = mapEmployee({
         HourlyPayRate1: '10',
         HourlyPayRate2: '',
-        FlatPayRate1: 'n/a',
-        FlatPayRate2: '20',
         HolidayPayRate: undefined,
       });
 
       expect(employee.hourlyPayRate1).toBe(10);
       expect(employee.hourlyPayRate2).toBe(0);
-      expect(employee.flatPayRate1).toBe(0);
-      expect(employee.flatPayRate2).toBe(20);
       expect(employee.holidayPayRate).toBe(0);
     });
   });

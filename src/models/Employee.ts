@@ -8,8 +8,6 @@ interface Employee {
   position: string;
   hourlyPayRate1: number;
   hourlyPayRate2: number;
-  flatPayRate1: number;
-  flatPayRate2: number;
   holidayPayRate: number;
   email: string;
   status: EmployeeStatusType;

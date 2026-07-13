@@ -7,12 +7,12 @@ import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
 import { PayRate, PayRateType } from '#models/PayRate.js';
 import { logger } from '#utils/logger.js';
 
+// FlatPayRate1/FlatPayRate2 fall through to 0 — the dollar amount for flat-rate activities belongs on
+// Activity.flatRateAmount, not Employee, but this isn't wired up yet. See docs/TODO.md.
 const resolveDollarRate = (employee: Employee, payRate: PayRateType): number => {
   switch (payRate) {
     case PayRate.HourlyPayRate1: return employee.hourlyPayRate1;
     case PayRate.HourlyPayRate2: return employee.hourlyPayRate2;
-    case PayRate.FlatPayRate1: return employee.flatPayRate1;
-    case PayRate.FlatPayRate2: return employee.flatPayRate2;
     default: return 0;
   }
 };

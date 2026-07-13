@@ -69,6 +69,12 @@ Started building CRUD routes for PayrollConfig entities (Employees, Supervisors,
 
 ---
 
+### Wire Activity.flatRateAmount into buildAllocationRows.ts
+
+Discovered 2026-07-13 while building Employee CRUD: `resolveDollarRate` in `buildAllocationRows.ts` used to read `employee.flatPayRate1`/`flatPayRate2` for `FlatPayRate1`/`FlatPayRate2` activities — but those Employee fields were confirmed dead (no live sheet column ever existed for them; that design was abandoned once it was realized the flat rate varies by *activity*, not by employee) and have been removed from the `Employee` model. `resolveDollarRate` now falls through to `0` for both flat-rate cases, which is a live calculation gap, not a regression — flat-rate activities were already always resolving to $0 before this cleanup, just silently via the dead employee fields instead of an explicit fallthrough. The real fix: use `Activity.flatRateAmount` (added earlier the same session, currently unused by any calculation) as the dollar amount for `FlatPayRate1`/`FlatPayRate2` activities instead. Needs its own review — this is payroll calculation logic, not CRUD scaffolding.
+
+---
+
 ## Allocation Report — Spreadsheet Tabs
 
 ~~### Create EmployeeExpenses tab service~~ — done as `writeEmployeeExpensesTab.ts` (field ended up named `activeThisPayPeriod` instead of `include`)
