@@ -9,7 +9,12 @@ const router = Router();
  * /api/v1/payrollReport/{clientId}/{payPeriodId}/employeeExpenses/batch:
  *   put:
  *     operationId: v1UpdateEmployeeExpensesBatch
- *     summary: Update totalExpense for multiple employees in a pay period at once
+ *     summary: Upsert totalExpense for multiple employees in a pay period at once
+ *     description: >
+ *       For each employeeId with an existing EmployeeExpense record, overlays totalExpense onto it.
+ *       For each employeeId without one, creates a new record (employeeName resolved from PayrollConfig,
+ *       activeThisPayPeriod defaulted to true). If any employeeId doesn't match a known employee in the
+ *       client's PayrollConfig, the entire batch is rejected and nothing is written.
  *     tags:
  *       - PayrollReport
  *     parameters:
@@ -36,6 +41,8 @@ const router = Router();
  *         description: Employee expenses updated
  *       404:
  *         description: Client, pay period, or payroll report not found
+ *       422:
+ *         description: One or more employeeId values do not match a known employee in the client's PayrollConfig
  */
 router.put('/:clientId/:payPeriodId/employeeExpenses/batch', async (req: Request, res: Response) => {
   const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
