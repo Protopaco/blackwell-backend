@@ -47,9 +47,9 @@
 
 ---
 
-### Alphabetize Swagger route groups and endpoints
+~~### Alphabetize Swagger route groups and endpoints~~
 
-The generated OpenAPI spec's tag/group order (and endpoint order within each group) currently just follows registration order — `app.use(...)` order in `app.ts` for groups, `router.use(...)` order in each resource's `index.ts` for endpoints within a group — not any deliberate ordering. Noted as "pretty chaotic" while browsing `/api/docs` during the PayrollConfig CRUD work. Worth a pass to reorder both alphabetically: route group registration in `app.ts` (currently health, client, payPeriod, timesheet, admin, payrollReport, holiday, supervisor — not alphabetical), and the `router.use(...)` calls within each group's `index.ts`. Purely cosmetic/organizational, no functional change — low priority, revisit once all PayrollConfig CRUD entities exist so it's a single pass instead of repeated churn.
+~~The generated OpenAPI spec's tag/group order (and endpoint order within each group) currently just follows registration order.~~ — done, but not the way originally sketched: registration order (`app.use`/`router.use`) turned out to have **zero effect** on the generated docs — `swaggerSpec.ts` discovers route files via `glob`, which returned filesystem-dependent order, not registration or alphabetical order (confirmed empirically). The real fix: a root-level `tags` array (alphabetical) added to `swaggerSpec.ts`'s `definition` — this is the actual OpenAPI-standard mechanism for group order, Swagger UI does not sort tags on its own. Endpoint order within each group needed a custom `operationsSorter` in `app.ts` (GET→POST→PUT→PATCH→DELETE, alphabetical-by-path tiebreak) — swagger-ui-dist's own built-in `'method'` sorter is just alphabetical-by-method-name (`delete, get, patch, post, put`), not a curated order, so it didn't fit. `docExpansion: 'none'` added alongside so groups default to collapsed. One gotcha worth remembering: `swaggerUi.setup()` serializes a function option by extracting only its own source text and re-evaluating it in the browser bundle — it must be fully self-contained, any reference to an outer-scope variable becomes a `ReferenceError` client-side.
 
 ---
 
@@ -69,9 +69,9 @@ Started building CRUD routes for PayrollConfig entities (Employees, Supervisors,
 
 ---
 
-### Wire Activity.flatRateAmount into buildAllocationRows.ts
+~~### Wire Activity.flatRateAmount into buildAllocationRows.ts~~
 
-Discovered 2026-07-13 while building Employee CRUD: `resolveDollarRate` in `buildAllocationRows.ts` used to read `employee.flatPayRate1`/`flatPayRate2` for `FlatPayRate1`/`FlatPayRate2` activities — but those Employee fields were confirmed dead (no live sheet column ever existed for them; that design was abandoned once it was realized the flat rate varies by *activity*, not by employee) and have been removed from the `Employee` model. `resolveDollarRate` now falls through to `0` for both flat-rate cases, which is a live calculation gap, not a regression — flat-rate activities were already always resolving to $0 before this cleanup, just silently via the dead employee fields instead of an explicit fallthrough. The real fix: use `Activity.flatRateAmount` (added earlier the same session, currently unused by any calculation) as the dollar amount for `FlatPayRate1`/`FlatPayRate2` activities instead. Needs its own review — this is payroll calculation logic, not CRUD scaffolding.
+~~Discovered 2026-07-13 while building Employee CRUD: `resolveDollarRate` in `buildAllocationRows.ts` fell through to `0` for `FlatPayRate1`/`FlatPayRate2` activities — a live calculation gap, not a regression.~~ — fixed: `resolveDollarRate` now takes the full `Activity` (not just `payRate`) and returns `activity.flatRateAmount` for both flat-rate cases. Confirmed with the user that `row.Hours` for a flat-rate activity holds the *quantity* of flat-rate units entered that day (e.g. "2 shifts"), not a duration — traced through `readTimesheetEntries.ts` (`flatRateRows` read identically to `activityRows`, same cell-reading logic) to verify this before changing anything, since it's real payroll math. So `rowCost = row.Hours * dollarRate` was already the right shape (quantity × per-unit amount), no restructuring needed beyond the rate resolution itself. Covered by two new cases in `buildAllocationRows.test.ts` (`FlatPayRate1` mixed with an hourly activity, and `FlatPayRate2` alone), replacing the old test that had locked in the `$0` behavior.
 
 ---
 

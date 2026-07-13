@@ -4,15 +4,18 @@ import AllocationReportRow from '#models/AllocationReportRow.js';
 import AdditionalExpense from '#models/AdditionalExpense.js';
 import EmployeeExpense from '#models/EmployeeExpense.js';
 import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
-import { PayRate, PayRateType } from '#models/PayRate.js';
+import { PayRate } from '#models/PayRate.js';
 import { logger } from '#utils/logger.js';
 
-// FlatPayRate1/FlatPayRate2 fall through to 0 — the dollar amount for flat-rate activities belongs on
-// Activity.flatRateAmount, not Employee, but this isn't wired up yet. See docs/TODO.md.
-const resolveDollarRate = (employee: Employee, payRate: PayRateType): number => {
-  switch (payRate) {
+// For flat-rate activities, row.Hours holds the quantity of flat-rate units entered (e.g. "2 shifts"),
+// not a duration — same shape as hourly's hours * rate, just quantity * activity.flatRateAmount instead.
+const resolveDollarRate = (employee: Employee, activity: Activity): number => {
+  switch (activity.payRate) {
     case PayRate.HourlyPayRate1: return employee.hourlyPayRate1;
     case PayRate.HourlyPayRate2: return employee.hourlyPayRate2;
+    case PayRate.FlatPayRate1:
+    case PayRate.FlatPayRate2:
+      return activity.flatRateAmount;
     default: return 0;
   }
 };
@@ -53,7 +56,7 @@ const buildAllocationRows = (
         continue;
       }
 
-      const dollarRate = resolveDollarRate(employee, activity.payRate);
+      const dollarRate = resolveDollarRate(employee, activity);
       const rowCost = row.Hours * dollarRate;
 
       for (const fundingSource of activity.fundingSources) {

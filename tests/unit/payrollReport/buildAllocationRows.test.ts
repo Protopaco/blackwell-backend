@@ -399,15 +399,17 @@ describe('buildAllocationRows', () => {
       expect(grantB.wagesAllocation).toBe(750);
     });
 
-    it('resolves FlatPayRate1/FlatPayRate2 activities to $0 — Activity.flatRateAmount isn\'t wired up yet (see docs/TODO.md)', () => {
+    it('resolves FlatPayRate1 activities using activity.flatRateAmount, not $0', () => {
       const employee = makeEmployee({ hourlyPayRate1: 20 });
       const activityA = makeActivity('Hourly Activity', [{ fundingSourceName: 'Grant A', percentage: 100 }], { payRate: PayRate.HourlyPayRate1 });
-      const activityB = makeActivity('Flat Activity', [{ fundingSourceName: 'Grant B', percentage: 100 }], { payRate: PayRate.FlatPayRate1 });
+      // 2 flat-rate shifts (row.Hours holds the quantity, not a duration) at $150/shift = $300
+      const activityB = makeActivity('Flat Activity', [{ fundingSourceName: 'Grant B', percentage: 100 }], { payRate: PayRate.FlatPayRate1, flatRateAmount: 150 });
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Hourly Activity', 4),
-        makeHoursRow(employee.employeeId, 'Flat Activity', 4),
+        makeHoursRow(employee.employeeId, 'Flat Activity', 2),
       ];
-      const expenses = [makeExpense(employee.employeeId, 2800)];
+      // Grant A: 4 hrs × $20 = $80. Grant B: 2 shifts × $150 = $300. Total weighted cost = $380.
+      const expenses = [makeExpense(employee.employeeId, 3800)];
       const activityMap = new Map([
         [activityA.activityName, activityA],
         [activityB.activityName, activityB],
@@ -416,11 +418,24 @@ describe('buildAllocationRows', () => {
 
       const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
 
-      // Flat Activity contributes $0 weighted cost, so all $2800 lands on Grant A
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
       const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
-      expect(grantA.wagesAllocation).toBe(2800);
-      expect(grantB.wagesAllocation).toBe(0);
+      expect(grantA.wagesAllocation).toBe(800);
+      expect(grantB.wagesAllocation).toBe(3000);
+    });
+
+    it('resolves FlatPayRate2 activities using activity.flatRateAmount', () => {
+      const employee = makeEmployee();
+      const activity = makeActivity('Flat Activity', [{ fundingSourceName: 'Grant A', percentage: 100 }], { payRate: PayRate.FlatPayRate2, flatRateAmount: 150 });
+      const hoursRows = [makeHoursRow(employee.employeeId, 'Flat Activity', 2)];
+      const expenses = [makeExpense(employee.employeeId, 300)];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].wagesAllocation).toBe(300);
     });
   });
 
