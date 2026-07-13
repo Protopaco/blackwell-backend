@@ -690,6 +690,75 @@
         }
       }
     },
+    "/api/v1/settings/{clientId}": {
+      "put": {
+        "operationId": "v1UpdateSettings",
+        "summary": "Update settings for a client",
+        "tags": [
+          "Settings"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Settings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settings updated"
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        }
+      },
+      "get": {
+        "operationId": "v1GetSettings",
+        "summary": "Get settings for a client",
+        "tags": [
+          "Settings"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        }
+      }
+    },
     "/api/v1/payrollReport/{clientId}/{payPeriodId}/employeeExpenses/batch": {
       "put": {
         "operationId": "v1UpdateEmployeeExpensesBatch",

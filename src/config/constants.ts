@@ -54,6 +54,7 @@ export const HOLIDAYS_HEADERS = ['HolidayId', 'HolidayName', 'HolidayDate'];
 export const SUPERVISORS_TAB = 'Supervisors';
 export const SUPERVISORS_HEADERS = ['SupervisorId', 'FirstName', 'LastName', 'Email'];
 export const SETTINGS_TAB = 'Settings';
+export const SETTINGS_HEADERS = ['TimesheetTemplate', 'PayPeriodInterval', 'PayPeriodStartDate'];
 
 // ─── Client Config Sheet Tabs ─────────────────────────────────────────────────
 
