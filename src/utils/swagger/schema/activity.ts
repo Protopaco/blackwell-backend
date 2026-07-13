@@ -17,6 +17,7 @@ const activity = {
         },
       },
       payRate: { type: 'string', enum: ['HourlyPayRate1', 'HourlyPayRate2', 'FlatPayRate1', 'FlatPayRate2'] },
+      flatRateAmount: { type: 'number', example: 25 },
     },
   },
 };

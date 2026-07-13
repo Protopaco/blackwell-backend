@@ -11,6 +11,7 @@ describe('mapActivity', () => {
       PayRate: 'HourlyPayRate1',
       FundingSource1Name: 'Federal Grant',
       FundingSource1Percentage: '50',
+      FlatRateAmount: '25',
     });
 
     expect(activity).toEqual({
@@ -20,6 +21,7 @@ describe('mapActivity', () => {
       payrollCategory: 'Regular',
       payRate: 'HourlyPayRate1',
       fundingSources: [{ fundingSourceName: 'Federal Grant', percentage: 50 }],
+      flatRateAmount: 25,
     });
   });
 
@@ -42,6 +44,16 @@ describe('mapActivity', () => {
 
     it('treats a missing value as false', () => {
       expect(mapActivity({}).trackSeparately).toBe(false);
+    });
+  });
+
+  describe('flatRateAmount', () => {
+    it('parses a numeric string', () => {
+      expect(mapActivity({ FlatRateAmount: '25' }).flatRateAmount).toBe(25);
+    });
+
+    it('defaults to 0 when missing', () => {
+      expect(mapActivity({}).flatRateAmount).toBe(0);
     });
   });
 

@@ -15,6 +15,7 @@ import payrollReportRoute from '#routes/v1/payrollReport/index.js';
 import holidayRoute from '#routes/v1/holiday/index.js';
 import supervisorRoute from '#routes/v1/supervisor/index.js';
 import fundingSourceRoute from '#routes/v1/fundingSource/index.js';
+import activityRoute from '#routes/v1/activity/index.js';
 
 dotenv.config();
 
@@ -45,6 +46,7 @@ app.use(`${basePath}/v1/payrollReport`, payrollReportRoute);
 app.use(`${basePath}/v1/holiday`, holidayRoute);
 app.use(`${basePath}/v1/supervisor`, supervisorRoute);
 app.use(`${basePath}/v1/fundingSource`, fundingSourceRoute);
+app.use(`${basePath}/v1/activity`, activityRoute);
 
 app.use(mapErrorResponse);
 
