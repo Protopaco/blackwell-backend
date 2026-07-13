@@ -4,7 +4,7 @@ import createOAuthWorkbook from '#db/adapter/createOAuthWorkbook.js';
 import payrollConfigCache from '#utils/caches/payrollConfigCache.js';
 import Employee from '#models/Employee.js';
 import { logger } from '#utils/logger.js';
-import { NotFoundError } from '#utils/errors.js';
+import { NotFoundError, UnprocessableError } from '#utils/errors.js';
 
 // Assigns a new UUID and appends an employee to the client's PayrollConfig. If timesheetFileId isn't
 // supplied, provisions a new timesheet workbook for the employee (same pattern as generateTimesheets.ts's
@@ -20,6 +20,9 @@ const createEmployee = async (
 
   let timesheetFileId = employee.timesheetFileId;
   if (!timesheetFileId) {
+    if (!client.timesheetsFolderId) {
+      throw new UnprocessableError(`Client ${clientId} has no timesheetsFolderId configured`);
+    }
     timesheetFileId = await createOAuthWorkbook(
       `${employee.firstName} ${employee.lastName} Timesheets`,
       client.timesheetsFolderId,

@@ -1,17 +1,15 @@
 import Guid from '#models/Guid.js';
+import { ClientStatusType } from '#models/ClientStatus.js';
 
 interface Client {
   clientId: Guid;
   clientName: string;
   clientCode: string;
-  trackFundingSource: boolean;
-  clientFolderLink: string;
-  clientFolderId: string;
+  status: ClientStatusType;
   employeePayrollFolderId: string;
   payrollConfigFolderId: string;
-  reportsFolderId: string;
   payrollReportFolderId: string;
-  timesheetsFolderId: string;
+  timesheetsFolderId: string | null;
   payrollConfigFileId: string;
   payPeriodRegistryFileId: string;
 }

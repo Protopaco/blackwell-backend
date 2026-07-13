@@ -7,14 +7,11 @@ describe('mapClient', () => {
       ClientId: 'c1',
       ClientName: 'Demo Client',
       ClientCode: 'DEMO',
-      TrackFundingSource: 'TRUE',
-      ClientFolderLink: 'https://drive.google.com/folder',
-      ClientFolderId: 'folder-1',
+      Status: 'Active',
       EmployeePayrollFolderId: 'folder-2',
       PayrollConfigFolderId: 'folder-3',
-      ReportFolderId: 'folder-4',
       PayrollReportFolderId: 'folder-5',
-      TimesheetFolderId: 'folder-6',
+      TimesheetsFolderId: 'folder-6',
       PayrollConfigFileId: 'file-1',
       PayPeriodRegistryFileId: 'file-2',
     });
@@ -23,12 +20,9 @@ describe('mapClient', () => {
       clientId: 'c1',
       clientName: 'Demo Client',
       clientCode: 'DEMO',
-      trackFundingSource: true,
-      clientFolderLink: 'https://drive.google.com/folder',
-      clientFolderId: 'folder-1',
+      status: 'Active',
       employeePayrollFolderId: 'folder-2',
       payrollConfigFolderId: 'folder-3',
-      reportsFolderId: 'folder-4',
       payrollReportFolderId: 'folder-5',
       timesheetsFolderId: 'folder-6',
       payrollConfigFileId: 'file-1',
@@ -36,21 +30,13 @@ describe('mapClient', () => {
     });
   });
 
-  describe('trackFundingSource coercion', () => {
-    it('treats boolean true as true', () => {
-      expect(mapClient({ TrackFundingSource: true }).trackFundingSource).toBe(true);
+  describe('timesheetsFolderId nullability', () => {
+    it('maps a missing value to null', () => {
+      expect(mapClient({}).timesheetsFolderId).toBeNull();
     });
 
-    it('treats string "TRUE" as true', () => {
-      expect(mapClient({ TrackFundingSource: 'TRUE' }).trackFundingSource).toBe(true);
-    });
-
-    it('treats string "FALSE" as false', () => {
-      expect(mapClient({ TrackFundingSource: 'FALSE' }).trackFundingSource).toBe(false);
-    });
-
-    it('treats a missing value as false', () => {
-      expect(mapClient({}).trackFundingSource).toBe(false);
+    it('maps an empty string to null', () => {
+      expect(mapClient({ TimesheetsFolderId: '' }).timesheetsFolderId).toBeNull();
     });
   });
 });

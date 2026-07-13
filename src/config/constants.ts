@@ -64,6 +64,18 @@ export const SETTINGS_HEADERS = ['TimesheetTemplate', 'PayPeriodInterval', 'PayP
 // ─── Client Config Sheet Tabs ─────────────────────────────────────────────────
 
 export const CLIENTS_TAB = 'Clients';
+export const CLIENT_HEADERS = [
+  'ClientId',
+  'ClientName',
+  'ClientCode',
+  'Status',
+  'EmployeePayrollFolderId',
+  'PayrollConfigFolderId',
+  'PayrollReportFolderId',
+  'TimesheetsFolderId',
+  'PayrollConfigFileId',
+  'PayPeriodRegistryFileId',
+];
 
 // ─── Cache TTLs ───────────────────────────────────────────────────────────────
 

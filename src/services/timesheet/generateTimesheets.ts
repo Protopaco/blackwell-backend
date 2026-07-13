@@ -11,6 +11,7 @@ import writePayPeriod from "#db/payPeriod/writePayPeriod.js";
 import getClientAndPayPeriod from "#services/payPeriod/getClientAndPayPeriod.js";
 import getPayrollConfig from "#db/payrollConfig/readPayrollConfig.js";
 import updateEmployeeTimesheetFile from "#db/employee/updateEmployeeTimesheetFile.js";
+import { UnprocessableError } from "#utils/errors.js";
 import Activity from "#models/Activity.js";
 import { EmployeeStatus } from "#models/EmployeeStatus.js";
 import Guid from "#models/Guid.js";
@@ -132,6 +133,9 @@ const generateTimesheets = async (
       logger.info(
         `No timesheet file for ${employee.firstName} ${employee.lastName} — creating`,
       );
+      if (!client.timesheetsFolderId) {
+        throw new UnprocessableError(`Client ${client.clientId} has no timesheetsFolderId configured`);
+      }
       const newFileId = await createOAuthWorkbook(
         `${employee.firstName} ${employee.lastName} Timesheets`,
         client.timesheetsFolderId,
