@@ -113,14 +113,12 @@
           "clientCode": {
             "type": "string"
           },
-          "trackFundingSource": {
-            "type": "boolean"
-          },
-          "clientFolderLink": {
-            "type": "string"
-          },
-          "clientFolderId": {
-            "type": "string"
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Inactive"
+            ]
           },
           "employeePayrollFolderId": {
             "type": "string"
@@ -128,19 +126,93 @@
           "payrollConfigFolderId": {
             "type": "string"
           },
-          "reportsFolderId": {
-            "type": "string"
-          },
           "payrollReportFolderId": {
             "type": "string"
           },
           "timesheetsFolderId": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "payrollConfigFileId": {
             "type": "string"
           },
           "payPeriodRegistryFileId": {
+            "type": "string"
+          }
+        }
+      },
+      "ClientCreateRequest": {
+        "type": "object",
+        "required": [
+          "clientName",
+          "clientCode",
+          "employeePayrollFolder",
+          "settings"
+        ],
+        "properties": {
+          "clientName": {
+            "type": "string"
+          },
+          "clientCode": {
+            "type": "string"
+          },
+          "employeePayrollFolder": {
+            "type": "object",
+            "description": "Exactly one of link or createNew must be provided. rootFolderLink is required when createNew is true (the parent Drive folder to create it inside) and is never persisted.",
+            "properties": {
+              "link": {
+                "type": "string",
+                "example": "https://drive.google.com/drive/folders/1abcXYZ"
+              },
+              "createNew": {
+                "type": "boolean"
+              },
+              "rootFolderLink": {
+                "type": "string",
+                "example": "https://drive.google.com/drive/folders/1rootXYZ"
+              }
+            }
+          },
+          "payrollConfigFolder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FolderInput"
+              }
+            ],
+            "description": "Omitted entirely means \"create new\" (the default) as a subfolder of employeePayrollFolder."
+          },
+          "payrollReportFolder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FolderInput"
+              }
+            ],
+            "description": "Omitted entirely means \"create new\" (the default) as a subfolder of employeePayrollFolder."
+          },
+          "timesheetsFolderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "settings": {
+            "$ref": "#/components/schemas/Settings"
+          }
+        }
+      },
+      "ClientUpdateRequest": {
+        "type": "object",
+        "description": "All fields optional — only send what is actually changing.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Inactive"
+            ]
+          },
+          "clientName": {
+            "type": "string"
+          },
+          "clientCode": {
             "type": "string"
           }
         }
@@ -270,6 +342,19 @@
             "type": "number",
             "nullable": true,
             "example": 2326.92
+          }
+        }
+      },
+      "FolderInput": {
+        "type": "object",
+        "description": "Exactly one of link or createNew must be provided.",
+        "properties": {
+          "link": {
+            "type": "string",
+            "example": "https://drive.google.com/drive/folders/1abcXYZ"
+          },
+          "createNew": {
+            "type": "boolean"
           }
         }
       },
@@ -753,7 +838,8 @@
     "/api/v1/payrollReport/{clientId}/{payPeriodId}/employeeExpenses/batch": {
       "put": {
         "operationId": "v1UpdateEmployeeExpensesBatch",
-        "summary": "Update totalExpense for multiple employees in a pay period at once",
+        "summary": "Upsert totalExpense for multiple employees in a pay period at once",
+        "description": "For each employeeId with an existing EmployeeExpense record, overlays totalExpense onto it. For each employeeId without one, creates a new record (employeeName resolved from PayrollConfig, activeThisPayPeriod defaulted to true). If any employeeId doesn't match a known employee in the client's PayrollConfig, the entire batch is rejected and nothing is written.\n",
         "tags": [
           "PayrollReport"
         ],
@@ -794,6 +880,9 @@
           },
           "404": {
             "description": "Client, pay period, or payroll report not found"
+          },
+          "422": {
+            "description": "One or more employeeId values do not match a known employee in the client's PayrollConfig"
           }
         }
       }
@@ -1850,7 +1939,81 @@
         }
       }
     },
+    "/api/v1/client/{clientId}": {
+      "put": {
+        "operationId": "v1UpdateClient",
+        "summary": "Update a client",
+        "description": "Only status, clientName, and clientCode are editable — all other fields (folder/file IDs) are set once at creation. All body fields are optional; only what's provided is changed.\n",
+        "tags": [
+          "Client"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Client updated"
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        }
+      }
+    },
     "/api/v1/client": {
+      "post": {
+        "operationId": "v1CreateClient",
+        "summary": "Create a new client",
+        "description": "Provisions the full Drive/Sheets infrastructure for a new client (folders, PayrollConfig workbook, PayPeriodRegistry workbook) then appends the Clients row. clientId, status, and all folder/file ID fields are server-generated or server-resolved — ignored if present in the request body. Unlike other create endpoints, this returns the full created Client since the caller has no other way to retrieve the generated folder/file IDs.\n",
+        "tags": [
+          "Client"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Client created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Client"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A supplied existing-folder link does not resolve or is inaccessible"
+          },
+          "422": {
+            "description": "A create-new step found an unexpected name collision, or the request is malformed"
+          }
+        }
+      },
       "get": {
         "operationId": "v1GetClients",
         "summary": "Get all clients",
