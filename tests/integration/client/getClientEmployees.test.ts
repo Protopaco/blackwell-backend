@@ -27,9 +27,8 @@ describe('GET /api/v1/client/:clientId/employees', () => {
     expect(employee).toHaveProperty('timesheetFileId');
   });
 
-  it('returns 200 with empty array for unknown clientId', async () => {
+  it('returns 404 for unknown clientId', async () => {
     const res = await request(app).get('/api/v1/client/00000000-0000-0000-0000-000000000000/employees');
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual([]);
+    expect(res.status).toBe(404);
   });
 });

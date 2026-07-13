@@ -39,6 +39,11 @@ export const PAY_PERIOD_HEADERS = [
 // ─── Payroll Config Sheet Tabs ────────────────────────────────────────────────
 
 export const EMPLOYEES_TAB = 'Employees';
+export const EMPLOYEES_HEADERS = [
+  'EmployeeId', 'FirstName', 'LastName', 'Position',
+  'HourlyPayRate1', 'HourlyPayRate2', 'HolidayPayRate',
+  'Email', 'Status', 'TimesheetFileId',
+];
 export const ACTIVITIES_TAB = 'Activities';
 export const ACTIVITIES_HEADERS = [
   'ActivityId', 'ActivityName', 'TrackSeparately', 'PayrollCategory',
