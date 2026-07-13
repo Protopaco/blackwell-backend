@@ -8,6 +8,7 @@
     "start": "tsx --conditions=development src/app.ts | pino-pretty",
     "watch": "tsx watch --conditions=development src/app.ts | pino-pretty",
     "build": "tsc -p config/typescript.json",
+    "typecheck": "tsc -p config/tsconfig.tests.json",
     "test": "vitest --project unit",
     "test:unit": "vitest --project unit",
     "test:integration": "vitest --project integration",
