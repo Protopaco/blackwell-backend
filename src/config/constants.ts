@@ -78,12 +78,14 @@ export const CLIENT_HEADERS = [
 ];
 
 // ─── Client Provisioning — Drive folder/file names ────────────────────────────
+// Folder names are used as-is. File names are labels only — createClient.ts prefixes each with the
+// client's clientCode to produce the real file name (e.g. "ACME Payroll Config").
 
 export const EMPLOYEE_PAYROLL_FOLDER_NAME = 'Employee Payroll';
 export const PAYROLL_CONFIG_FOLDER_NAME = 'Payroll Config';
 export const PAYROLL_REPORT_FOLDER_NAME = 'Payroll Report';
-export const PAYROLL_CONFIG_FILE_NAME = 'Payroll Config';
-export const PAY_PERIOD_REGISTRY_FILE_NAME = 'Pay Period Registry';
+export const PAYROLL_CONFIG_FILE_LABEL = 'Payroll Config';
+export const PAY_PERIOD_REGISTRY_FILE_LABEL = 'Pay Period Registry';
 
 // ─── Cache TTLs ───────────────────────────────────────────────────────────────
 

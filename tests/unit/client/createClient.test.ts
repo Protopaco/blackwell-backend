@@ -58,6 +58,8 @@ describe('createClient', () => {
     });
     expect(client.clientId).toEqual(expect.any(String));
 
+    expect(createOAuthWorkbook).toHaveBeenNthCalledWith(1, 'ACME Payroll Config', 'payroll-config-1');
+    expect(createOAuthWorkbook).toHaveBeenNthCalledWith(2, 'ACME Pay Period Registry', 'payroll-config-1');
     expect(createTabIfNotExists).toHaveBeenCalledTimes(6);
     expect(appendClient).toHaveBeenCalledWith('client-config-1', client);
   });

@@ -13,8 +13,8 @@ import {
   EMPLOYEE_PAYROLL_FOLDER_NAME,
   PAYROLL_CONFIG_FOLDER_NAME,
   PAYROLL_REPORT_FOLDER_NAME,
-  PAYROLL_CONFIG_FILE_NAME,
-  PAY_PERIOD_REGISTRY_FILE_NAME,
+  PAYROLL_CONFIG_FILE_LABEL,
+  PAY_PERIOD_REGISTRY_FILE_LABEL,
   EMPLOYEES_TAB,
   SUPERVISORS_TAB,
   FUNDING_SOURCES_TAB,
@@ -73,30 +73,29 @@ const createClient = async (request: ClientCreateRequest): Promise<Client> => {
     PAYROLL_REPORT_FOLDER_NAME,
   );
 
-  const configFileCollision = await driveChildExists(payrollConfigFolderId, PAYROLL_CONFIG_FILE_NAME);
+  const payrollConfigFileName = `${request.clientCode} ${PAYROLL_CONFIG_FILE_LABEL}`;
+  const configFileCollision = await driveChildExists(payrollConfigFolderId, payrollConfigFileName);
   if (configFileCollision) {
     throw new UnprocessableError(
-      `A file named "${PAYROLL_CONFIG_FILE_NAME}" already exists in the Payroll Config folder`,
+      `A file named "${payrollConfigFileName}" already exists in the Payroll Config folder`,
     );
   }
-  const payrollConfigFileId = await createOAuthWorkbook(PAYROLL_CONFIG_FILE_NAME, payrollConfigFolderId);
+  const payrollConfigFileId = await createOAuthWorkbook(payrollConfigFileName, payrollConfigFolderId);
 
   for (const tabName of PAYROLL_CONFIG_TABS) {
     await createTabIfNotExists(payrollConfigFileId, tabName);
   }
   await writeSettings(payrollConfigFileId, request.settings);
 
-  const registryFileCollision = await driveChildExists(
-    payrollConfigFolderId,
-    PAY_PERIOD_REGISTRY_FILE_NAME,
-  );
+  const payPeriodRegistryFileName = `${request.clientCode} ${PAY_PERIOD_REGISTRY_FILE_LABEL}`;
+  const registryFileCollision = await driveChildExists(payrollConfigFolderId, payPeriodRegistryFileName);
   if (registryFileCollision) {
     throw new UnprocessableError(
-      `A file named "${PAY_PERIOD_REGISTRY_FILE_NAME}" already exists in the Payroll Config folder`,
+      `A file named "${payPeriodRegistryFileName}" already exists in the Payroll Config folder`,
     );
   }
   const payPeriodRegistryFileId = await createOAuthWorkbook(
-    PAY_PERIOD_REGISTRY_FILE_NAME,
+    payPeriodRegistryFileName,
     payrollConfigFolderId,
   );
 

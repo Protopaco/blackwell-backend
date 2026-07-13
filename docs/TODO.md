@@ -159,64 +159,11 @@ Build one flagship integration test that exercises the entire pay period workflo
 
 ---
 
-## Client CRUD (Create/Update)
+~~## Client CRUD (Create/Update)~~
 
-Design session 2026-07-13, not yet implemented — this section is the plan, not a record of what exists. Once built, fold the real facts into `ARCHITECTURE.md`'s "Data model" section (updated `Clients` tab schema, folder architecture) and update/strike the stale "Client create/edit" bullet in `ARCHITECTURE.md`'s "Deferred / out of scope" section. `docs/BlackwellTime.md`'s old Client field list/creation flow (lines ~268-270, ~569, and the ~10-step folder-provisioning sketch) is now superseded by this — don't build from that doc, it predates all of the below.
+~~Design session 2026-07-13. Client creation provisions real Drive/Sheets infrastructure (folders, PayrollConfig workbook, PayPeriodRegistry workbook), not just a sheet row — see design discussion for the full reasoning on the existing-link/create-new toggle, the never-delete/no-rollback safety philosophy, and why `EmployeePayrollFolderId` became the sole folder anchor. Update is deliberately narrow (`status`/`clientName`/`clientCode` only, no delete endpoint).~~ — done via `services/client/createClient.ts`, `services/client/updateClient.ts`, `services/client/resolveFolder.ts`, the three new `db/adapter/` Drive functions (`createFolder.ts`, `folderExists.ts`, `driveChildExists.ts`), `utils/parseDriveLink.ts`, and `POST`/`PUT /api/v1/client`. Full details now live in `ARCHITECTURE.md`'s "Data model" section (Client-Config) and "Deferred / intentionally out of scope" (the remaining `TimesheetsFolderId` question). `docs/BlackwellTime.md`'s old Client field list/creation flow (lines ~268-270, ~569, and the ~10-step folder-provisioning sketch) is now fully superseded — don't build from that doc for anything Client-related.
 
-**No live `Clients` sheet exists today** — this is a from-scratch design, not a migration of live data. Any file that currently exists gets deleted before implementation starts.
-
-### Model changes
-
-Cut entirely: `clientFolderLink`, `clientFolderId` (redundant once `EmployeePayrollFolderId` becomes the sole anchor — nothing else in the codebase referenced either field, confirmed by grep), `reportsFolderId`/`ReportFolderId` (redundant with `payrollReportFolderId` — was two names for what's really one folder), `trackFundingSource` (confirmed completely inert — grepped the codebase, nothing branches on it; cutting now costs nothing since there's no live sheet to migrate, cheaper to cut now than carry a dead field into a fresh design).
-
-Add: `status: 'Active' | 'Inactive'` (new field — enables deactivating a client; string enum to match `Employee.status`'s convention, not a boolean, for sheet readability).
-
-Change: `timesheetsFolderId` becomes nullable (`string | null`) — optional at creation for simple clients where the folder's known, left `null` for complex clients (multi-location, unclear ownership) to be resolved later. See "Deferred" below.
-
-Resulting `Clients` tab column order (no live data to preserve, so this was designed fresh rather than reverse-engineered — confirm before implementing):
-`ClientId`, `ClientName`, `ClientCode`, `Status`, `EmployeePayrollFolderId`, `PayrollConfigFolderId`, `PayrollReportFolderId`, `TimesheetsFolderId`, `PayrollConfigFileId`, `PayPeriodRegistryFileId`. Full `Client`-prefixed naming on `ClientId`/`ClientName`/`ClientCode` matches the exact `FundingSources` precedent (`FundingSourceId`/`FundingSourceName`/`FundingSourceCode`) rather than bare `Id`/`Name`/`Code`.
-
-### Why Client creation is different from every other entity's CRUD
-
-Client creation provisions real Drive/Sheets infrastructure, not just a sheet row: `EmployeePayrollFolderId` is the sole folder anchor (no separate root "Client folder" concept survives — see model changes above), with `PayrollConfigFolderId` and `PayrollReportFolderId` as subfolders under it, plus two Sheets files (`PayrollConfigFileId`, `PayPeriodRegistryFileId`) inside the Payroll Config folder.
-
-**Technical finding**: `readPayrollConfig.ts` batch-reads all 6 PayrollConfig tabs (`Employees`, `Supervisors`, `FundingSources`, `Activities`, `Settings`, `Holidays`) in one `batchGet` call — a **missing tab** (not just an empty one) throws at the Sheets API level, so a freshly-created PayrollConfig file must have all 6 tabs created via `createTabIfNotExists` even though 5 stay empty. Only `Settings` needs an actual data row (readPayrollConfig throws if that one's empty) — confirms the "prompt for Settings values at client-creation time" decision below is sufficient, nothing extra needed. `PayPeriodRegistryFile` needs **no tabs at all** at creation — `createPayPeriod.ts` already lazily creates each year-tab on first use, so this file just needs to exist, blank. Both new Sheets files should be created via `createOAuthWorkbook` (OAuth/user-owned), matching the existing precedent in `generatePayrollReport.ts` (creates the payroll report workbook inside `client.payrollReportFolderId` the same way) — not `createWorkbook` (service-account owned), which was the original plan until this was checked against real code. All of this infrastructure lives in the client's own Google Drive; they own the documents, so anything created inside that tree (folders included) needs to go through the OAuth client, not the service account.
-
-### Create workflow
-
-Every folder decision (except `timesheetsFolderId`, see Deferred) is either "use this existing link" or "create new" — never a silent "if doesn't exist, create." The UI passes through whatever link the user pastes as-is (a raw URL); the **backend** validates the shape and extracts the Drive ID, via a small reusable utility (not buried in the client service — needed elsewhere later).
-
-- **Employee/Payroll folder** — defaults to "use existing" (assume it already exists for a real client, since this app's folder tree is rarely being stood up from zero). If "create new" is checked instead, a transient "Client's root Drive folder" link field appears, used once to know where to create the subfolder, and is **never persisted** anywhere — there's no stored root-folder concept in this design at all.
-- **Payroll Config folder** and **Payroll Report folder** — same existing-link/create-new toggle, but default to "create new" (these are assumed to not pre-exist), built as subfolders of the resolved Employee/Payroll folder.
-- **Payroll Config file** and **PayPeriod Registry file** — always app-created (Sheets files, no "existing" option), inside the Payroll Config folder.
-
-**Safety principle (applies to every step above)**: since Sheets/Drive isn't a real DB, a bookkeeper could have manually moved/renamed/deleted something. So every step checks existence first — an "existing link" input gets verified (does it actually resolve, is it accessible); a "create new" step checks its target location for a same-named collision before creating, so we never silently duplicate something a human already placed there. **Never delete anything programmatically, ever** — not even as cleanup after a failed step. On any anomaly (broken/unexpected structure) or blocker, halt just that step, log it, and surface a specific, human-readable UI error describing exactly what's wrong — no automatic rollback of whatever was already created in that run. This is a firm decision, not a placeholder — revisit only if/when this migrates off Sheets to a real DB.
-
-Full sequence:
-1. Resolve Employee/Payroll folder (existing-link verify, or create-new under the transient root link).
-2. Resolve Payroll Config folder (existing-link verify, or create-new under Employee/Payroll folder).
-3. Resolve Payroll Report folder (same pattern).
-4. Check Payroll Config folder for a name collision, then create the Payroll Config Sheets file inside it.
-5. Create all 6 PayrollConfig tabs; write the single `Settings` row from values prompted as part of this same Create request (no app-side defaults — resolves the "readPayrollConfig throws on empty Settings" invariant cleanly).
-6. Check Payroll Config folder for a name collision, then create the PayPeriod Registry Sheets file inside it (no tabs needed yet — lazy per-year creation already exists).
-7. Append the `Clients` row (all resolved IDs, `clientName`/`clientCode`, `status: 'Active'`, `timesheetsFolderId` if supplied else `null`).
-8. Invalidate `clientsCache` (currently has zero write-invalidation coverage — first write path to the `Clients` tab ever built).
-
-New Drive adapters needed (none of this exists in `db/adapter/` today, confirmed): `createFolder.ts`, `getFolderMetadata.ts` (verify an existing-link ID resolves/is accessible), `findChildByName.ts` (the "does it exist" collision guard, used for both folders and files).
-
-### Update
-
-Deliberately narrow — no general field editor, and no delete/hard-delete endpoint at all (deactivation via `status` covers the entire "removal" need). Only `status`, `clientName`, and `clientCode` are editable. `clientCode` is confirmed display-only within this app (a bookkeeper's own shorthand, not used in Drive folder naming or any calculation), so there's no technical risk to allowing it to change post-creation.
-
-### Deferred, explicitly out of scope for this ticket
-
-- **`timesheetsFolderId` resolution + `createEmployee.ts` ripple + permission checks** — bundled as one future conversation. Today `createEmployee.ts` unconditionally uses `client.timesheetsFolderId`; once nullable, it needs a fallback (possibly prompting the user for a folder at first-timesheet-generation time, since some clients' timesheet folders live outside the bookkeeper's own Drive with more complex, non-uniform structure). Permission-checking (verifying read/create/update access on a folder we don't necessarily control) is scoped narrowly to timesheet-folder access only — not needed for Employee/Payroll, Payroll Config, or Payroll Report folders, which are assumed to be within the bookkeeper's own Drive.
-- **`trackFundingSource`** — already resolved (cut, see Model changes above), not actually deferred, noting here only because it came up mid-design.
-
-### Resolved
-- **Subfolder naming** — plain fixed names (e.g. `"Payroll Config"`, `"Payroll Report"`), no `clientCode` prefix.
-- **POST response shape** — deviates from the message-only convention: returns the full created `Client` object, since the caller has no other way to retrieve the generated folder/file IDs.
-- **Error type mapping** — `NotFoundError` (404) when a supplied existing-folder link doesn't resolve/is inaccessible; `UnprocessableError` (422) when a create-new step hits an unexpected name collision.
+Two small deviations worth knowing if touching this again: the two Sheets files are named `"{ClientCode} Payroll Config"` / `"{ClientCode} Pay Period Registry"` (clientCode-prefixed, unlike the plain-named folders), and `createEmployee.ts`/`generateTimesheets.ts` throw `UnprocessableError` as a stopgap when `timesheetsFolderId` is `null` and a new timesheet file is needed — not the real fix, see `ARCHITECTURE.md`.
 
 ---
 
