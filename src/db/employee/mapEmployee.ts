@@ -14,7 +14,6 @@ const mapEmployee = (row: Record<string, unknown>): Employee => ({
   holidayPayRate: Number(row["HolidayPayRate"]) || 0,
   email: row["Email"] as string,
   status: row["Status"] as EmployeeStatusType,
-  timesheetFileLink: row["TimesheetFileLink"] as string,
   timesheetFileId: row["TimesheetFileId"] as string,
 });
 

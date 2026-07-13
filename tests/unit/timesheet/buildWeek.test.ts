@@ -13,6 +13,7 @@ const makeActivity = (activityName: string, payRate: string = PayRate.HourlyPayR
   payrollCategory: payrollCategory as Activity['payrollCategory'],
   fundingSources: [],
   payRate: payRate as Activity['payRate'],
+  flatRateAmount: 0,
 });
 
 const makeHoliday = (date: string, name: string): Holiday => ({

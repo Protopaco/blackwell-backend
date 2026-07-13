@@ -235,11 +235,6 @@
           "timesheetFileId": {
             "type": "string",
             "example": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
-          },
-          "timesheetFileLink": {
-            "type": "string",
-            "format": "uri",
-            "example": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/edit"
           }
         }
       },
@@ -409,10 +404,6 @@
           },
           "timesheetFileId": {
             "type": "string"
-          },
-          "timesheetFileLink": {
-            "type": "string",
-            "example": "https://docs.google.com/spreadsheets/d/..."
           },
           "totalHours": {
             "type": "number",

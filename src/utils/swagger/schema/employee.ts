@@ -12,7 +12,6 @@ const employee = {
       email: { type: 'string', format: 'email', example: 'jane.smith@example.org' },
       status: { type: 'string', enum: ['Active', 'Inactive'] },
       timesheetFileId: { type: 'string', example: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms' },
-      timesheetFileLink: { type: 'string', format: 'uri', example: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/edit' },
     },
   },
 };

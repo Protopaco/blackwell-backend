@@ -120,7 +120,7 @@ Vitest 4, using `test.projects` in `vitest.config.ts`:
 
 **Payroll-Config** (one per client, file ID = `Client.payrollConfigFileId`) — read in one batched call by `readPayrollConfig.ts` via `db/adapter/readTabs.ts`
 
-- `Employees`: `EmployeeId`, `FirstName`, `LastName`, `Position`, `HourlyPayRate1`, `HourlyPayRate2`, `FlatPayRate1`, `FlatPayRate2`, `HolidayPayRate`, `Email`, `Status` (`Active`/`Inactive`), `TimesheetFileLink`, `TimesheetFileId`. Pay rates ARE used in calculations (allocation proportion weighting via `buildAllocationRows.ts`) — not display-only.
+- `Employees`: `EmployeeId`, `FirstName`, `LastName`, `Position`, `HourlyPayRate1`, `HourlyPayRate2`, `FlatPayRate1`, `FlatPayRate2`, `HolidayPayRate`, `Email`, `Status` (`Active`/`Inactive`), `TimesheetFileId`. Pay rates ARE used in calculations (allocation proportion weighting via `buildAllocationRows.ts`) — not display-only.
 - `Supervisors`: `SupervisorId`, `FirstName`, `LastName`, `Email`. No hard assignment to employees — any supervisor can approve any employee's timesheet.
 - `FundingSources`: `FundingSourceId`, `FundingSourceName`, `FundingSourceCode` (optional, QuickBooks mapping)
 - `Activities`: `ActivityId`, `ActivityName`, `TrackSeparately` (bool), `PayrollCategory` (`Regular`/`ETO`/`PTO`/`STO`), `FundingSource1Name`/`Percentage` through `FundingSource3Name`/`Percentage` (hardcoded max 3, known limitation), `PayRate` (`HourlyPayRate1`/`HourlyPayRate2`/`FlatPayRate1`/`FlatPayRate2`)

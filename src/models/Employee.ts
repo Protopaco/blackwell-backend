@@ -13,7 +13,6 @@ interface Employee {
   holidayPayRate: number;
   email: string;
   status: EmployeeStatusType;
-  timesheetFileLink: string;
   timesheetFileId: string;
 }
 

@@ -296,7 +296,6 @@ Created automatically when a client is added.
 | HolidayPayRate    | Holiday rate — display only, never used in calculations |
 | Email             |                                                         |
 | Status            | Active / Inactive                                       |
-| TimesheetFileLink | Google Sheets URL                                       |
 | TimesheetFileId   | Google Sheets file ID                                   |
 
 #### Supervisors Sheet
@@ -589,7 +588,6 @@ interface Employee {
   holidayPayRate: number;
   email: string;
   status: EmployeeStatus;
-  timesheetFileLink: string;
   timesheetFileId: string;
 }
 

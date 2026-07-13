@@ -25,7 +25,6 @@ describe('GET /api/v1/client/:clientId/employees', () => {
     expect(employee).toHaveProperty('email');
     expect(employee).toHaveProperty('status');
     expect(employee).toHaveProperty('timesheetFileId');
-    expect(employee).toHaveProperty('timesheetFileLink');
   });
 
   it('returns 200 with empty array for unknown clientId', async () => {

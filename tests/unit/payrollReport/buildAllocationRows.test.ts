@@ -23,7 +23,6 @@ const makeEmployee = (overrides: Partial<Employee> = {}): Employee => ({
   holidayPayRate: 30.00,
   email: 'jane@example.com',
   status: EmployeeStatus.Active,
-  timesheetFileLink: '',
   timesheetFileId: '',
   ...overrides,
 });
@@ -39,6 +38,7 @@ const makeActivity = (
   payrollCategory: PayrollCategory.Regular,
   payRate: PayRate.HourlyPayRate1,
   fundingSources,
+  flatRateAmount: 0,
   ...overrides,
 });
 

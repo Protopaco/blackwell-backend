@@ -15,7 +15,6 @@ describe('mapEmployee', () => {
       HolidayPayRate: '38.94',
       Email: 'jane.smith@example.org',
       Status: 'Active',
-      TimesheetFileLink: 'https://docs.google.com/spreadsheets/d/1',
       TimesheetFileId: '1',
     });
 
@@ -31,7 +30,6 @@ describe('mapEmployee', () => {
       holidayPayRate: 38.94,
       email: 'jane.smith@example.org',
       status: 'Active',
-      timesheetFileLink: 'https://docs.google.com/spreadsheets/d/1',
       timesheetFileId: '1',
     });
   });

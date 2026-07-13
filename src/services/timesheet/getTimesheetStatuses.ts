@@ -38,7 +38,6 @@ const getTimesheetStatuses = async (
         employeeId: employee.employeeId,
         employeeName: `${employee.firstName} ${employee.lastName}`,
         timesheetFileId: employee.timesheetFileId,
-        timesheetFileLink: employee.timesheetFileLink,
         totalHours: detail.totalHours,
         flatRateQuantity: detail.flatRateQuantity,
         employeeSigned: detail.employeeSigned,

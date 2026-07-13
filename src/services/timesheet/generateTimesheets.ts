@@ -136,15 +136,12 @@ const generateTimesheets = async (
         `${employee.firstName} ${employee.lastName} Timesheets`,
         client.timesheetsFolderId,
       );
-      const newFileLink = `https://docs.google.com/spreadsheets/d/${newFileId}/edit`;
       await updateEmployeeTimesheetFile(
         client.payrollConfigFileId,
         employee.employeeId,
         newFileId,
-        newFileLink,
       );
       employee.timesheetFileId = newFileId;
-      employee.timesheetFileLink = newFileLink;
       logger.info(
         `Created timesheet file for ${employee.firstName} ${employee.lastName}: ${newFileId}`,
       );
