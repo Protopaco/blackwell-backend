@@ -9,6 +9,7 @@ import { PayPeriodInterval } from '#models/PayPeriodInterval.js';
 import { assert } from 'node:console';
 import buildDriveFolderLink from '../buildDriveFolderLink.js';
 import createFolder from '#db/adapter/createFolder.js';
+import createTestClient from '../builders/createTestClient.js';
 
 const defaultSettings = {
   timeInputMethod: TimeInputMethod.TotalHours,
@@ -65,5 +66,28 @@ describe('POST /api/v1/client', () => {
     expect(res.body.payrollReportFolderId).toBe(payrollReportFolderId);
     expect(res.body.payrollConfigFileId).toBeDefined();
     expect(res.body.payPeriodRegistryFileId).toBeDefined();
+  });
+
+  it('fails with 422 when clientCode already exists', async () => {
+    const existingClient = await createTestClient();
+    const root = await createTestRootFolder('createClient_duplicateClientCode');
+
+    const res = await request(app)
+      .post('/api/v1/client')
+      .send({
+        clientName: 'Duplicate Client Code Test Client',
+        clientCode: existingClient.clientCode,
+        employeePayrollFolder: {
+          createNew: true,
+          rootFolderLink: root.folderLink,
+        },
+        payrollConfigFolder: { createNew: true, rootFolderLink: root.folderLink },
+        payrollReportFolder: { createNew: true, rootFolderLink: root.folderLink },
+        settings: defaultSettings,
+      });
+
+    assert(res.status === 422, `Expected status 422, got ${res.status}`);
+    expect(res.body.message).toContain('already exists');
+    expect(res.body.message).toContain('Client Code');
   });
 });

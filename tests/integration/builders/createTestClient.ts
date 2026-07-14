@@ -5,6 +5,8 @@ import Client from '#models/Client.js';
 import { TimeInputMethod } from '#models/TimeInputMethod.js';
 import { PayPeriodInterval } from '#models/PayPeriodInterval.js';
 import buildDriveFolderLink from '../buildDriveFolderLink.js';
+import getUniqueCode from '../helpers/getUniqueCode.js';
+import createTestRootFolder from './createTestRootFolder.js';
 
 const TEST_DATA_ROOT_FOLDER_ID = process.env.TEST_DATA_ROOT_FOLDER_ID;
 
@@ -15,15 +17,15 @@ const createTestClient = async (overrides: Partial<ClientCreateRequest> = {}): P
   if (!TEST_DATA_ROOT_FOLDER_ID) {
     throw new Error('TEST_DATA_ROOT_FOLDER_ID is not set — required for all test data builders');
   }
-
-  const uniqueSuffix = Date.now().toString(36);
+  const rootFilderLinkFolderId = (await createTestRootFolder('createTestClient')).folderId;
+  const uniqueClientCode = getUniqueCode('TEST');
 
   const requestBody: ClientCreateRequest = {
-    clientName: `Test Client ${uniqueSuffix}`,
-    clientCode: `TEST${uniqueSuffix}`,
+    clientName: `Test Client ${uniqueClientCode}`,
+    clientCode: uniqueClientCode,
     employeePayrollFolder: {
       createNew: true,
-      rootFolderLink: buildDriveFolderLink(TEST_DATA_ROOT_FOLDER_ID),
+      rootFolderLink: buildDriveFolderLink(rootFilderLinkFolderId),
     },
     settings: {
       timeInputMethod: TimeInputMethod.TotalHours,
