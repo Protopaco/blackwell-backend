@@ -1,17 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import app from '#app.js';
-import Client from '#models/Client.js';
 import { ClientStatus } from '#models/ClientStatus.js';
 import createTestClient from '../builders/createTestClient.js';
+import getClientById from '../helpers/getClientById.js';
 import getUniqueCode from '../helpers/getUniqueCode.js';
-
-const getClientFromList = async (clientId: string): Promise<Client | undefined> => {
-  const res = await request(app).get('/api/v1/client');
-
-  expect(res.status).toBe(200);
-  return res.body.find((client: Client) => client.clientId === clientId);
-};
 
 describe('PUT /api/v1/client/:clientId', () => {
   it('200 - Updates client status, name, and code', async () => {
@@ -30,7 +23,7 @@ describe('PUT /api/v1/client/:clientId', () => {
     expect(res.status).toBe(200);
     expect(res.body.message).toBe('Client updated');
 
-    const updatedClient = await getClientFromList(client.clientId);
+    const updatedClient = await getClientById(client.clientId);
     expect(updatedClient).toMatchObject({
       clientId: client.clientId,
       status: ClientStatus.Inactive,
@@ -51,7 +44,7 @@ describe('PUT /api/v1/client/:clientId', () => {
     expect(res.status).toBe(200);
     expect(res.body.message).toBe('Client updated');
 
-    const updatedClient = await getClientFromList(client.clientId);
+    const updatedClient = await getClientById(client.clientId);
     expect(updatedClient).toMatchObject({
       clientId: client.clientId,
       status: ClientStatus.Inactive,
