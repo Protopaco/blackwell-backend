@@ -54,13 +54,12 @@ describe('createClient', () => {
       payrollReportFolderId: 'payroll-report-1',
       payrollConfigFileId: 'payroll-config-file-1',
       payPeriodRegistryFileId: 'pay-period-registry-1',
-      timesheetsFolderId: null,
     });
     expect(client.clientId).toEqual(expect.any(String));
 
     expect(createOAuthWorkbook).toHaveBeenNthCalledWith(1, 'ACME Payroll Config', 'payroll-config-1');
     expect(createOAuthWorkbook).toHaveBeenNthCalledWith(2, 'ACME Pay Period Registry', 'payroll-config-1');
-    expect(createTabIfNotExists).toHaveBeenCalledTimes(6);
+    expect(createTabIfNotExists).toHaveBeenCalledTimes(7);
     expect(appendClient).toHaveBeenCalledWith('client-config-1', client);
   });
 

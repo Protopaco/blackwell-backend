@@ -46,6 +46,9 @@
     },
     {
       "name": "Timesheet"
+    },
+    {
+      "name": "TimesheetFolder"
     }
   ],
   "components": {
@@ -167,10 +170,6 @@
           "payrollReportFolderId": {
             "type": "string"
           },
-          "timesheetsFolderId": {
-            "type": "string",
-            "nullable": true
-          },
           "payrollConfigFileId": {
             "type": "string"
           },
@@ -226,10 +225,6 @@
               }
             ],
             "description": "Omitted entirely means \"create new\" (the default) as a subfolder of employeePayrollFolder."
-          },
-          "timesheetsFolderId": {
-            "type": "string",
-            "nullable": true
           },
           "settings": {
             "$ref": "#/components/schemas/Settings"
@@ -345,6 +340,66 @@
           "timesheetFileId": {
             "type": "string",
             "example": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+          }
+        }
+      },
+      "EmployeeCreateRequest": {
+        "type": "object",
+        "description": "Exactly one of timesheetFileId or timesheetFolderId must be provided.",
+        "required": [
+          "firstName",
+          "lastName",
+          "position",
+          "hourlyPayRate1",
+          "hourlyPayRate2",
+          "holidayPayRate",
+          "email",
+          "status"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "Jane"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Smith"
+          },
+          "position": {
+            "type": "string",
+            "example": "Program Director"
+          },
+          "hourlyPayRate1": {
+            "type": "number",
+            "example": 25.96
+          },
+          "hourlyPayRate2": {
+            "type": "number",
+            "example": 36
+          },
+          "holidayPayRate": {
+            "type": "number",
+            "example": 38.94
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "jane.smith@example.org"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Inactive"
+            ]
+          },
+          "timesheetFileId": {
+            "type": "string",
+            "example": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+          },
+          "timesheetFolderId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -514,6 +569,68 @@
           }
         }
       },
+      "TimesheetFolder": {
+        "type": "object",
+        "properties": {
+          "timesheetFolderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timesheetFolderName": {
+            "type": "string",
+            "example": "Main Office"
+          },
+          "driveFolderId": {
+            "type": "string",
+            "example": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Inactive"
+            ]
+          }
+        }
+      },
+      "TimesheetFolderCreateRequest": {
+        "type": "object",
+        "required": [
+          "timesheetFolderName",
+          "driveFolderLink"
+        ],
+        "properties": {
+          "timesheetFolderName": {
+            "type": "string",
+            "example": "Main Office"
+          },
+          "driveFolderLink": {
+            "type": "string",
+            "example": "https://drive.google.com/drive/folders/1abcXYZ"
+          }
+        }
+      },
+      "TimesheetFolderUpdateRequest": {
+        "type": "object",
+        "description": "All fields optional — only send what is actually changing.",
+        "properties": {
+          "timesheetFolderName": {
+            "type": "string",
+            "example": "Main Office"
+          },
+          "driveFolderLink": {
+            "type": "string",
+            "example": "https://drive.google.com/drive/folders/1abcXYZ"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Active",
+              "Inactive"
+            ]
+          }
+        }
+      },
       "EmployeeTimesheetStatus": {
         "type": "object",
         "properties": {
@@ -572,6 +689,125 @@
     }
   },
   "paths": {
+    "/api/v1/timesheetFolder/{clientId}/{timesheetFolderId}": {
+      "put": {
+        "operationId": "v1UpdateTimesheetFolder",
+        "summary": "Update a timesheet folder",
+        "description": "All body fields are optional; only what's provided is changed. driveFolderLink, if provided, is re-parsed and re-verified against Drive before being stored.\n",
+        "tags": [
+          "TimesheetFolder"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "timesheetFolderId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimesheetFolderUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "TimesheetFolder updated"
+          },
+          "404": {
+            "description": "Client or timesheet folder not found, or the supplied driveFolderLink doesn't resolve/is inaccessible"
+          }
+        }
+      }
+    },
+    "/api/v1/timesheetFolder/{clientId}": {
+      "post": {
+        "operationId": "v1CreateTimesheetFolder",
+        "summary": "Create a new timesheet folder",
+        "description": "timesheetFolderId is server-generated, status is always created Active — both ignored if present in the request body. driveFolderLink is parsed and verified against Drive before being stored.\n",
+        "tags": [
+          "TimesheetFolder"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimesheetFolderCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "TimesheetFolder created"
+          },
+          "404": {
+            "description": "Client not found, or the supplied driveFolderLink doesn't resolve/is inaccessible"
+          }
+        }
+      },
+      "get": {
+        "operationId": "v1GetTimesheetFolders",
+        "summary": "Get all timesheet folders for a client",
+        "tags": [
+          "TimesheetFolder"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of timesheet folders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TimesheetFolder"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        }
+      }
+    },
     "/api/v1/timesheet/{clientId}/{payPeriodId}/generate": {
       "post": {
         "operationId": "v1GenerateTimesheets",
@@ -1908,7 +2144,7 @@
       "post": {
         "operationId": "v1CreateEmployee",
         "summary": "Create a new employee",
-        "description": "employeeId is server-generated — ignored if present in the request body. If timesheetFileId is omitted, a new timesheet workbook is provisioned automatically and its ID is saved.",
+        "description": "employeeId is server-generated — ignored if present in the request body. Exactly one of timesheetFileId (existing file, used as-is) or timesheetFolderId (must be an Active TimesheetFolder configured for this client — a new timesheet workbook is provisioned there) must be provided.\n",
         "tags": [
           "Employee"
         ],
@@ -1927,7 +2163,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Employee"
+                "$ref": "#/components/schemas/EmployeeCreateRequest"
               }
             }
           }
@@ -1937,7 +2173,10 @@
             "description": "Employee created"
           },
           "404": {
-            "description": "Client not found"
+            "description": "Client not found, or timesheetFolderId doesn't match an Active TimesheetFolder"
+          },
+          "422": {
+            "description": "Neither timesheetFileId nor timesheetFolderId was provided"
           }
         }
       },

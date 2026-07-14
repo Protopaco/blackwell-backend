@@ -10,7 +10,6 @@ const { existingClient } = vi.hoisted(() => ({
     employeePayrollFolderId: 'folder-1',
     payrollConfigFolderId: 'folder-2',
     payrollReportFolderId: 'folder-3',
-    timesheetsFolderId: null,
     payrollConfigFileId: 'file-1',
     payPeriodRegistryFileId: 'file-2',
   } as Client,
