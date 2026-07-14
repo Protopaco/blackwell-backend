@@ -1,5 +1,4 @@
 import tabExists from "#db/adapter/tabExists.js";
-import createOAuthWorkbook from "#db/adapter/createOAuthWorkbook.js";
 import createTabIfNotExists from "#db/adapter/createTabIfNotExists.js";
 import writeValues from "#db/adapter/writeValues.js";
 import listTabNames from "#db/adapter/listTabNames.js";
@@ -10,7 +9,6 @@ import getPayPeriods from "#db/payPeriod/readPayPeriods.js";
 import writePayPeriod from "#db/payPeriod/writePayPeriod.js";
 import getClientAndPayPeriod from "#services/payPeriod/getClientAndPayPeriod.js";
 import getPayrollConfig from "#db/payrollConfig/readPayrollConfig.js";
-import updateEmployeeTimesheetFile from "#db/employee/updateEmployeeTimesheetFile.js";
 import { UnprocessableError } from "#utils/errors.js";
 import Activity from "#models/Activity.js";
 import { EmployeeStatus } from "#models/EmployeeStatus.js";
@@ -52,27 +50,6 @@ const sumRows = (rowNums: number[], maxDays: number): string => {
   return `=SUM(${ranges.join(",")})`;
 };
 
-// cols is 1-based column numbers
-const sumCells = (rowNums: number[], cols: number[]): string => {
-  if (rowNums.length === 0 || cols.length === 0) return "0";
-  const cells: string[] = [];
-  for (const colNum of cols) {
-    const colLetterStr = colLetter(colNum - 1);
-    for (const rowNum of rowNums) {
-      cells.push(`${colLetterStr}${rowNum}`);
-    }
-  }
-  return `=SUM(${cells.join(",")})`;
-};
-
-// Builds a =COUNTA() formula that counts filled cells across day columns for the given rows — used for flat-rate shift counts.
-const countaRows = (rowNums: number[], maxDays: number): string => {
-  if (rowNums.length === 0) return "0";
-  const lastCol = colLetter(maxDays);
-  const ranges = rowNums.map((rowNum) => `B${rowNum}:${lastCol}${rowNum}`);
-  return `=COUNTA(${ranges.join(",")})`;
-};
-
 // For each active employee, creates a new timesheet file if needed, writes all week rows and summary formulas,
 // and saves a manifest entry so future status checks know what was generated and where signatures belong.
 // Skips employees whose timesheet for this pay period already exists.
@@ -87,6 +64,17 @@ const generateTimesheets = async (
   const activeEmployees = payrollConfig.employees.filter(
     (employee) => employee.status === EmployeeStatus.Active,
   );
+
+  // A missing timesheetFileId at generation time is a data error, not something generation should
+  // silently patch over — fix it via Employee update (which requires a timesheetFolderId at creation
+  // time now, see createEmployee.ts).
+  const employeesMissingTimesheetFile = activeEmployees.filter((employee) => !employee.timesheetFileId);
+  if (employeesMissingTimesheetFile.length > 0) {
+    const names = employeesMissingTimesheetFile.map((employee) => `${employee.firstName} ${employee.lastName}`);
+    throw new UnprocessableError(
+      `Active employees missing a timesheetFileId — fix via Employee update before generating: ${names.join(', ')}`,
+    );
+  }
 
   logger.info(`Generating timesheets for ${activeEmployees.length} employees`);
 
@@ -126,28 +114,6 @@ const generateTimesheets = async (
     if (existingManifest) {
       logger.info(
         `Manifest exists but tab was deleted — regenerating ${employee.firstName} ${employee.lastName}`,
-      );
-    }
-
-    if (!employee.timesheetFileId) {
-      logger.info(
-        `No timesheet file for ${employee.firstName} ${employee.lastName} — creating`,
-      );
-      if (!client.timesheetsFolderId) {
-        throw new UnprocessableError(`Client ${client.clientId} has no timesheetsFolderId configured`);
-      }
-      const newFileId = await createOAuthWorkbook(
-        `${employee.firstName} ${employee.lastName} Timesheets`,
-        client.timesheetsFolderId,
-      );
-      await updateEmployeeTimesheetFile(
-        client.payrollConfigFileId,
-        employee.employeeId,
-        newFileId,
-      );
-      employee.timesheetFileId = newFileId;
-      logger.info(
-        `Created timesheet file for ${employee.firstName} ${employee.lastName}: ${newFileId}`,
       );
     }
 

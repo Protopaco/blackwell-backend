@@ -21,6 +21,7 @@ import {
   ACTIVITIES_TAB,
   SETTINGS_TAB,
   HOLIDAYS_TAB,
+  TIMESHEET_FOLDERS_TAB,
 } from '#config/constants.js';
 import { logger } from '#utils/logger.js';
 import { UnprocessableError } from '#utils/errors.js';
@@ -32,6 +33,7 @@ const PAYROLL_CONFIG_TABS = [
   ACTIVITIES_TAB,
   SETTINGS_TAB,
   HOLIDAYS_TAB,
+  TIMESHEET_FOLDERS_TAB,
 ];
 
 // Provisions a brand-new client end to end: Drive folder tree, PayrollConfig workbook (all 6 tabs,
@@ -107,7 +109,6 @@ const createClient = async (request: ClientCreateRequest): Promise<Client> => {
     employeePayrollFolderId,
     payrollConfigFolderId,
     payrollReportFolderId,
-    timesheetsFolderId: request.timesheetsFolderId ?? null,
     payrollConfigFileId,
     payPeriodRegistryFileId,
   };

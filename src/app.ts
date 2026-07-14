@@ -18,6 +18,7 @@ import payrollReportRoute from '#routes/v1/payrollReport/index.js';
 import settingsRoute from '#routes/v1/settings/index.js';
 import supervisorRoute from '#routes/v1/supervisor/index.js';
 import timesheetRoute from '#routes/v1/timesheet/index.js';
+import timesheetFolderRoute from '#routes/v1/timesheetFolder/index.js';
 
 dotenv.config();
 
@@ -70,6 +71,7 @@ app.use(`${basePath}/v1/payrollReport`, payrollReportRoute);
 app.use(`${basePath}/v1/settings`, settingsRoute);
 app.use(`${basePath}/v1/supervisor`, supervisorRoute);
 app.use(`${basePath}/v1/timesheet`, timesheetRoute);
+app.use(`${basePath}/v1/timesheetFolder`, timesheetFolderRoute);
 
 app.use(mapErrorResponse);
 

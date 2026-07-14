@@ -24,7 +24,6 @@ const writeClients = async (updatedClient: Client): Promise<void> => {
     EmployeePayrollFolderId: client.employeePayrollFolderId,
     PayrollConfigFolderId: client.payrollConfigFolderId,
     PayrollReportFolderId: client.payrollReportFolderId,
-    TimesheetsFolderId: client.timesheetsFolderId ?? '',
     PayrollConfigFileId: client.payrollConfigFileId,
     PayPeriodRegistryFileId: client.payPeriodRegistryFileId,
   }));

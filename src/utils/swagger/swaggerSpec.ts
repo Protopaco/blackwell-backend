@@ -33,6 +33,7 @@ const swaggerOptions = {
       { name: 'Settings' },
       { name: 'Supervisor' },
       { name: 'Timesheet' },
+      { name: 'TimesheetFolder' },
     ],
     components: {
       schemas,

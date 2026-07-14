@@ -9,7 +9,6 @@ interface Client {
   employeePayrollFolderId: string;
   payrollConfigFolderId: string;
   payrollReportFolderId: string;
-  timesheetsFolderId: string | null;
   payrollConfigFileId: string;
   payPeriodRegistryFileId: string;
 }

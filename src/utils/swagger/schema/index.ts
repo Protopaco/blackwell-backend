@@ -6,6 +6,7 @@ import clientCreateRequest from './clientCreateRequest.js';
 import clientUpdateRequest from './clientUpdateRequest.js';
 import clientSummary from './clientSummary.js';
 import employee from './employee.js';
+import employeeCreateRequest from './employeeCreateRequest.js';
 import employeeExpense from './employeeExpense.js';
 import employeeExpenseUpdate from './employeeExpenseUpdate.js';
 import folderInput from './folderInput.js';
@@ -14,6 +15,9 @@ import holiday from './holiday.js';
 import payPeriod from './payPeriod.js';
 import settings from './settings.js';
 import supervisor from './supervisor.js';
+import timesheetFolder from './timesheetFolder.js';
+import timesheetFolderCreateRequest from './timesheetFolderCreateRequest.js';
+import timesheetFolderUpdateRequest from './timesheetFolderUpdateRequest.js';
 import timesheetStatusResponse from './timesheetStatusResponse.js';
 import error from './error.js';
 
@@ -26,6 +30,7 @@ const schemas = {
   ...clientUpdateRequest,
   ...clientSummary,
   ...employee,
+  ...employeeCreateRequest,
   ...employeeExpense,
   ...employeeExpenseUpdate,
   ...folderInput,
@@ -34,6 +39,9 @@ const schemas = {
   ...payPeriod,
   ...settings,
   ...supervisor,
+  ...timesheetFolder,
+  ...timesheetFolderCreateRequest,
+  ...timesheetFolderUpdateRequest,
   ...timesheetStatusResponse,
   ...error,
 };

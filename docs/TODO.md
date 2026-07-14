@@ -63,9 +63,9 @@
 
 ---
 
-### Route getEmployees.ts through the payrollConfigCache
+~~### Route getEmployees.ts through the payrollConfigCache~~
 
-Started building CRUD routes for PayrollConfig entities (Employees, Supervisors, Activities, FundingSources, Holidays, Settings), starting with Holidays. New entities' list reads go through `readPayrollConfig(...)` (already cached, one batched `readTabs`/`batchGet` call for all 6 tabs) rather than calling their individual `read<Entity>s.ts` directly — avoids a second, separately-invalidated cache per entity, and avoids extra Sheets API calls on a cold cache. `getEmployees.ts` (the one entity with an existing live route, `GET /client/:clientId/employees`) predates this and still calls `readEmployees.ts` directly, uncached. Fix it to match the new pattern when Employee CRUD routes get built.
+~~`getEmployees.ts` predates the `readPayrollConfig(...)`-cached pattern used by the other PayrollConfig entities and still called `readEmployees.ts` directly, uncached.~~ — already done, turned out to have been fixed as part of building Employee CRUD itself; this item was just never struck through. `getEmployees.ts` now matches `getHolidays.ts`'s exact shape. The only remaining direct use of `readEmployees.ts` is inside `writeEmployees.ts`'s read-modify-write, which is correct and expected (same pattern as `writeHolidays.ts`). Noted in passing, not fixed: `readEmployeeById.ts` looks like dead code — nothing in `src/` calls it.
 
 ---
 

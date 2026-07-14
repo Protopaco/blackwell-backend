@@ -9,7 +9,6 @@ const client = {
       employeePayrollFolderId: { type: 'string' },
       payrollConfigFolderId: { type: 'string' },
       payrollReportFolderId: { type: 'string' },
-      timesheetsFolderId: { type: 'string', nullable: true },
       payrollConfigFileId: { type: 'string' },
       payPeriodRegistryFileId: { type: 'string' },
     },

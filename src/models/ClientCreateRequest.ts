@@ -10,7 +10,6 @@ interface ClientCreateRequest {
   // Omitted entirely means "create new" (the agreed default) for both of these.
   payrollConfigFolder?: FolderInput;
   payrollReportFolder?: FolderInput;
-  timesheetsFolderId?: string | null;
   settings: Settings;
 }
 

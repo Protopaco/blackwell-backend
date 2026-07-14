@@ -4,6 +4,7 @@ import Activity from './Activity.js';
 import FundingSource from './FundingSource.js';
 import Holiday from './Holiday.js';
 import Settings from './Settings.js';
+import TimesheetFolder from './TimesheetFolder.js';
 
 interface PayrollConfig {
   employees: Employee[];
@@ -12,6 +13,7 @@ interface PayrollConfig {
   fundingSources: FundingSource[];
   holidays: Holiday[];
   settings: Settings;
+  timesheetFolders: TimesheetFolder[];
 }
 
 export default PayrollConfig;

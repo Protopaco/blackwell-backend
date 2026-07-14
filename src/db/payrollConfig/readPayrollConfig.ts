@@ -6,6 +6,7 @@ import mapActivity from '#db/activity/mapActivity.js';
 import mapFundingSource from '#db/fundingSource/mapFundingSource.js';
 import mapHoliday from '#db/holiday/mapHoliday.js';
 import mapSettings from '#db/settings/mapSettings.js';
+import mapTimesheetFolder from '#db/timesheetFolder/mapTimesheetFolder.js';
 import {
   EMPLOYEES_TAB,
   ACTIVITIES_TAB,
@@ -13,6 +14,7 @@ import {
   HOLIDAYS_TAB,
   SUPERVISORS_TAB,
   SETTINGS_TAB,
+  TIMESHEET_FOLDERS_TAB,
 } from '#config/constants.js';
 import { logger } from '#utils/logger.js';
 import payrollConfigCache from '#utils/caches/payrollConfigCache.js';
@@ -24,6 +26,7 @@ const TAB_NAMES = {
   activities: ACTIVITIES_TAB,
   settings: SETTINGS_TAB,
   holidays: HOLIDAYS_TAB,
+  timesheetFolders: TIMESHEET_FOLDERS_TAB,
 };
 
 // Loads all config tabs (employees, activities, settings, etc.) in one batched call and caches the result for 5 minutes.
@@ -41,6 +44,7 @@ const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollCo
     activityRows,
     settingsRows,
     holidayRows,
+    timesheetFolderRows,
   ] = await readTabs(payrollConfigFileId, Object.values(TAB_NAMES));
 
   const settings = settingsRows.length > 0 ? mapSettings(settingsRows[0]) : null;
@@ -53,6 +57,7 @@ const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollCo
     fundingSources: fundingSourceRows.map(mapFundingSource),
     holidays: holidayRows.map(mapHoliday),
     settings,
+    timesheetFolders: timesheetFolderRows.map(mapTimesheetFolder),
   };
 
   payrollConfigCache.set(payrollConfigFileId, config);

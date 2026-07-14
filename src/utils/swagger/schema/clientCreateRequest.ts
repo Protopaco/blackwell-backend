@@ -24,7 +24,6 @@ const clientCreateRequest = {
         allOf: [{ $ref: '#/components/schemas/FolderInput' }],
         description: 'Omitted entirely means "create new" (the default) as a subfolder of employeePayrollFolder.',
       },
-      timesheetsFolderId: { type: 'string', nullable: true },
       settings: { $ref: '#/components/schemas/Settings' },
     },
   },

@@ -12,7 +12,6 @@ const appendClient = async (clientConfigFileId: string, client: Client): Promise
     EmployeePayrollFolderId: client.employeePayrollFolderId,
     PayrollConfigFolderId: client.payrollConfigFolderId,
     PayrollReportFolderId: client.payrollReportFolderId,
-    TimesheetsFolderId: client.timesheetsFolderId ?? '',
     PayrollConfigFileId: client.payrollConfigFileId,
     PayPeriodRegistryFileId: client.payPeriodRegistryFileId,
   };

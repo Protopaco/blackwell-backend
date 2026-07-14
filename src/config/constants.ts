@@ -60,6 +60,8 @@ export const SUPERVISORS_TAB = 'Supervisors';
 export const SUPERVISORS_HEADERS = ['SupervisorId', 'FirstName', 'LastName', 'Email'];
 export const SETTINGS_TAB = 'Settings';
 export const SETTINGS_HEADERS = ['TimesheetTemplate', 'PayPeriodInterval', 'PayPeriodStartDate'];
+export const TIMESHEET_FOLDERS_TAB = 'TimesheetFolders';
+export const TIMESHEET_FOLDERS_HEADERS = ['TimesheetFolderId', 'TimesheetFolderName', 'DriveFolderId', 'Status'];
 
 // ─── Client Config Sheet Tabs ─────────────────────────────────────────────────
 
@@ -72,7 +74,6 @@ export const CLIENT_HEADERS = [
   'EmployeePayrollFolderId',
   'PayrollConfigFolderId',
   'PayrollReportFolderId',
-  'TimesheetsFolderId',
   'PayrollConfigFileId',
   'PayPeriodRegistryFileId',
 ];
