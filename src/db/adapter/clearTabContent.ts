@@ -1,4 +1,5 @@
 import getSheetsClient from './getSheetsClient.js';
+import sheetsLimiter from '#utils/rateLimiters/sheetsLimiter.js';
 import { logger } from '#utils/logger.js';
 
 // Clears all cell values in a tab without deleting the tab itself.
@@ -6,10 +7,10 @@ import { logger } from '#utils/logger.js';
 const clearTabContent = async (workbookId: string, tabName: string): Promise<void> => {
   logger.debug(`Clearing tab content: ${tabName} in workbook: ${workbookId}`);
   const sheets = await getSheetsClient();
-  await sheets.spreadsheets.values.clear({
+  await sheetsLimiter.schedule(() => sheets.spreadsheets.values.clear({
     spreadsheetId: workbookId,
     range: tabName,
-  });
+  }));
 };
 
 export default clearTabContent;

@@ -1,4 +1,5 @@
 import getSheetsClient from './getSheetsClient.js';
+import sheetsLimiter from '#utils/rateLimiters/sheetsLimiter.js';
 import { logger } from '#utils/logger.js';
 
 // Overwrites existing rows in a tab in place, ordered by the given headers — does NOT clear the tab first,
@@ -16,12 +17,12 @@ const overwriteTabRows = async (
   const sheets = await getSheetsClient();
   const values = [headers, ...rows.map((row) => headers.map((header) => row[header] ?? ''))];
 
-  await sheets.spreadsheets.values.update({
+  await sheetsLimiter.schedule(() => sheets.spreadsheets.values.update({
     spreadsheetId: workbookId,
     range: tabName,
     valueInputOption: 'RAW',
     requestBody: { values },
-  });
+  }));
 };
 
 export default overwriteTabRows;

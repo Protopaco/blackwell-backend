@@ -1,4 +1,5 @@
 import getOAuthDriveClient from './getOAuthDriveClient.js';
+import oauthDriveLimiter from '#utils/rateLimiters/oauthDriveLimiter.js';
 import { logger } from '#utils/logger.js';
 
 // Creates a new Google Sheets workbook owned by the OAuth user in the specified Drive folder.
@@ -7,14 +8,14 @@ const createOAuthWorkbook = async (name: string, folderId: string): Promise<stri
   logger.debug(`Creating workbook via OAuth: ${name}`);
   const drive = getOAuthDriveClient();
 
-  const response = await drive.files.create({
+  const response = await oauthDriveLimiter.schedule(() => drive.files.create({
     requestBody: {
       name,
       mimeType: 'application/vnd.google-apps.spreadsheet',
       parents: [folderId],
     },
     fields: 'id',
-  });
+  }));
 
   const workbookId = response.data.id;
   if (!workbookId) throw new Error(`Failed to create workbook via OAuth: ${name}`);

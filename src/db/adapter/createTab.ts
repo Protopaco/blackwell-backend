@@ -1,4 +1,5 @@
 import getSheetsClient from './getSheetsClient.js';
+import sheetsLimiter from '#utils/rateLimiters/sheetsLimiter.js';
 import { logger } from '#utils/logger.js';
 
 // Adds a new sheet tab to an existing workbook — throws if the tab already exists.
@@ -6,7 +7,7 @@ const createTab = async (workbookId: string, tabName: string): Promise<void> => 
   logger.debug(`Creating tab: ${tabName} in workbook: ${workbookId}`);
   const sheets = await getSheetsClient();
 
-  await sheets.spreadsheets.batchUpdate({
+  await sheetsLimiter.schedule(() => sheets.spreadsheets.batchUpdate({
     spreadsheetId: workbookId,
     requestBody: {
       requests: [
@@ -17,7 +18,7 @@ const createTab = async (workbookId: string, tabName: string): Promise<void> => 
         },
       ],
     },
-  });
+  }));
 };
 
 export default createTab;

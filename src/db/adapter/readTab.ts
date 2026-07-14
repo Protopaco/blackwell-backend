@@ -1,4 +1,5 @@
 import getSheetsClient from './getSheetsClient.js';
+import sheetsLimiter from '#utils/rateLimiters/sheetsLimiter.js';
 import { logger } from '#utils/logger.js';
 
 // Reads a tab and maps each row to a keyed object using the first row as headers — used for config/data tabs.
@@ -6,10 +7,10 @@ const readTab = async (workbookId: string, tabName: string): Promise<Record<stri
   logger.debug(`Reading tab: ${tabName} from workbook: ${workbookId}`);
   const sheets = await getSheetsClient();
 
-  const response = await sheets.spreadsheets.values.get({
+  const response = await sheetsLimiter.schedule(() => sheets.spreadsheets.values.get({
     spreadsheetId: workbookId,
     range: tabName,
-  });
+  }));
 
   const rows = response.data.values;
   if (!rows || rows.length === 0) return [];

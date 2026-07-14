@@ -1,4 +1,5 @@
 import getOAuthDriveClient from './getOAuthDriveClient.js';
+import oauthDriveLimiter from '#utils/rateLimiters/oauthDriveLimiter.js';
 
 // Returns true if the given folder ID resolves to a real, non-trashed folder accessible via the OAuth
 // client — used to verify a user-supplied "existing folder" link before trusting it. A 404 (not found)
@@ -8,10 +9,10 @@ const folderExists = async (folderId: string): Promise<boolean> => {
   const drive = getOAuthDriveClient();
 
   try {
-    const response = await drive.files.get({
+    const response = await oauthDriveLimiter.schedule(() => drive.files.get({
       fileId: folderId,
       fields: 'id, trashed, mimeType',
-    });
+    }));
 
     if (response.data.trashed) return false;
     if (response.data.mimeType !== 'application/vnd.google-apps.folder') return false;

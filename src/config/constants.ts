@@ -93,3 +93,12 @@ export const PAY_PERIOD_REGISTRY_FILE_LABEL = 'Pay Period Registry';
 export const CACHE_TTL_SHORT_MS = 60 * 1000;
 export const CACHE_TTL_MEDIUM_MS = 5 * 60 * 1000;
 export const CACHE_TTL_LONG_MS = 30 * 60 * 1000;
+
+// ─── Google API Rate Limits ────────────────────────────────────────────────────
+// Starting value for all three limiters (Sheets, service-account Drive, OAuth Drive) — only the
+// Sheets API quota (60 req/min) is actually documented anywhere in this project; the two Drive
+// limits are unconfirmed guesses using the same number. Tune per-limiter once real 429 behavior
+// (or the GCP Console's actual configured quotas) says otherwise.
+
+export const GOOGLE_API_RATE_LIMIT_PER_MINUTE = 60;
+export const GOOGLE_API_RATE_LIMIT_WINDOW_MS = 60 * 1000;
