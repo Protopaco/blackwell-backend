@@ -14,6 +14,7 @@ interface Activity {
   payrollCategory: PayrollCategoryType;
   fundingSources: ActivityFundingSource[];  // max 3 — limit accepted for now
   payRate: PayRateType;
+  flatRateAmount: number;
 }
 
 export type { ActivityFundingSource };

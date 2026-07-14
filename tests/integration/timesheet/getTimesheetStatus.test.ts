@@ -26,8 +26,8 @@ describe('GET /api/v1/timesheet/status/:clientId/:payPeriodId', () => {
       expect(entry).toHaveProperty('employeeId');
       expect(entry).toHaveProperty('employeeName');
       expect(entry).toHaveProperty('timesheetFileId');
-      expect(entry).toHaveProperty('timesheetFileLink');
       expect(entry).toHaveProperty('totalHours');
+      expect(entry).toHaveProperty('flatRateQuantity');
       expect(entry).toHaveProperty('employeeSigned');
       expect(entry).toHaveProperty('supervisorSigned');
       expect(typeof entry.employeeSigned).toBe('boolean');

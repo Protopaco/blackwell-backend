@@ -1,7 +1,8 @@
-import writeTab from '#db/adapter/writeTab.js';
+import overwriteTabRows from '#db/adapter/overwriteTabRows.js';
 import getPayPeriods from "#db/payPeriod/readPayPeriods.js";
 import payPeriodsCache from '#utils/caches/payPeriodsCache.js';
 import PayPeriod from "#models/PayPeriod.js";
+import { PAY_PERIOD_HEADERS } from '#config/constants.js';
 
 // Overwrites all pay period rows for the current year, updating the one matching the given pay period — used when changing status.
 const writePayPeriod = async (
@@ -29,7 +30,7 @@ const writePayPeriod = async (
     PayrollReportFileId: pp.payrollReportFileId,
   }));
 
-  await writeTab(payPeriodRegistryFileId, currentYear, rows);
+  await overwriteTabRows(payPeriodRegistryFileId, currentYear, PAY_PERIOD_HEADERS, rows);
   payPeriodsCache.delete(payPeriodRegistryFileId);
 };
 

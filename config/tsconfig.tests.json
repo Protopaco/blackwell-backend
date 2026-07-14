@@ -1,0 +1,10 @@
+{
+  "extends": "./typescript.json",
+  "compilerOptions": {
+    "module": "node16",
+    "noEmit": true,
+    "rootDir": ".."
+  },
+  "include": ["../src/**/*.ts", "../tests/**/*.ts"],
+  "exclude": ["../node_modules", "../dist"]
+}

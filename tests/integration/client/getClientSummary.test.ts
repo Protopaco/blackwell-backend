@@ -35,7 +35,6 @@ describe('GET /api/v1/client/:clientId/summary', () => {
     expect(employee).toHaveProperty('holidayPayRate');
     expect(employee).toHaveProperty('email');
     expect(employee).toHaveProperty('timesheetFileId');
-    expect(employee).toHaveProperty('timesheetFileLink');
   });
 
   it('returns settings with expected fields', async () => {

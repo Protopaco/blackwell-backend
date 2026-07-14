@@ -43,6 +43,48 @@ describe('buildPayrollReportResponse', () => {
     expect(response.e1.flatRate).toHaveLength(1);
   });
 
+  describe('totalHours and totalFlatRate', () => {
+    it('sums totalHours across multiple hourly rows for the same employee', () => {
+      const response = buildPayrollReportResponse([
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate2', PayrollCategory: 'ETO', IsHoliday: 'FALSE', TotalHours: '2.5' },
+      ]);
+
+      expect(response.e1.totalHours).toBe(10.5);
+    });
+
+    it('sums totalFlatRate across multiple flat rate rows for the same employee', () => {
+      const response = buildPayrollReportResponse([
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'FlatPayRate1', TotalHours: '3' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'FlatPayRate2', TotalHours: '1' },
+      ]);
+
+      expect(response.e1.totalFlatRate).toBe(4);
+    });
+
+    it('keeps totalHours and totalFlatRate at 0 when an employee has no rows in that bucket', () => {
+      const response = buildPayrollReportResponse([
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+      ]);
+
+      expect(response.e1.totalHours).toBe(8);
+      expect(response.e1.totalFlatRate).toBe(0);
+    });
+
+    it('keeps totals for different employees independent', () => {
+      const response = buildPayrollReportResponse([
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+        { EmployeeId: 'e2', EmployeeName: 'John Doe', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '5' },
+        { EmployeeId: 'e2', EmployeeName: 'John Doe', PayRate: 'FlatPayRate1', TotalHours: '2' },
+      ]);
+
+      expect(response.e1.totalHours).toBe(8);
+      expect(response.e1.totalFlatRate).toBe(0);
+      expect(response.e2.totalHours).toBe(5);
+      expect(response.e2.totalFlatRate).toBe(2);
+    });
+  });
+
   describe('isHoliday coercion', () => {
     it('treats the string "TRUE" as true', () => {
       const response = buildPayrollReportResponse([

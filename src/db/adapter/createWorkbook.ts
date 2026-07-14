@@ -1,4 +1,5 @@
 import getDriveClient from './getDriveClient.js';
+import driveLimiter from '#utils/rateLimiters/driveLimiter.js';
 import { logger } from '#utils/logger.js';
 
 // Creates a new Google Sheets workbook owned by the service account — not currently used for
@@ -16,10 +17,10 @@ const createWorkbook = async (name: string, folderId?: string): Promise<string> 
     fileMetadata.parents = [folderId];
   }
 
-  const response = await drive.files.create({
+  const response = await driveLimiter.schedule(() => drive.files.create({
     requestBody: fileMetadata,
     fields: 'id',
-  });
+  }));
 
   const workbookId = response.data.id;
   if (!workbookId) throw new Error(`Failed to create workbook: ${name}`);

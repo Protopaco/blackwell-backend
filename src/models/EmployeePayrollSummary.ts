@@ -3,6 +3,8 @@ import FlatRateEntry from "#models/FlatRateEntry.js";
 
 interface EmployeePayrollSummary {
   employeeName: string;
+  totalHours: number;
+  totalFlatRate: number;
   hourly: HourlyEntry[];
   flatRate: FlatRateEntry[];
 }

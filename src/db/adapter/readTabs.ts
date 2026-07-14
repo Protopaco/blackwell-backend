@@ -1,4 +1,5 @@
 import getSheetsClient from './getSheetsClient.js';
+import sheetsLimiter from '#utils/rateLimiters/sheetsLimiter.js';
 import { logger } from '#utils/logger.js';
 
 // Reads multiple tabs in one batched call, mapping each tab's rows to keyed objects using its first
@@ -7,10 +8,10 @@ const readTabs = async (workbookId: string, tabNames: string[]): Promise<Record<
   logger.debug(`Reading tabs: ${tabNames.join(', ')} from workbook: ${workbookId}`);
   const sheets = await getSheetsClient();
 
-  const response = await sheets.spreadsheets.values.batchGet({
+  const response = await sheetsLimiter.schedule(() => sheets.spreadsheets.values.batchGet({
     spreadsheetId: workbookId,
     ranges: tabNames,
-  });
+  }));
 
   const valueRanges = response.data.valueRanges ?? [];
 

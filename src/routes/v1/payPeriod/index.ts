@@ -8,6 +8,9 @@ import patchClosePayPeriodRouter from './patchClosePayPeriod.js';
 
 const router = Router();
 
+// getNextPayPeriodRouter (/:clientId/next) MUST be registered before getPayPeriodByIdRouter
+// (/:clientId/:payPeriodId) — Express matches in registration order, and :payPeriodId is a wildcard
+// that would otherwise swallow "next" as a literal ID.
 router.use(getNextPayPeriodRouter);
 router.use(getPayPeriodsRouter);
 router.use(getPayPeriodByIdRouter);

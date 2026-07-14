@@ -6,7 +6,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/payrollReport/{clientId}/{payPeriodId}/employee-expenses:
+ * /api/v1/payrollReport/{clientId}/{payPeriodId}/employeeExpenses:
  *   get:
  *     operationId: v1GetEmployeeExpenses
  *     summary: Get employee expense records for a pay period
@@ -35,13 +35,13 @@ const router = Router();
  *       404:
  *         description: Client or pay period not found
  */
-router.get('/:clientId/:payPeriodId/employee-expenses', async (req: Request, res: Response) => {
+router.get('/:clientId/:payPeriodId/employeeExpenses', async (req: Request, res: Response) => {
   const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };
-  logger.info(`GET /payrollReport/${clientId}/${payPeriodId}/employee-expenses — request`);
+  logger.info(`GET /payrollReport/${clientId}/${payPeriodId}/employeeExpenses — request`);
 
   const expenses = await getEmployeeExpensesService(clientId, payPeriodId);
 
-  logger.info(`GET /payrollReport/${clientId}/${payPeriodId}/employee-expenses — response 200 count=${expenses.length}`);
+  logger.info(`GET /payrollReport/${clientId}/${payPeriodId}/employeeExpenses — response 200 count=${expenses.length}`);
   return res.status(200).json(expenses);
 });
 

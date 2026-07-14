@@ -4,6 +4,7 @@ import { logger } from '#utils/logger.js';
 
 interface TimesheetDetail {
   totalHours: number | null;
+  flatRateQuantity: number | null;
   employeeSigned: boolean;
   supervisorSigned: boolean;
 }
@@ -15,7 +16,12 @@ const readTimesheetDetail = async (
   timesheetFileId: string,
   tabName: string,
 ): Promise<TimesheetDetail> => {
-  const notGenerated: TimesheetDetail = { totalHours: null, employeeSigned: false, supervisorSigned: false };
+  const notGenerated: TimesheetDetail = {
+    totalHours: null,
+    flatRateQuantity: null,
+    employeeSigned: false,
+    supervisorSigned: false,
+  };
 
   if (!timesheetFileId) return notGenerated;
 
@@ -39,7 +45,17 @@ const readTimesheetDetail = async (
     ? Number(totalHoursRawValue)
     : 0;
 
-  return { totalHours, employeeSigned, supervisorSigned };
+  const flatRateQuantityManifestRow = summaryRows?.find((summaryRow) => summaryRow.label === 'Flat Rate Shifts');
+  const flatRateQuantityRawValue = flatRateQuantityManifestRow
+    ? rows[flatRateQuantityManifestRow.row - 1]?.[1]
+    : undefined;
+  const flatRateQuantity = flatRateQuantityManifestRow
+    ? flatRateQuantityRawValue !== undefined && flatRateQuantityRawValue !== ''
+      ? Number(flatRateQuantityRawValue)
+      : 0
+    : null;
+
+  return { totalHours, flatRateQuantity, employeeSigned, supervisorSigned };
 };
 
 export type { TimesheetDetail };

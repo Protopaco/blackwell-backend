@@ -12,10 +12,13 @@ const updateEmployeeExpenses = async (
   payPeriodId: Guid,
   updatedExpense: EmployeeExpense,
 ): Promise<void> => {
-  logger.info(`updateEmployeeExpenses clientId=${clientId} payPeriodId=${payPeriodId} employeeId=${updatedExpense.employeeId}`);
+  logger.info(
+    `updateEmployeeExpenses clientId=${clientId} payPeriodId=${payPeriodId} employeeId=${updatedExpense.employeeId}`,
+  );
 
   const payPeriod = await getPayPeriodById(clientId, payPeriodId);
-  if (!payPeriod.payrollReportFileId) throw new NotFoundError(`No payroll report file exists for pay period: ${payPeriodId}`);
+  if (!payPeriod.payrollReportFileId)
+    throw new NotFoundError(`No payroll report file exists for pay period: ${payPeriodId}`);
 
   if (!updatedExpense.activeThisPayPeriod) {
     const summaryRows = await readPayrollReportSummary(payPeriod.payrollReportFileId);
@@ -23,12 +26,16 @@ const updateEmployeeExpenses = async (
       (row) => row['EmployeeId'] === updatedExpense.employeeId && Number(row['TotalHours']) > 0,
     );
     if (hasHours) {
-      throw new UnprocessableError(`Employee ${updatedExpense.employeeId} has hours this pay period and cannot be marked inactive`);
+      throw new UnprocessableError(
+        `Employee ${updatedExpense.employeeName} has hours this pay period and cannot be marked inactive`,
+      );
     }
   }
 
   const existingExpenses = (await readEmployeeExpensesTab(payPeriod.payrollReportFileId)) ?? [];
-  const index = existingExpenses.findIndex((expense) => expense.employeeId === updatedExpense.employeeId);
+  const index = existingExpenses.findIndex(
+    (expense) => expense.employeeId === updatedExpense.employeeId,
+  );
 
   if (index >= 0) {
     existingExpenses[index] = updatedExpense;

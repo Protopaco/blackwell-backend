@@ -5,8 +5,8 @@ interface EmployeeTimesheetStatus {
   employeeId: Guid;
   employeeName: string;
   timesheetFileId: string;
-  timesheetFileLink: string;
   totalHours: number | null;
+  flatRateQuantity: number | null;
   employeeSigned: boolean;
   supervisorSigned: boolean;
   status: TimesheetStatusType;

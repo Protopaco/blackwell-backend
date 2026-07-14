@@ -1,4 +1,5 @@
 import appendRow from '#db/adapter/appendRow.js';
+import { PAY_PERIOD_HEADERS } from '#config/constants.js';
 import PayPeriod from '#models/PayPeriod.js';
 
 // Appends a new pay period row to the current year's tab in the pay period registry file.
@@ -15,7 +16,7 @@ const appendPayPeriod = async (payPeriodRegistryFileId: string, payPeriod: PayPe
     PayrollReportFileId: payPeriod.payrollReportFileId ?? '',
   };
 
-  await appendRow(payPeriodRegistryFileId, currentYear, row);
+  await appendRow(payPeriodRegistryFileId, currentYear, PAY_PERIOD_HEADERS, row);
 };
 
 export default appendPayPeriod;

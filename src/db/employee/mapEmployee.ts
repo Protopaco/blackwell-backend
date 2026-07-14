@@ -9,12 +9,9 @@ const mapEmployee = (row: Record<string, unknown>): Employee => ({
   position: row["Position"] as string,
   hourlyPayRate1: Number(row["HourlyPayRate1"]) || 0,
   hourlyPayRate2: Number(row["HourlyPayRate2"]) || 0,
-  flatPayRate1: Number(row["FlatPayRate1"]) || 0,
-  flatPayRate2: Number(row["FlatPayRate2"]) || 0,
   holidayPayRate: Number(row["HolidayPayRate"]) || 0,
   email: row["Email"] as string,
   status: row["Status"] as EmployeeStatusType,
-  timesheetFileLink: row["TimesheetFileLink"] as string,
   timesheetFileId: row["TimesheetFileId"] as string,
 });
 

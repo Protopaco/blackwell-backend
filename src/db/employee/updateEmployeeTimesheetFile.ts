@@ -17,13 +17,12 @@ const toColumnLetter = (colIndex: number): string => {
   return result;
 };
 
-// Writes a newly created timesheet file's ID and link into the employee's row in the Employees tab,
+// Writes a newly created timesheet file's ID into the employee's row in the Employees tab,
 // then invalidates the payrollConfig cache so subsequent reads see the updated value.
 const updateEmployeeTimesheetFile = async (
   payrollConfigFileId: string,
   employeeId: Guid,
   timesheetFileId: string,
-  timesheetFileLink: string,
 ): Promise<void> => {
   const rows = await readTabValues(payrollConfigFileId, EMPLOYEES_TAB);
   if (rows.length === 0) throw new Error('Employees tab is empty');
@@ -31,11 +30,9 @@ const updateEmployeeTimesheetFile = async (
   const headers = rows[0] as string[];
   const employeeIdColIndex = headers.indexOf('EmployeeId');
   const fileIdColIndex = headers.indexOf('TimesheetFileId');
-  const fileLinkColIndex = headers.indexOf('TimesheetFileLink');
 
   if (employeeIdColIndex === -1) throw new Error('EmployeeId column not found in Employees tab');
   if (fileIdColIndex === -1) throw new Error('TimesheetFileId column not found in Employees tab');
-  if (fileLinkColIndex === -1) throw new Error('TimesheetFileLink column not found in Employees tab');
 
   // rows[0] is headers, so employee data starts at rows[1] → sheet row 2
   const employeeRowIndex = rows.findIndex((row) => row[employeeIdColIndex] === employeeId);
@@ -47,12 +44,6 @@ const updateEmployeeTimesheetFile = async (
     payrollConfigFileId,
     `${EMPLOYEES_TAB}!${toColumnLetter(fileIdColIndex)}${sheetRowNumber}`,
     [[timesheetFileId]],
-  );
-
-  await updateCells(
-    payrollConfigFileId,
-    `${EMPLOYEES_TAB}!${toColumnLetter(fileLinkColIndex)}${sheetRowNumber}`,
-    [[timesheetFileLink]],
   );
 
   payrollConfigCache.delete(payrollConfigFileId);

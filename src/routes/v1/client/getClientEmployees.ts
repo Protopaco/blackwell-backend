@@ -28,6 +28,8 @@ const router = Router();
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Employee'
+ *       404:
+ *         description: Client not found
  */
 router.get("/:clientId/employees", async (req: Request, res: Response) => {
   const { clientId } = req.params as { clientId: string };

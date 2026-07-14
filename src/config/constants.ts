@@ -28,22 +28,77 @@ export const ALLOCATION_REPORT_HEADERS: (keyof AllocationReportRow)[] = ['fundin
 // ─── Timesheet Tabs ───────────────────────────────────────────────────────────
 
 export const MANIFEST_TAB = '_manifest';
+export const MANIFEST_HEADERS = ['tabName', 'manifest'];
+
+// ─── Pay Period Registry Tabs ─────────────────────────────────────────────────
+
+export const PAY_PERIOD_HEADERS = [
+  'PayPeriodId', 'PayPeriodName', 'Status', 'StartDate', 'EndDate', 'CreatedDate', 'PayrollReportFileId',
+];
 
 // ─── Payroll Config Sheet Tabs ────────────────────────────────────────────────
 
 export const EMPLOYEES_TAB = 'Employees';
+export const EMPLOYEES_HEADERS = [
+  'EmployeeId', 'FirstName', 'LastName', 'Position',
+  'HourlyPayRate1', 'HourlyPayRate2', 'HolidayPayRate',
+  'Email', 'Status', 'TimesheetFileId',
+];
 export const ACTIVITIES_TAB = 'Activities';
+export const ACTIVITIES_HEADERS = [
+  'ActivityId', 'ActivityName', 'TrackSeparately', 'PayrollCategory',
+  'FundingSource1Name', 'FundingSource1Percentage',
+  'FundingSource2Name', 'FundingSource2Percentage',
+  'FundingSource3Name', 'FundingSource3Percentage',
+  'PayRate', 'FlatRateAmount',
+];
 export const FUNDING_SOURCES_TAB = 'FundingSources';
+export const FUNDING_SOURCES_HEADERS = ['FundingSourceId', 'FundingSourceName', 'FundingSourceCode'];
 export const HOLIDAYS_TAB = 'Holidays';
+export const HOLIDAYS_HEADERS = ['HolidayId', 'HolidayName', 'HolidayDate'];
 export const SUPERVISORS_TAB = 'Supervisors';
+export const SUPERVISORS_HEADERS = ['SupervisorId', 'FirstName', 'LastName', 'Email'];
 export const SETTINGS_TAB = 'Settings';
+export const SETTINGS_HEADERS = ['TimesheetTemplate', 'PayPeriodInterval', 'PayPeriodStartDate'];
+export const TIMESHEET_FOLDERS_TAB = 'TimesheetFolders';
+export const TIMESHEET_FOLDERS_HEADERS = ['TimesheetFolderId', 'TimesheetFolderName', 'DriveFolderId', 'Status'];
 
 // ─── Client Config Sheet Tabs ─────────────────────────────────────────────────
 
 export const CLIENTS_TAB = 'Clients';
+export const CLIENT_HEADERS = [
+  'ClientId',
+  'ClientName',
+  'ClientCode',
+  'Status',
+  'EmployeePayrollFolderId',
+  'PayrollConfigFolderId',
+  'PayrollReportFolderId',
+  'PayrollConfigFileId',
+  'PayPeriodRegistryFileId',
+];
+
+// ─── Client Provisioning — Drive folder/file names ────────────────────────────
+// Folder names are used as-is. File names are labels only — createClient.ts prefixes each with the
+// client's clientCode to produce the real file name (e.g. "ACME Payroll Config").
+
+export const EMPLOYEE_PAYROLL_FOLDER_NAME = 'Employee Payroll';
+export const PAYROLL_CONFIG_FOLDER_NAME = 'Payroll Config';
+export const PAYROLL_REPORT_FOLDER_NAME = 'Payroll Report';
+export const PAYROLL_CONFIG_FILE_LABEL = 'Payroll Config';
+export const PAY_PERIOD_REGISTRY_FILE_LABEL = 'Pay Period Registry';
 
 // ─── Cache TTLs ───────────────────────────────────────────────────────────────
 
 export const CACHE_TTL_SHORT_MS = 60 * 1000;
 export const CACHE_TTL_MEDIUM_MS = 5 * 60 * 1000;
 export const CACHE_TTL_LONG_MS = 30 * 60 * 1000;
+
+// ─── Google API Rate Limits ────────────────────────────────────────────────────
+// Starting value for all three limiters (Sheets, service-account Drive, OAuth Drive) — only the
+// Sheets API quota (60 req/min) is actually documented anywhere in this project; the two Drive
+// limits are unconfirmed guesses using the same number. Tune per-limiter once real 429 behavior
+// (or the GCP Console's actual configured quotas) says otherwise.
+
+export const GOOGLE_API_RATE_LIMIT_PER_MINUTE = 60;
+export const GOOGLE_API_RATE_LIMIT_WINDOW_MS = 60 * 1000;

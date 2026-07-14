@@ -13,6 +13,8 @@ const buildPayrollReportResponse = (rawRows: Record<string, unknown>[]): Payroll
     if (!response[employeeId]) {
       response[employeeId] = {
         employeeName: row['EmployeeName'] as string,
+        totalHours: 0,
+        totalFlatRate: 0,
         hourly: [],
         flatRate: [],
       } satisfies EmployeePayrollSummary;
@@ -21,17 +23,18 @@ const buildPayrollReportResponse = (rawRows: Record<string, unknown>[]): Payroll
     const employee = response[employeeId];
 
     if (isFlatRate(payRate as any)) {
-      employee.flatRate.push({
-        payRate,
-        quantity: Number(row['TotalHours']),
-      });
+      const quantity = Number(row['TotalHours']);
+      employee.flatRate.push({ payRate, quantity });
+      employee.totalFlatRate += quantity;
     } else {
+      const totalHours = Number(row['TotalHours']);
       employee.hourly.push({
         payrollCategory: row['PayrollCategory'] as string,
         payRate,
         isHoliday: row['IsHoliday'] === 'TRUE' || row['IsHoliday'] === true,
-        totalHours: Number(row['TotalHours']),
+        totalHours,
       });
+      employee.totalHours += totalHours;
     }
   }
 

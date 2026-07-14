@@ -4,11 +4,11 @@ import app from '#app.js';
 import { TEST_CLIENT_ID } from '../helpers/testClient.js';
 import getTestPayPeriod from '../helpers/getTestPayPeriod.js';
 
-describe('GET /api/v1/payrollReport/:clientId/:payPeriodId/additional-expenses', () => {
+describe('GET /api/v1/payrollReport/:clientId/:payPeriodId/additionalExpenses', () => {
   it('returns 200 with an array for a valid client and pay period', async () => {
     const { payPeriodId } = await getTestPayPeriod();
     const res = await request(app).get(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additional-expenses`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additionalExpenses`,
     );
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
@@ -17,7 +17,7 @@ describe('GET /api/v1/payrollReport/:clientId/:payPeriodId/additional-expenses',
   it('returns rows with the correct shape when data exists', async () => {
     const { payPeriodId } = await getTestPayPeriod();
     const res = await request(app).get(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additional-expenses`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additionalExpenses`,
     );
     expect(res.status).toBe(200);
     for (const row of res.body) {
@@ -28,7 +28,7 @@ describe('GET /api/v1/payrollReport/:clientId/:payPeriodId/additional-expenses',
 
   it('returns 404 for an unknown pay period', async () => {
     const res = await request(app).get(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/unknown-pay-period-id/additional-expenses`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/unknown-pay-period-id/additionalExpenses`,
     );
     expect(res.status).toBe(404);
   }, 30_000);
@@ -36,13 +36,13 @@ describe('GET /api/v1/payrollReport/:clientId/:payPeriodId/additional-expenses',
   it('returns 404 for an unknown client', async () => {
     const { payPeriodId } = await getTestPayPeriod();
     const res = await request(app).get(
-      `/api/v1/payrollReport/unknown-client-id/${payPeriodId}/additional-expenses`,
+      `/api/v1/payrollReport/unknown-client-id/${payPeriodId}/additionalExpenses`,
     );
     expect(res.status).toBe(404);
   }, 30_000);
 });
 
-describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/additional-expenses', () => {
+describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/additionalExpenses', () => {
   it('saves and round-trips a list of additional expenses', async () => {
     const { payPeriodId } = await getTestPayPeriod();
     const payload = [
@@ -51,12 +51,12 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/additional-expenses',
     ];
 
     const putRes = await request(app)
-      .put(`/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additional-expenses`)
+      .put(`/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additionalExpenses`)
       .send(payload);
     expect(putRes.status).toBe(200);
 
     const getRes = await request(app).get(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additional-expenses`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additionalExpenses`,
     );
     expect(getRes.status).toBe(200);
     expect(getRes.body).toHaveLength(2);
@@ -70,16 +70,16 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/additional-expenses',
     const { payPeriodId } = await getTestPayPeriod();
 
     await request(app)
-      .put(`/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additional-expenses`)
+      .put(`/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additionalExpenses`)
       .send([{ expenseName: 'HSA', amount: 8400 }, { expenseName: 'Dental', amount: 1200 }]);
 
     const putRes = await request(app)
-      .put(`/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additional-expenses`)
+      .put(`/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additionalExpenses`)
       .send([{ expenseName: 'Vision', amount: 600 }]);
     expect(putRes.status).toBe(200);
 
     const getRes = await request(app).get(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additional-expenses`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additionalExpenses`,
     );
     expect(getRes.status).toBe(200);
     expect(getRes.body).toHaveLength(1);
@@ -90,16 +90,16 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/additional-expenses',
     const { payPeriodId } = await getTestPayPeriod();
 
     await request(app)
-      .put(`/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additional-expenses`)
+      .put(`/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additionalExpenses`)
       .send([{ expenseName: 'HSA', amount: 8400 }]);
 
     const putRes = await request(app)
-      .put(`/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additional-expenses`)
+      .put(`/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additionalExpenses`)
       .send([]);
     expect(putRes.status).toBe(200);
 
     const getRes = await request(app).get(
-      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additional-expenses`,
+      `/api/v1/payrollReport/${TEST_CLIENT_ID}/${payPeriodId}/additionalExpenses`,
     );
     expect(getRes.status).toBe(200);
     expect(getRes.body).toHaveLength(0);
@@ -107,7 +107,7 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/additional-expenses',
 
   it('returns 404 for an unknown pay period', async () => {
     const res = await request(app)
-      .put(`/api/v1/payrollReport/${TEST_CLIENT_ID}/unknown-pay-period-id/additional-expenses`)
+      .put(`/api/v1/payrollReport/${TEST_CLIENT_ID}/unknown-pay-period-id/additionalExpenses`)
       .send([{ expenseName: 'HSA', amount: 8400 }]);
     expect(res.status).toBe(404);
   }, 30_000);
@@ -115,7 +115,7 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/additional-expenses',
   it('returns 404 for an unknown client', async () => {
     const { payPeriodId } = await getTestPayPeriod();
     const res = await request(app)
-      .put(`/api/v1/payrollReport/unknown-client-id/${payPeriodId}/additional-expenses`)
+      .put(`/api/v1/payrollReport/unknown-client-id/${payPeriodId}/additionalExpenses`)
       .send([{ expenseName: 'HSA', amount: 8400 }]);
     expect(res.status).toBe(404);
   }, 30_000);

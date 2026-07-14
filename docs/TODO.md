@@ -47,6 +47,12 @@
 
 ---
 
+~~### Alphabetize Swagger route groups and endpoints~~
+
+~~The generated OpenAPI spec's tag/group order (and endpoint order within each group) currently just follows registration order.~~ — done, but not the way originally sketched: registration order (`app.use`/`router.use`) turned out to have **zero effect** on the generated docs — `swaggerSpec.ts` discovers route files via `glob`, which returned filesystem-dependent order, not registration or alphabetical order (confirmed empirically). The real fix: a root-level `tags` array (alphabetical) added to `swaggerSpec.ts`'s `definition` — this is the actual OpenAPI-standard mechanism for group order, Swagger UI does not sort tags on its own. Endpoint order within each group needed a custom `operationsSorter` in `app.ts` (GET→POST→PUT→PATCH→DELETE, alphabetical-by-path tiebreak) — swagger-ui-dist's own built-in `'method'` sorter is just alphabetical-by-method-name (`delete, get, patch, post, put`), not a curated order, so it didn't fit. `docExpansion: 'none'` added alongside so groups default to collapsed. One gotcha worth remembering: `swaggerUi.setup()` serializes a function option by extracting only its own source text and re-evaluating it in the browser bundle — it must be fully self-contained, any reference to an outer-scope variable becomes a `ReferenceError` client-side.
+
+---
+
 ## Data Model / Config
 
 ~~### Update employee data model to include all fields, including pay rates~~
@@ -54,6 +60,18 @@
 
 ~~### Remove allocationReportFolderId from logic and references~~
 ~~The allocation report now lives in the payroll report workbook — there is no separate allocation report folder. Remove `allocationReportFolderId` from the client model, config reads, docs, and any references in routes or services.~~ — already gone from `src/`; the only leftover was a stale `docs/openapi.json`, fixed by regenerating it (`npm run generate`).
+
+---
+
+~~### Route getEmployees.ts through the payrollConfigCache~~
+
+~~`getEmployees.ts` predates the `readPayrollConfig(...)`-cached pattern used by the other PayrollConfig entities and still called `readEmployees.ts` directly, uncached.~~ — already done, turned out to have been fixed as part of building Employee CRUD itself; this item was just never struck through. `getEmployees.ts` now matches `getHolidays.ts`'s exact shape. The only remaining direct use of `readEmployees.ts` is inside `writeEmployees.ts`'s read-modify-write, which is correct and expected (same pattern as `writeHolidays.ts`). Noted in passing, not fixed: `readEmployeeById.ts` looks like dead code — nothing in `src/` calls it.
+
+---
+
+~~### Wire Activity.flatRateAmount into buildAllocationRows.ts~~
+
+~~Discovered 2026-07-13 while building Employee CRUD: `resolveDollarRate` in `buildAllocationRows.ts` fell through to `0` for `FlatPayRate1`/`FlatPayRate2` activities — a live calculation gap, not a regression.~~ — fixed: `resolveDollarRate` now takes the full `Activity` (not just `payRate`) and returns `activity.flatRateAmount` for both flat-rate cases. Confirmed with the user that `row.Hours` for a flat-rate activity holds the *quantity* of flat-rate units entered that day (e.g. "2 shifts"), not a duration — traced through `readTimesheetEntries.ts` (`flatRateRows` read identically to `activityRows`, same cell-reading logic) to verify this before changing anything, since it's real payroll math. So `rowCost = row.Hours * dollarRate` was already the right shape (quantity × per-unit amount), no restructuring needed beyond the rate resolution itself. Covered by two new cases in `buildAllocationRows.test.ts` (`FlatPayRate1` mixed with an hourly activity, and `FlatPayRate2` alone), replacing the old test that had locked in the `$0` behavior.
 
 ---
 
@@ -90,7 +108,7 @@ Both use the naming convention correction from the map*/build* discussion below:
 
 ~~## Allocation Report — Endpoints~~
 
-~~All 6 endpoints done~~ — GET/PUT employee-expenses, GET/PUT additional-expenses, GET/POST allocation-report, all live under `/payrollReport/:clientId/:payPeriodId/...` (routes ended up nested under client+pay period rather than the `/pay-periods/:payPeriodId/...` path originally sketched here).
+~~All 6 endpoints done~~ — GET/PUT employeeExpenses, GET/PUT additionalExpenses, GET/POST allocationReport, all live under `/payrollReport/:clientId/:payPeriodId/...` (routes ended up nested under client+pay period rather than the `/pay-periods/:payPeriodId/...` path originally sketched here).
 
 ---
 
@@ -104,7 +122,7 @@ Both use the naming convention correction from the map*/build* discussion below:
 ~~### Assess cache-invalidation test coverage~~
 ~~Decision made: keep the two existing flaky integration tests (`allocationReport.test.ts`, `generatePayrollReport.test.ts`) as-is rather than lightening them — they verify something a mock can't (real Sheets write → real read sees fresh data, no eventual-consistency gap), which is a different and stronger claim than wiring correctness. Their occasional quota-flakiness is more acceptable now that wiring has separate, always-run coverage (below).~~
 
-~~Still fully untested: `payPeriodsCache` invalidation (`writePayPeriod.ts`) and `payrollConfigCache` invalidation (`updateEmployeeTimesheetFile.ts`)~~ — closed. Every invalidation site turned out to be the same trivial shape (one `<cache>.delete(key)` call right after a successful write), so wiring got unit-tested by mocking the underlying Sheets adapter calls (`vi.mock()`), with zero quota cost: `tests/unit/db/writeAdditionalExpensesTab.test.ts`, `writeEmployeeExpensesTab.test.ts`, `writeAllocationReportTab.test.ts`, `writePayPeriod.test.ts`, `updateEmployeeTimesheetFile.test.ts`. Also surfaced a gap not previously documented here: `employeeExpensesCache`/the whole `employee-expenses` endpoint pair had **zero** test coverage of any kind (not even integration) — now has unit wiring coverage at least.
+~~Still fully untested: `payPeriodsCache` invalidation (`writePayPeriod.ts`) and `payrollConfigCache` invalidation (`updateEmployeeTimesheetFile.ts`)~~ — closed. Every invalidation site turned out to be the same trivial shape (one `<cache>.delete(key)` call right after a successful write), so wiring got unit-tested by mocking the underlying Sheets adapter calls (`vi.mock()`), with zero quota cost: `tests/unit/db/writeAdditionalExpensesTab.test.ts`, `writeEmployeeExpensesTab.test.ts`, `writeAllocationReportTab.test.ts`, `writePayPeriod.test.ts`, `updateEmployeeTimesheetFile.test.ts`. Also surfaced a gap not previously documented here: `employeeExpensesCache`/the whole `employeeExpenses` endpoint pair had **zero** test coverage of any kind (not even integration) — now has unit wiring coverage at least.
 
 ~~`currentHoursCache` (invalidated inside `generatePayrollReport.ts`) was deliberately **not** given an equivalent unit test~~ — user confirmed passing on it: that function has ~10 dependencies (`readClientById`, `readPayPeriodById`, `readPayrollConfig`, `readTimesheetDetail`, `readTimesheetEntries`, `createOAuthWorkbook`, `writePayPeriod`, `writePayrollReportTab`, `archivePayrollReportTab`, `renameTab`) that would all need mocking to reach one assertion — disproportionate effort for the existing integration test's marginal value.
 
@@ -138,6 +156,24 @@ Build one flagship integration test that exercises the entire pay period workflo
 
 ~~### Add client summary/config data endpoint~~
 ~~Client Summary page needs: current pay period, number of employees, timesheet template, pay period interval. The template (`Settings.timeInputMethod`) and interval (`Settings.payPeriodInterval`) already exist in `PayrollConfig`/`Settings` but nothing exposes them via a GET endpoint today — `readPayrollConfig` is only used internally by generation services. Need a new endpoint (e.g. `GET /client/:clientId/summary`) that surfaces this data. Open question: is "current pay period" derived from the existing `GET /payPeriod` list (most recent non-Closed), or does it need its own resolution logic?~~ — done via `getClientSummary.ts` / `GET /client/:clientId/summary`. Scope ended up broader than originally planned: returns the full active-employee list plus supervisors/activities/fundingSources/holidays/settings from `PayrollConfig`, not just the four original fields. `payPeriods` (all non-Closed pay periods, `PayPeriodResponse[]` shape via `buildPayPeriodResponse`) was added after the initial cut — there's no single "current" pay period since multiple non-Closed ones can coexist, so the array is returned as-is and the UI picks/displays from it; `GET /payPeriod/:clientId` still exists separately if the full (including Closed) list is ever needed.
+
+---
+
+~~## Client CRUD (Create/Update)~~
+
+~~Design session 2026-07-13. Client creation provisions real Drive/Sheets infrastructure (folders, PayrollConfig workbook, PayPeriodRegistry workbook), not just a sheet row — see design discussion for the full reasoning on the existing-link/create-new toggle, the never-delete/no-rollback safety philosophy, and why `EmployeePayrollFolderId` became the sole folder anchor. Update is deliberately narrow (`status`/`clientName`/`clientCode` only, no delete endpoint).~~ — done via `services/client/createClient.ts`, `services/client/updateClient.ts`, `services/client/resolveFolder.ts`, the three new `db/adapter/` Drive functions (`createFolder.ts`, `folderExists.ts`, `driveChildExists.ts`), `utils/parseDriveLink.ts`, and `POST`/`PUT /api/v1/client`. Full details now live in `ARCHITECTURE.md`'s "Data model" section (Client-Config). `docs/BlackwellTime.md`'s old Client field list/creation flow (lines ~268-270, ~569, and the ~10-step folder-provisioning sketch) is now fully superseded — don't build from that doc for anything Client-related.
+
+One deviation worth knowing if touching this again: the two Sheets files are named `"{ClientCode} Payroll Config"` / `"{ClientCode} Pay Period Registry"` (clientCode-prefixed, unlike the plain-named folders).
+
+---
+
+~~## TimesheetFolder entity + createEmployee/generateTimesheets rework (Client.timesheetsFolderId follow-up)~~
+
+~~Design session same day. `Client.timesheetsFolderId` (nullable, no resolution path) was a stopgap — real clients can have several timesheet locations (different sites, changed over time), not just one. Replaced entirely with a proper one-to-many `TimesheetFolder` PayrollConfig entity (`TimesheetFolderId` app-generated UUID, `TimesheetFolderName`, `DriveFolderId`, `Status`) rather than a single client-level field.~~ — done. `Client.timesheetsFolderId` removed everywhere (model, column, mapper, create/update flows, schemas). New `TimesheetFolder` entity built full-width: model, own `TimesheetFolderStatus` enum, db layer (`mapTimesheetFolder.ts`/`readTimesheetFolders.ts`/`appendTimesheetFolder.ts`/`writeTimesheetFolders.ts`), services (`getTimesheetFolders.ts`/`createTimesheetFolder.ts`/`updateTimesheetFolder.ts`), routes (`GET`/`POST`/`PUT /api/v1/timesheetFolder`), wired into `readPayrollConfig.ts` as the 7th tab. Create/Update accept a raw Drive link (parsed via the existing `parseDriveLink` util, verified via the existing `folderExists` adapter — reused from Client CRUD, no new Drive mechanics). Status-only, no delete — same reasoning as `Client`: unlike `Supervisors`/`FundingSources`/`Activities`/`Holidays` (effectively snapshotted into each pay period's payroll report, so deleting old config doesn't corrupt historical reports), `Employee`/`TimesheetFolder` persist and get referenced indefinitely with no compensating snapshot — hard-delete would destroy an audit trail for no benefit.
+
+`createEmployee.ts` now takes a new `EmployeeCreateRequest` type requiring exactly one of `timesheetFileId` (existing file) or `timesheetFolderId` (validated against this client's `TimesheetFolders` — must exist and be `Active` — then used to provision a new file there). `generateTimesheets.ts`'s lazy timesheet-file-creation fallback was removed entirely — a missing `timesheetFileId` on an active employee at generation time is now a data error, checked upfront (before the per-employee loop) and reported as one clear error naming every affected employee, rather than something generation tries to silently fix mid-batch.
+
+Not touched, flagged for awareness: `db/employee/updateEmployeeTimesheetFile.ts` is now orphaned dead code (was only called from the removed `generateTimesheets.ts` fallback) — left in place, not deleted, since it wasn't asked for.
 
 ---
 

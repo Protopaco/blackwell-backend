@@ -15,6 +15,7 @@ const makeActivity = (
   payrollCategory: payrollCategory as any,
   fundingSources: [],
   payRate: payRate as any,
+  flatRateAmount: 0,
 });
 
 const mockActivities: Activity[] = [

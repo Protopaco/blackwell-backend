@@ -1,4 +1,5 @@
 import getSheetsClient from './getSheetsClient.js';
+import sheetsLimiter from '#utils/rateLimiters/sheetsLimiter.js';
 import { logger } from '#utils/logger.js';
 
 // Sets tab order to match orderedTabNames (left to right) in one batched call.
@@ -6,7 +7,7 @@ import { logger } from '#utils/logger.js';
 const reorderTabs = async (workbookId: string, orderedTabNames: string[]): Promise<void> => {
   logger.debug(`Reordering tabs in workbook: ${workbookId} — ${orderedTabNames.join(', ')}`);
   const sheets = await getSheetsClient();
-  const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId: workbookId });
+  const spreadsheet = await sheetsLimiter.schedule(() => sheets.spreadsheets.get({ spreadsheetId: workbookId }));
 
   const sheetIdByTabName = new Map(
     (spreadsheet.data.sheets ?? []).map((sheet) => [sheet.properties?.title, sheet.properties?.sheetId]),
@@ -24,10 +25,10 @@ const reorderTabs = async (workbookId: string, orderedTabNames: string[]): Promi
     };
   });
 
-  await sheets.spreadsheets.batchUpdate({
+  await sheetsLimiter.schedule(() => sheets.spreadsheets.batchUpdate({
     spreadsheetId: workbookId,
     requestBody: { requests },
-  });
+  }));
 };
 
 export default reorderTabs;
