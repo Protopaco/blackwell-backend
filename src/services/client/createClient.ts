@@ -3,6 +3,7 @@ import parseDriveLink from '#utils/parseDriveLink.js';
 import driveChildExists from '#db/adapter/driveChildExists.js';
 import createOAuthWorkbook from '#db/adapter/createOAuthWorkbook.js';
 import createTabIfNotExists from '#db/adapter/createTabIfNotExists.js';
+import writeHeaderRow from '#db/adapter/writeHeaderRow.js';
 import writeSettings from '#db/settings/writeSettings.js';
 import appendClient from '#db/client/appendClient.js';
 import clientsCache from '#utils/caches/clientsCache.js';
@@ -16,12 +17,18 @@ import {
   PAYROLL_CONFIG_FILE_LABEL,
   PAY_PERIOD_REGISTRY_FILE_LABEL,
   EMPLOYEES_TAB,
+  EMPLOYEES_HEADERS,
   SUPERVISORS_TAB,
+  SUPERVISORS_HEADERS,
   FUNDING_SOURCES_TAB,
+  FUNDING_SOURCES_HEADERS,
   ACTIVITIES_TAB,
+  ACTIVITIES_HEADERS,
   SETTINGS_TAB,
   HOLIDAYS_TAB,
+  HOLIDAYS_HEADERS,
   TIMESHEET_FOLDERS_TAB,
+  TIMESHEET_FOLDERS_HEADERS,
 } from '#config/constants.js';
 import { logger } from '#utils/logger.js';
 import { UnprocessableError } from '#utils/errors.js';
@@ -34,6 +41,15 @@ const PAYROLL_CONFIG_TABS = [
   SETTINGS_TAB,
   HOLIDAYS_TAB,
   TIMESHEET_FOLDERS_TAB,
+];
+
+const PAYROLL_CONFIG_HEADER_ROWS = [
+  { tabName: EMPLOYEES_TAB, headers: EMPLOYEES_HEADERS },
+  { tabName: SUPERVISORS_TAB, headers: SUPERVISORS_HEADERS },
+  { tabName: FUNDING_SOURCES_TAB, headers: FUNDING_SOURCES_HEADERS },
+  { tabName: ACTIVITIES_TAB, headers: ACTIVITIES_HEADERS },
+  { tabName: HOLIDAYS_TAB, headers: HOLIDAYS_HEADERS },
+  { tabName: TIMESHEET_FOLDERS_TAB, headers: TIMESHEET_FOLDERS_HEADERS },
 ];
 
 // Provisions a brand-new client end to end: Drive folder tree, PayrollConfig workbook (all 6 tabs,
@@ -82,15 +98,22 @@ const createClient = async (request: ClientCreateRequest): Promise<Client> => {
       `A file named "${payrollConfigFileName}" already exists in the Payroll Config folder`,
     );
   }
-  const payrollConfigFileId = await createOAuthWorkbook(payrollConfigFileName, payrollConfigFolderId);
+  const payrollConfigFileId = await createOAuthWorkbook(
+    payrollConfigFileName,
+    payrollConfigFolderId,
+  );
 
-  for (const tabName of PAYROLL_CONFIG_TABS) {
+  for (const { tabName, headers } of PAYROLL_CONFIG_HEADER_ROWS) {
     await createTabIfNotExists(payrollConfigFileId, tabName);
+    await writeHeaderRow(payrollConfigFileId, tabName, headers);
   }
   await writeSettings(payrollConfigFileId, request.settings);
 
   const payPeriodRegistryFileName = `${request.clientCode} ${PAY_PERIOD_REGISTRY_FILE_LABEL}`;
-  const registryFileCollision = await driveChildExists(payrollConfigFolderId, payPeriodRegistryFileName);
+  const registryFileCollision = await driveChildExists(
+    payrollConfigFolderId,
+    payPeriodRegistryFileName,
+  );
   if (registryFileCollision) {
     throw new UnprocessableError(
       `A file named "${payPeriodRegistryFileName}" already exists in the Payroll Config folder`,
