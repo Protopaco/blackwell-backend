@@ -25,6 +25,7 @@ import {
   ACTIVITIES_TAB,
   ACTIVITIES_HEADERS,
   SETTINGS_TAB,
+  SETTINGS_HEADERS,
   HOLIDAYS_TAB,
   HOLIDAYS_HEADERS,
   TIMESHEET_FOLDERS_TAB,
@@ -34,22 +35,13 @@ import { logger } from '#utils/logger.js';
 import { UnprocessableError } from '#utils/errors.js';
 
 const PAYROLL_CONFIG_TABS = [
-  EMPLOYEES_TAB,
-  SUPERVISORS_TAB,
-  FUNDING_SOURCES_TAB,
-  ACTIVITIES_TAB,
-  SETTINGS_TAB,
-  HOLIDAYS_TAB,
-  TIMESHEET_FOLDERS_TAB,
-];
-
-const PAYROLL_CONFIG_HEADER_ROWS = [
   { tabName: EMPLOYEES_TAB, headers: EMPLOYEES_HEADERS },
   { tabName: SUPERVISORS_TAB, headers: SUPERVISORS_HEADERS },
   { tabName: FUNDING_SOURCES_TAB, headers: FUNDING_SOURCES_HEADERS },
   { tabName: ACTIVITIES_TAB, headers: ACTIVITIES_HEADERS },
   { tabName: HOLIDAYS_TAB, headers: HOLIDAYS_HEADERS },
   { tabName: TIMESHEET_FOLDERS_TAB, headers: TIMESHEET_FOLDERS_HEADERS },
+  { tabName: SETTINGS_TAB, headers: SETTINGS_HEADERS },
 ];
 
 // Provisions a brand-new client end to end: Drive folder tree, PayrollConfig workbook (all 6 tabs,
@@ -103,7 +95,7 @@ const createClient = async (request: ClientCreateRequest): Promise<Client> => {
     payrollConfigFolderId,
   );
 
-  for (const { tabName, headers } of PAYROLL_CONFIG_HEADER_ROWS) {
+  for (const { tabName, headers } of PAYROLL_CONFIG_TABS) {
     await createTabIfNotExists(payrollConfigFileId, tabName);
     await writeHeaderRow(payrollConfigFileId, tabName, headers);
   }
