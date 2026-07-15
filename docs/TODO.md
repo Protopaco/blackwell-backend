@@ -122,6 +122,9 @@ Both use the naming convention correction from the map*/build* discussion below:
 ### Validate Activity funding source references
 `createActivity` and `updateActivity` currently accept funding source names without verifying that those names exist in the client's Funding Sources tab. Add validation so activities can only reference real funding sources.
 
+### Validate Holiday dates
+`createHoliday` and `updateHoliday` currently accept `holidayDate` without validating the format or calendar value. Add validation, likely strict `YYYY-MM-DD`, then add 422 tests for malformed dates.
+
 ~~### Unit tests for allocation calculation~~
 ~~The allocation math is complex enough to warrant thorough unit tests. Cover: proportion calculation, expense distribution, ignored employees, employees with no hours in a funding source, org-level expense distribution, edge cases (single employee, single funding source, zero expenses).~~ — done, `buildAllocationRows.test.ts` (24 tests) already covers all of this: proportion calculation, expense distribution, ignored/inactive employees, zero-hours edge cases, rounding/remainder handling, and sort order. Item was just never struck through.
 
