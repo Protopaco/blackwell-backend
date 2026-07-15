@@ -6,6 +6,7 @@ import createTestEmployee from './createTestEmployee.js';
 import createTestPayPeriod from './createTestPayPeriod.js';
 import createTestTimesheetFolder from './createTestTimesheetFolder.js';
 import fillGeneratedTimesheet from '../helpers/fillGeneratedTimesheet.js';
+import getInternalPayPeriodById from '../helpers/getInternalPayPeriodById.js';
 import PayrollReportReadyPayPeriod from '../models/PayrollReportReadyPayPeriod.js';
 
 const createPayrollReportReadyPayPeriod = async (): Promise<PayrollReportReadyPayPeriod> => {
@@ -49,11 +50,16 @@ const createPayrollReportReadyPayPeriod = async (): Promise<PayrollReportReadyPa
     supervisorSigned: true,
   });
 
+  const updatedPayPeriod = await getInternalPayPeriodById(client, payPeriod.payPeriodId);
+  if (!updatedPayPeriod) {
+    throw new Error(`createPayrollReportReadyPayPeriod pay period not found: ${payPeriod.payPeriodId}`);
+  }
+
   return {
     client,
     completeEmployee,
     incompleteEmployee,
-    payPeriod,
+    payPeriod: updatedPayPeriod,
     activityMix,
   };
 };
