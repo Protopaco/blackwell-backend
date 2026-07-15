@@ -1,15 +1,7 @@
-import Activity from '#models/Activity.js';
 import { PayRate } from '#models/PayRate.js';
 import createTestActivity from './createTestActivity.js';
 import createTestFundingSource from './createTestFundingSource.js';
-
-interface TestActivityMix {
-  hourlyPayRate1Activity: Activity;
-  hourlyPayRate2Activity: Activity;
-  flatPayRate1Activity: Activity;
-  flatPayRate2Activity: Activity;
-  activities: Activity[];
-}
+import TestActivityMix from '../models/TestActivityMix.js';
 
 const createTestActivityMix = async (clientId: string): Promise<TestActivityMix> => {
   const fundingSource = await createTestFundingSource(clientId);
