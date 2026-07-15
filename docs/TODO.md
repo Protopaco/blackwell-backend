@@ -140,6 +140,10 @@ Both use the naming convention correction from the map*/build* discussion below:
 
 `createHoliday` and `updateHoliday` currently accept `holidayDate` without validating the format or calendar value. Add validation, likely strict `YYYY-MM-DD`, then add 422 tests for malformed dates.
 
+### Validate duplicate client codes
+
+`createClient` does not directly check whether `clientCode` already exists in the `Clients` sheet. Duplicate client codes can be created when they use different folders and avoid Payroll Config / Pay Period Registry file-name collisions. Add explicit client-code uniqueness validation before provisioning client infrastructure.
+
 ~~### Unit tests for allocation calculation~~
 ~~The allocation math is complex enough to warrant thorough unit tests. Cover: proportion calculation, expense distribution, ignored employees, employees with no hours in a funding source, org-level expense distribution, edge cases (single employee, single funding source, zero expenses).~~ — done, `buildAllocationRows.test.ts` (24 tests) already covers all of this: proportion calculation, expense distribution, ignored/inactive employees, zero-hours edge cases, rounding/remainder handling, and sort order. Item was just never struck through.
 
@@ -173,6 +177,12 @@ Build one flagship integration test that exercises the entire pay period workflo
 ---
 
 ## Timesheet
+
+### Review generated timesheet styling
+
+Low priority. Generated timesheets are being created, but the visual styling needs review: the tab exists and the data is present, but the coloring is off compared with the intended workbook format.
+
+---
 
 ~~### Add derived status to timesheet status endpoint~~
 ~~`GET /timesheet/status/:clientId/:payPeriodId` only returned raw `totalHours`/`employeeSigned`/`supervisorSigned` — UI needs a labeled status per employee.~~ — done via `deriveTimesheetStatus.ts`, wired into `getTimesheetStatuses.ts`. Uses the five-state `TimesheetStatus` enum (`NotGenerated`/`Generated`/`Submitted`/`Approved`/`Complete`); distinguishes `Approved` from `Complete` by checking whether the employee's hours appear in `current_hours` for the pay period.
