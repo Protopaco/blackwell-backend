@@ -16,6 +16,7 @@ import {
   PAYROLL_REPORT_FOLDER_NAME,
   PAYROLL_CONFIG_FILE_LABEL,
   PAY_PERIOD_REGISTRY_FILE_LABEL,
+  PAY_PERIOD_HEADERS,
   EMPLOYEES_TAB,
   EMPLOYEES_HEADERS,
   SUPERVISORS_TAB,
@@ -115,6 +116,9 @@ const createClient = async (request: ClientCreateRequest): Promise<Client> => {
     payPeriodRegistryFileName,
     payrollConfigFolderId,
   );
+  const currentYear = String(new Date().getFullYear());
+  await createTabIfNotExists(payPeriodRegistryFileId, currentYear);
+  await writeHeaderRow(payPeriodRegistryFileId, currentYear, PAY_PERIOD_HEADERS);
 
   const client: Client = {
     clientId: crypto.randomUUID(),

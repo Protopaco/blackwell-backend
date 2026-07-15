@@ -26,13 +26,14 @@
 ---
 
 ~~### Review Client/PayPeriod resolution pattern~~
-~~Every service resolves `clientId → client → payPeriodRegistryFileId → payPeriod → payrollReportFileId` from scratch on every request. We have caching to reduce Sheets API calls, but the pattern is still repetitive and fragile. Investigate a better solution — e.g. a lightweight mapping table or a resolution helper that centralizes this chain. Goal: services should not need to pass clientId and payPeriodId through multiple layers just to get to a file ID.~~ — decision: there's no real fix for needing both `clientId` and `payPeriodId` short of a DB migration (pay periods live in a per-client Sheet file, so there's no way to resolve a bare `payPeriodId` without first knowing which client's registry to look in — a reverse-index cache was considered and rejected, since the first lookup for any given `payPeriodId` would still need `clientId`, making the API inconsistent). What *was* fixable: the two-hop lookup was duplicated inline across 10 files. Centralized into `services/payPeriod/getClientAndPayPeriod.ts` (does the real resolution, returns both `client` and `payPeriod` — for the 3 callers that need client fields afterward: `generateAllocationReport.ts`, `generatePayrollReport.ts`, `generateTimesheets.ts`) with the existing `getPayPeriodById.ts` now a one-line wrapper around it (for the 6 callers that only need `payPeriod`: `getPayrollReport.ts`, `updateAdditionalExpenses.ts`, `getEmployeeExpenses.ts`, `getAllocationReport.ts`, `updateEmployeeExpenses.ts`, `getAdditionalExpenses.ts`). Verified via typecheck, full unit suite, and a live integration run of the most-affected test files.
+~~Every service resolves `clientId → client → payPeriodRegistryFileId → payPeriod → payrollReportFileId` from scratch on every request. We have caching to reduce Sheets API calls, but the pattern is still repetitive and fragile. Investigate a better solution — e.g. a lightweight mapping table or a resolution helper that centralizes this chain. Goal: services should not need to pass clientId and payPeriodId through multiple layers just to get to a file ID.~~ — decision: there's no real fix for needing both `clientId` and `payPeriodId` short of a DB migration (pay periods live in a per-client Sheet file, so there's no way to resolve a bare `payPeriodId` without first knowing which client's registry to look in — a reverse-index cache was considered and rejected, since the first lookup for any given `payPeriodId` would still need `clientId`, making the API inconsistent). What _was_ fixable: the two-hop lookup was duplicated inline across 10 files. Centralized into `services/payPeriod/getClientAndPayPeriod.ts` (does the real resolution, returns both `client` and `payPeriod` — for the 3 callers that need client fields afterward: `generateAllocationReport.ts`, `generatePayrollReport.ts`, `generateTimesheets.ts`) with the existing `getPayPeriodById.ts` now a one-line wrapper around it (for the 6 callers that only need `payPeriod`: `getPayrollReport.ts`, `updateAdditionalExpenses.ts`, `getEmployeeExpenses.ts`, `getAllocationReport.ts`, `updateEmployeeExpenses.ts`, `getAdditionalExpenses.ts`). Verified via typecheck, full unit suite, and a live integration run of the most-affected test files.
 
 ---
 
 ## Code Cleanup
 
 ### Remove duplicate `/client/:clientId/employees` route
+
 `GET /api/v1/employee/:clientId` is the route being covered by the Employee integration tests. The older `/client/:clientId/employees` route appears to duplicate the same responsibility and should be deleted once the Employee route coverage is stable.
 
 ---
@@ -58,6 +59,18 @@
 
 ---
 
+### Remove or restrict `PUT /payPeriod/:clientId/:payPeriodId`
+
+Pay periods are backend-owned workflow records: dates/name come from `GET /payPeriod/:clientId/next`, creation persists that suggested period, and status changes should happen through workflow actions (`generateTimesheets`, `generatePayrollReport`, `closePayPeriod`) rather than a generic update endpoint. Decide whether to delete this route entirely or restrict it before adding integration coverage for it.
+
+---
+
+### Rename Pay Period row persistence helpers
+
+Low priority. The DB-layer helper names `appendPayPeriod` and `writePayPeriod` are awkward: both write to Sheets, but one inserts a new pay period row and the other updates an existing one. Rename them to something clearer, such as `createPayPeriodRow` / `updatePayPeriodRow` or `insertPayPeriod` / `updatePayPeriodRow`, once the current integration-test work settles.
+
+---
+
 ## Data Model / Config
 
 ~~### Update employee data model to include all fields, including pay rates~~
@@ -76,7 +89,7 @@
 
 ~~### Wire Activity.flatRateAmount into buildAllocationRows.ts~~
 
-~~Discovered 2026-07-13 while building Employee CRUD: `resolveDollarRate` in `buildAllocationRows.ts` fell through to `0` for `FlatPayRate1`/`FlatPayRate2` activities — a live calculation gap, not a regression.~~ — fixed: `resolveDollarRate` now takes the full `Activity` (not just `payRate`) and returns `activity.flatRateAmount` for both flat-rate cases. Confirmed with the user that `row.Hours` for a flat-rate activity holds the *quantity* of flat-rate units entered that day (e.g. "2 shifts"), not a duration — traced through `readTimesheetEntries.ts` (`flatRateRows` read identically to `activityRows`, same cell-reading logic) to verify this before changing anything, since it's real payroll math. So `rowCost = row.Hours * dollarRate` was already the right shape (quantity × per-unit amount), no restructuring needed beyond the rate resolution itself. Covered by two new cases in `buildAllocationRows.test.ts` (`FlatPayRate1` mixed with an hourly activity, and `FlatPayRate2` alone), replacing the old test that had locked in the `$0` behavior.
+~~Discovered 2026-07-13 while building Employee CRUD: `resolveDollarRate` in `buildAllocationRows.ts` fell through to `0` for `FlatPayRate1`/`FlatPayRate2` activities — a live calculation gap, not a regression.~~ — fixed: `resolveDollarRate` now takes the full `Activity` (not just `payRate`) and returns `activity.flatRateAmount` for both flat-rate cases. Confirmed with the user that `row.Hours` for a flat-rate activity holds the _quantity_ of flat-rate units entered that day (e.g. "2 shifts"), not a duration — traced through `readTimesheetEntries.ts` (`flatRateRows` read identically to `activityRows`, same cell-reading logic) to verify this before changing anything, since it's real payroll math. So `rowCost = row.Hours * dollarRate` was already the right shape (quantity × per-unit amount), no restructuring needed beyond the rate resolution itself. Covered by two new cases in `buildAllocationRows.test.ts` (`FlatPayRate1` mixed with an hourly activity, and `FlatPayRate2` alone), replacing the old test that had locked in the `$0` behavior.
 
 ---
 
@@ -120,9 +133,11 @@ Both use the naming convention correction from the map*/build* discussion below:
 ## Testing
 
 ### Validate Activity funding source references
+
 `createActivity` and `updateActivity` currently accept funding source names without verifying that those names exist in the client's Funding Sources tab. Add validation so activities can only reference real funding sources.
 
 ### Validate Holiday dates
+
 `createHoliday` and `updateHoliday` currently accept `holidayDate` without validating the format or calendar value. Add validation, likely strict `YYYY-MM-DD`, then add 422 tests for malformed dates.
 
 ~~### Unit tests for allocation calculation~~
@@ -152,6 +167,7 @@ Deferred, not built now: real integration-level round-trip tests (POST/PUT → G
 ---
 
 ### Add a full-lifecycle integration test: create client → close pay period
+
 Build one flagship integration test that exercises the entire pay period workflow end-to-end rather than the current per-endpoint piecemeal tests: create a brand-new test client, generate timesheets, fill in and sign them, generate the payroll report, save employee/additional expenses, generate the allocation report, and close the pay period. Should clean up (delete) whatever it creates. This belongs in the integration suite above, and would need its own setup/teardown since it can't reuse the existing shared `TEST_CLIENT_ID` fixture.
 
 ---
@@ -189,6 +205,7 @@ Not touched, flagged for awareness: `db/employee/updateEmployeeTimesheetFile.ts`
 ---
 
 ## Open Questions (see DECISIONS.md)
+
 - Confirm holiday pay is time-and-a-half modifier
 - Confirm flat rate code names — probably unnecessary; likely additive (not a replace) if ever needed, revisit at payroll app integration
 - Confirm whether payroll service has rates on file (affects whether pay rates can be pulled automatically or must be maintained manually in payroll config)
