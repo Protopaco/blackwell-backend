@@ -26,7 +26,7 @@ export default defineConfig({
           // doing several calls could stack multiple waits. Vitest's 5s default would kill those
           // tests as "timed out" even though nothing actually failed. Revisit this number once we
           // see real queuing behavior from the new integration suite.
-          testTimeout: 120_000,
+          testTimeout: 250_000,
         },
       },
     ],

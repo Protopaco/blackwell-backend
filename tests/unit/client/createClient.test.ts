@@ -17,6 +17,7 @@ vi.mock('#services/client/resolveFolder.js', () => ({ default: vi.fn() }));
 vi.mock('#db/adapter/driveChildExists.js', () => ({ default: vi.fn().mockResolvedValue(false) }));
 vi.mock('#db/adapter/createOAuthWorkbook.js', () => ({ default: vi.fn() }));
 vi.mock('#db/adapter/createTabIfNotExists.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('#db/adapter/writeHeaderRow.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#db/settings/writeSettings.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#db/client/appendClient.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 
@@ -25,8 +26,10 @@ import resolveFolder from '#services/client/resolveFolder.js';
 import driveChildExists from '#db/adapter/driveChildExists.js';
 import createOAuthWorkbook from '#db/adapter/createOAuthWorkbook.js';
 import createTabIfNotExists from '#db/adapter/createTabIfNotExists.js';
+import writeHeaderRow from '#db/adapter/writeHeaderRow.js';
 import appendClient from '#db/client/appendClient.js';
 import clientsCache from '#utils/caches/clientsCache.js';
+import { PAY_PERIOD_HEADERS } from '#config/constants.js';
 
 describe('createClient', () => {
   beforeEach(() => {
@@ -59,7 +62,13 @@ describe('createClient', () => {
 
     expect(createOAuthWorkbook).toHaveBeenNthCalledWith(1, 'ACME Payroll Config', 'payroll-config-1');
     expect(createOAuthWorkbook).toHaveBeenNthCalledWith(2, 'ACME Pay Period Registry', 'payroll-config-1');
-    expect(createTabIfNotExists).toHaveBeenCalledTimes(7);
+    expect(createTabIfNotExists).toHaveBeenCalledTimes(8);
+    expect(createTabIfNotExists).toHaveBeenCalledWith('pay-period-registry-1', String(new Date().getFullYear()));
+    expect(writeHeaderRow).toHaveBeenCalledWith(
+      'pay-period-registry-1',
+      String(new Date().getFullYear()),
+      PAY_PERIOD_HEADERS,
+    );
     expect(appendClient).toHaveBeenCalledWith('client-config-1', client);
   });
 
