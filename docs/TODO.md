@@ -32,6 +32,11 @@
 
 ## Code Cleanup
 
+### Remove duplicate `/client/:clientId/employees` route
+`GET /api/v1/employee/:clientId` is the route being covered by the Employee integration tests. The older `/client/:clientId/employees` route appears to duplicate the same responsibility and should be deleted once the Employee route coverage is stable.
+
+---
+
 ~~### Update all `import Guid from './Guid.js'` to use absolute imports~~
 ~~Several model files use relative imports for Guid. Update all occurrences to `import Guid from '#models/Guid.js'` to match the codebase standard.~~
 
