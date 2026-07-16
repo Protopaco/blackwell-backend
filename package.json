@@ -12,6 +12,7 @@
     "test": "vitest --project unit",
     "test:unit": "vitest --project unit",
     "test:integration": "vitest --project integration",
+    "dev:test-data:build-templates": "tsx --conditions=development src/devTestData/scripts/buildTemplates.ts",
     "generate": "npx tsx src/utils/swagger/exportSwagger.ts"
   },
   "imports": {
