@@ -9,6 +9,7 @@ import mapErrorResponse from '#middleware/mapErrorResponse.js';
 import activityRoute from '#routes/v1/activity/index.js';
 import adminRoute from '#routes/v1/admin/index.js';
 import clientRoute from '#routes/v1/client/index.js';
+import devRoute from '#routes/v1/dev/index.js';
 import employeeRoute from '#routes/v1/employee/index.js';
 import fundingSourceRoute from '#routes/v1/fundingSource/index.js';
 import healthRoute from '#routes/v1/health/index.js';
@@ -62,6 +63,9 @@ app.get('/openapi.json', (req, res) => res.json(swaggerSpec));
 app.use(`${basePath}/v1/activity`, activityRoute);
 app.use(`${basePath}/v1/admin`, adminRoute);
 app.use(`${basePath}/v1/client`, clientRoute);
+if (process.env.NODE_ENV !== 'production') {
+  app.use(`${basePath}/v1/dev`, devRoute);
+}
 app.use(`${basePath}/v1/employee`, employeeRoute);
 app.use(`${basePath}/v1/fundingSource`, fundingSourceRoute);
 app.use(`${basePath}/v1/health`, healthRoute);

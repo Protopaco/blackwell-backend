@@ -12,6 +12,7 @@
     "test": "vitest --project unit",
     "test:unit": "vitest --project unit",
     "test:integration": "vitest --project integration",
+    "dev:reset-test-data": "curl -X POST http://127.0.0.1:3000/api/v1/dev/testData/reset",
     "generate": "npx tsx src/utils/swagger/exportSwagger.ts"
   },
   "imports": {
