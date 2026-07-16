@@ -51,6 +51,29 @@ describe('PUT /api/v1/holiday/:clientId/:holidayId', () => {
     expect(res.body.message).toContain(`Client not found: ${missingClientId}`);
   });
 
+  it('422 - Invalid holiday date', async () => {
+    const client = await createTestClient();
+    const holiday = await createTestHoliday(client.clientId);
+
+    const res = await request(app)
+      .put(`/api/v1/holiday/${client.clientId}/${holiday.holidayId}`)
+      .send({
+        ...holiday,
+        holidayName: 'Should Not Persist',
+        holidayDate: '2026-02-30',
+      });
+
+    expect(res.status).toBe(422);
+    expect(res.body.message).toContain('holidayDate must be a valid YYYY-MM-DD date');
+
+    const holidaysRes = await request(app).get(`/api/v1/holiday/${client.clientId}`);
+    expect(holidaysRes.status).toBe(200);
+    const persistedHoliday = holidaysRes.body.find(
+      (candidate: Holiday) => candidate.holidayId === holiday.holidayId,
+    );
+    expect(persistedHoliday).toMatchObject(holiday);
+  });
+
   it('404 - Holiday not found', async () => {
     const client = await createTestClient();
     const holiday = await createTestHoliday(client.clientId);

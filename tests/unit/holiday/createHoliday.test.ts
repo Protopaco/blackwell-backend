@@ -36,4 +36,13 @@ describe('createHoliday', () => {
       createHoliday('unknown-client', { holidayName: 'Labor Day', holidayDate: '2026-09-07' }),
     ).rejects.toThrow('Client not found: unknown-client');
   });
+
+  it('throws UnprocessableError when holidayDate is invalid', async () => {
+    vi.mocked(appendHoliday).mockClear();
+
+    await expect(
+      createHoliday('client-1', { holidayName: 'Labor Day', holidayDate: '2026-02-30' }),
+    ).rejects.toThrow('holidayDate must be a valid YYYY-MM-DD date');
+    expect(appendHoliday).not.toHaveBeenCalled();
+  });
 });

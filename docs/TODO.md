@@ -142,9 +142,9 @@ Create local/QA-only tooling for UI development that can reset a known test data
 
 ~~`createActivity` and `updateActivity` currently accept funding source names without verifying that those names exist in the client's Funding Sources tab. Add validation so activities can only reference real funding sources.~~ — done via `validateActivityFundingSources.ts`, wired into create/update Activity, with unit coverage and integration 422 cases.
 
-### Validate Holiday dates
+~~### Validate Holiday dates~~
 
-`createHoliday` and `updateHoliday` currently accept `holidayDate` without validating the format or calendar value. Add validation, likely strict `YYYY-MM-DD`, then add 422 tests for malformed dates.
+~~`createHoliday` and `updateHoliday` currently accept `holidayDate` without validating the format or calendar value. Add validation, likely strict `YYYY-MM-DD`, then add 422 tests for malformed dates.~~ — done via reusable `validateIsoDateString.ts`, wired into create/update Holiday with unit coverage and integration 422 cases.
 
 ### Validate duplicate client codes
 

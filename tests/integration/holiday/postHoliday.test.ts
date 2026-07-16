@@ -42,4 +42,17 @@ describe('POST /api/v1/holiday/:clientId', () => {
     expect(res.status).toBe(404);
     expect(res.body.message).toContain(`Client not found: ${missingClientId}`);
   });
+
+  it('422 - Invalid holiday date', async () => {
+    const client = await createTestClient();
+    const uniqueCode = getUniqueCode('HOL');
+
+    const res = await request(app).post(`/api/v1/holiday/${client.clientId}`).send({
+      holidayName: `Test Holiday ${uniqueCode}`,
+      holidayDate: '2026-02-30',
+    });
+
+    expect(res.status).toBe(422);
+    expect(res.body.message).toContain('holidayDate must be a valid YYYY-MM-DD date');
+  });
 });

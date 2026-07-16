@@ -1785,6 +1785,9 @@
           },
           "404": {
             "description": "Client or holiday not found"
+          },
+          "422": {
+            "description": "holidayDate is not a valid YYYY-MM-DD date"
           }
         }
       },
@@ -1856,6 +1859,9 @@
           },
           "404": {
             "description": "Client not found"
+          },
+          "422": {
+            "description": "holidayDate is not a valid YYYY-MM-DD date"
           }
         }
       },

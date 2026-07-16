@@ -1,6 +1,7 @@
 import appendHoliday from '#db/holiday/appendHoliday.js';
 import getClientById from '#services/client/getClientById.js';
 import payrollConfigCache from '#utils/caches/payrollConfigCache.js';
+import validateIsoDateString from '#utils/validateIsoDateString.js';
 import Holiday from '#models/Holiday.js';
 import { logger } from '#utils/logger.js';
 import { NotFoundError } from '#utils/errors.js';
@@ -11,6 +12,8 @@ const createHoliday = async (
   holiday: Omit<Holiday, 'holidayId'>,
 ): Promise<void> => {
   logger.info(`createHoliday clientId=${clientId}`);
+
+  validateIsoDateString(holiday.holidayDate, 'holidayDate');
 
   const client = await getClientById(clientId);
   if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
