@@ -36,6 +36,7 @@ src/
     client/, employee/, activity/, fundingSource/, holiday/, supervisor/,
     payPeriod/, payrollConfig/, payrollReport/, settings/, manifest/
                              — domain-specific read*/write*/append*/map* functions
+  devTestData/              — local/QA-only operator cleanup for scoped test data; not production business logic
   models/                   — one interface (or controlled-vocab const) per file
   services/                 — business logic, organized by domain folder
   routes/v1/<resource>/     — one file per endpoint, wired together via each resource's index.ts, then into app.ts
@@ -74,6 +75,28 @@ Imports: everything in `src/` uses `#`-prefixed subpath imports (`#services/...`
 This 5-verb split (`map`/`build`/`sort`/`get`/`create`+`update`) was deliberately revisited on 2026-07-08 and confirmed to hold up — don't introduce a 6th verb (`to*`/`from*`/`resolve*` were all considered and rejected) without a similarly deliberate reason; the existing split already has a crisp, mechanical rule for each category.
 
 **`Client + PayPeriod` resolution**: every payroll-report/pay-period service needs `clientId → client → payPeriodRegistryFileId → payPeriod`, because pay periods live in a per-client Google Sheets file — there's no way to resolve a bare `payPeriodId` without first knowing which client's registry to look in (no real fix short of a DB migration; a reverse-index cache was considered and rejected — it has a cold-start problem, since the first lookup for any given ID still needs `clientId`). This is centralized in `services/payPeriod/getClientAndPayPeriod.ts` (returns `{ client, payPeriod }`, for the few callers that need client fields afterward — `generateAllocationReport.ts`, `generatePayrollReport.ts`, `generateTimesheets.ts`) with `services/payPeriod/getPayPeriodById.ts` as a one-line wrapper around it (for callers that only need the pay period). Don't re-implement this chain inline — call one of these two.
+
+---
+
+## Dev test-data fixture commands
+
+Dev/QA test-data management is backend-owned command tooling, not HTTP API surface. No external app needs to trigger it, and the backend already owns Google Drive/Sheets auth plus the Clients registry shape.
+
+Planned commands:
+
+- `npm run dev:test-data:purge`
+- `npm run dev:test-data:build-templates`
+- `npm run dev:test-data:reset`
+
+Guardrails:
+
+- Commands only run when `NODE_ENV` is `development` or `qa`.
+- No `/api/v1/dev` route, no Swagger/OpenAPI entry, no `DEV_TOOL_KEY`, and no application startup hook.
+- Template data lives under `TEST_DATA_TEMPLATE_FOLDER_ID`.
+- Disposable live UI test data lives under `TEST_DATA_ROOT_FOLDER_ID` in a known `UI_TEST_DATA` folder.
+- Commands only remove/write Clients rows whose `clientCode` starts with `UI_TEST_`.
+
+Current purge scope lives in `devTestData/purgeDevTestData.ts`: trash the `UI_TEST_DATA` Drive folder under `TEST_DATA_ROOT_FOLDER_ID`, remove Clients rows whose `clientCode` starts with `UI_TEST_`, and invalidate `clientsCache` for `CLIENT_CONFIG_FILE_ID`. The purge target is parameterized (`folderName`, `clientCodePrefix`) so integration-test cleanup can later use the same mechanism with a separate namespace.
 
 ---
 
@@ -165,7 +188,7 @@ Don't flag these as gaps — they're deliberate, not missed:
 
 ## Endpoint reference
 
-Don't maintain a hand-written route list here — it'll drift the same way `BlackwellTime.md`'s did. `docs/openapi.json` is the generated, always-accurate source of truth (regenerated via `npm run generate` from the `@swagger` JSDoc blocks above each route handler — run this after adding or changing a schema so it stays in sync). Current resources: `client` (list, `:clientId/summary`, create, update), `payPeriod` (list, `next`, `:payPeriodId`, create, close), `timesheet` (generate, status), `timesheetFolder` (list, create, update), `payrollReport` (get report, generate, employeeExpenses get/put/batch, additionalExpenses get/put, allocationReport get/generate), `admin` (`cache/clear`), `health`.
+Don't maintain a hand-written route list here — it'll drift the same way `BlackwellTime.md`'s did. `docs/openapi.json` is the generated, always-accurate source of truth (regenerated via `npm run generate` from the `@swagger` JSDoc blocks above each route handler — run this after adding or changing a schema so it stays in sync). Current documented resources: `client` (list, `:clientId/summary`, create, update), `payPeriod` (list, `next`, `:payPeriodId`, create, close), `timesheet` (generate, status), `timesheetFolder` (list, create, update), `payrollReport` (get report, generate, employeeExpenses get/put/batch, additionalExpenses get/put, allocationReport get/generate), `admin` (`cache/clear`), `health`. The local/QA-only dev purge endpoint is intentionally not included in OpenAPI; see "Dev test-data purge endpoint" above.
 
 ---
 

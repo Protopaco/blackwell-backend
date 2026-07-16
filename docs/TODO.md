@@ -132,9 +132,65 @@ Both use the naming convention correction from the map*/build* discussion below:
 
 ## Testing
 
-### Add local/QA test data purge endpoint and reset tool
+### Replace dev test-data endpoint/sower plan with backend fixture commands
 
-Create local/QA-only tooling for UI development that can reset a known test dataset on demand. Backend shape: a narrow `POST /dev/test-data/purge` endpoint that only removes scoped test data. It should trash the `UI_TEST_DATA` Drive folder under the configured test-data root and remove Clients rows with the `UI_TEST_` client-code prefix. Guardrails: only register in local/QA, never mount in production, require a dev tool key in QA, and keep scenario creation out of the backend. Reset/seeding should live in a separate CLI tool that calls purge first, then creates Fresh/Configured/Early/Late scenarios through normal API endpoints.
+Decision: do not build a separate `blackwell-sower` repo for now, and do not expose test-data reset actions as HTTP endpoints. No other application needs to trigger these actions. They should be backend-owned dev/QA commands because the backend already owns Google Drive/Sheets auth and the client registry shape.
+
+Target commands:
+
+- `npm run dev:test-data:purge`
+- `npm run dev:test-data:build-templates`
+- `npm run dev:test-data:reset`
+
+Backend-owned env vars:
+
+- `TEST_DATA_ROOT_FOLDER_ID` — disposable live UI test data parent
+- `TEST_DATA_TEMPLATE_FOLDER_ID` — durable canonical template parent, provided as a Google folder (`1NWbA0ZSVLjluDQdLqgMmyMVn7OfwZQvo`)
+- `CLIENT_CONFIG_FILE_ID` — existing Clients registry
+
+Guardrails:
+
+- Commands only run in `development` or `qa`.
+- No Swagger/OpenAPI route, no mounted dev endpoint, no `DEV_TOOL_KEY`.
+- Never call these from app startup.
+- Only trash/copy known folders such as `UI_TEST_DATA`.
+- Only remove/write Clients rows with the `UI_TEST_` client-code prefix.
+- Print explicit summaries of trashed folders, copied templates, and written Clients rows.
+
+Suggested structure:
+
+```text
+src/devTestData/
+  constants.ts
+  purgeDevTestData.ts
+  buildTestDataTemplates.ts
+  resetDevTestData.ts
+  scenarios/
+    freshClientTemplate.ts
+  scripts/
+    purge.ts
+    buildTemplates.ts
+    reset.ts
+```
+
+Milestone 1 scope: Fresh Client only.
+
+- Template scenario: `Fresh Client`
+- Live client name/code: `UI Test Fresh Client` / `UI_TEST_FC`
+- Create client with settings.
+- No employees, supervisors, funding sources, activities, holidays, pay periods, or payroll state.
+
+Implementation chunks:
+
+1. Remove the dev test-data purge HTTP route, route mounting, Swagger/OpenAPI exposure if any, and route-specific tests. Keep reusable purge logic as internal dev tooling.
+2. Add command guard helpers for `development`/`qa` only and required backend env validation.
+3. Refactor `purgeDevTestData` into a command-safe service that trashes live `UI_TEST_DATA` under `TEST_DATA_ROOT_FOLDER_ID`, removes `UI_TEST_` Clients rows, and clears relevant caches.
+4. Add Drive adapter support needed for template workflows: ensure/find child folder by name, copy folder tree, copy Sheets/files, and list copied children by name/role.
+5. Add `buildTestDataTemplates` for Fresh Client. It should create or refresh the canonical `Fresh Client` template under `TEST_DATA_TEMPLATE_FOLDER_ID` using backend-owned Google access and existing client provisioning logic where practical.
+6. Add `resetDevTestData` for Fresh Client. It should purge live data, create a fresh `UI_TEST_DATA` folder under `TEST_DATA_ROOT_FOLDER_ID`, copy the `Fresh Client` template into it, infer or read copied folder/file IDs, write the `UI_TEST_FC` Clients row pointing at the copied artifacts, and clear caches.
+7. Add command scripts and npm scripts for purge/build-templates/reset.
+8. Add focused unit tests around guards, env validation, Clients row filtering/writing, and copy-result mapping. Add live integration coverage only after the Fresh Client reset works manually.
+9. Do not add Configured Client, Early Client, or Late Client until Fresh Client template build and reset work end to end.
 
 ---
 
