@@ -36,7 +36,7 @@ const router = Router();
  *       404:
  *         description: Client or activity not found
  *       422:
- *         description: More than 3 funding sources were provided
+ *         description: More than 3 funding sources were provided, or a referenced funding source does not exist
  */
 router.put('/:clientId/:activityId', async (req: Request, res: Response) => {
   const { clientId, activityId } = req.params as { clientId: string; activityId: string };

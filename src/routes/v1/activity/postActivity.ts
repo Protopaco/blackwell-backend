@@ -31,7 +31,7 @@ const router = Router();
  *       404:
  *         description: Client not found
  *       422:
- *         description: More than 3 funding sources were provided
+ *         description: More than 3 funding sources were provided, or a referenced funding source does not exist
  */
 router.post('/:clientId', async (req: Request, res: Response) => {
   const { clientId } = req.params as { clientId: string };

@@ -45,12 +45,12 @@ describe('PUT /api/v1/activity/:clientId/:activityId', () => {
   it('422 - More than 3 funding sources', async () => {
     const client = await createTestClient();
     const activity = await createTestActivity(client.clientId);
-    const fundingSources = await Promise.all([
-      createTestFundingSource(client.clientId),
-      createTestFundingSource(client.clientId),
-      createTestFundingSource(client.clientId),
-      createTestFundingSource(client.clientId),
-    ]);
+    const fundingSources = [
+      await createTestFundingSource(client.clientId),
+      await createTestFundingSource(client.clientId),
+      await createTestFundingSource(client.clientId),
+      await createTestFundingSource(client.clientId),
+    ];
 
     const res = await request(app)
       .put(`/api/v1/activity/${client.clientId}/${activity.activityId}`)
@@ -64,6 +64,34 @@ describe('PUT /api/v1/activity/:clientId/:activityId', () => {
 
     expect(res.status).toBe(422);
     expect(res.body.message).toContain('An activity cannot have more than 3 funding sources');
+  });
+
+  it('422 - Funding source not found', async () => {
+    const client = await createTestClient();
+    const activity = await createTestActivity(client.clientId);
+
+    const res = await request(app)
+      .put(`/api/v1/activity/${client.clientId}/${activity.activityId}`)
+      .send({
+        ...activity,
+        activityName: 'Should Not Persist',
+        fundingSources: [
+          {
+            fundingSourceName: 'Unknown Funding Source',
+            percentage: 100,
+          },
+        ],
+      });
+
+    expect(res.status).toBe(422);
+    expect(res.body.message).toContain('Activity funding source not found: Unknown Funding Source');
+
+    const activitiesRes = await request(app).get(`/api/v1/activity/${client.clientId}`);
+    expect(activitiesRes.status).toBe(200);
+    const persistedActivity = activitiesRes.body.find(
+      (candidate: Activity) => candidate.activityId === activity.activityId,
+    );
+    expect(persistedActivity).toMatchObject(activity);
   });
 
   it('404 - Client not found', async () => {

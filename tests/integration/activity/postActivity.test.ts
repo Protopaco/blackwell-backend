@@ -80,12 +80,12 @@ describe('POST /api/v1/activity/:clientId', () => {
 
   it('422 - More than 3 funding sources', async () => {
     const client = await createTestClient();
-    const fundingSources = await Promise.all([
-      createTestFundingSource(client.clientId),
-      createTestFundingSource(client.clientId),
-      createTestFundingSource(client.clientId),
-      createTestFundingSource(client.clientId),
-    ]);
+    const fundingSources = [
+      await createTestFundingSource(client.clientId),
+      await createTestFundingSource(client.clientId),
+      await createTestFundingSource(client.clientId),
+      await createTestFundingSource(client.clientId),
+    ];
     const uniqueCode = getUniqueCode('ACT');
 
     const res = await request(app)
@@ -104,6 +104,30 @@ describe('POST /api/v1/activity/:clientId', () => {
 
     expect(res.status).toBe(422);
     expect(res.body.message).toContain('An activity cannot have more than 3 funding sources');
+  });
+
+  it('422 - Funding source not found', async () => {
+    const client = await createTestClient();
+    const uniqueCode = getUniqueCode('ACT');
+
+    const res = await request(app)
+      .post(`/api/v1/activity/${client.clientId}`)
+      .send({
+        activityName: `Test Activity ${uniqueCode}`,
+        trackSeparately: true,
+        payrollCategory: PayrollCategory.Regular,
+        fundingSources: [
+          {
+            fundingSourceName: 'Unknown Funding Source',
+            percentage: 100,
+          },
+        ],
+        payRate: PayRate.HourlyPayRate1,
+        flatRateAmount: 0,
+      });
+
+    expect(res.status).toBe(422);
+    expect(res.body.message).toContain('Activity funding source not found: Unknown Funding Source');
   });
 
   it('404 - Client not found', async () => {

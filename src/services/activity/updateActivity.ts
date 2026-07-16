@@ -1,6 +1,8 @@
 import writeActivities from '#db/activity/writeActivities.js';
+import readPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
 import getClientById from '#services/client/getClientById.js';
 import applyFundingSourceRemainder from '#services/activity/applyFundingSourceRemainder.js';
+import validateActivityFundingSources from '#services/activity/validateActivityFundingSources.js';
 import payrollConfigCache from '#utils/caches/payrollConfigCache.js';
 import Activity from '#models/Activity.js';
 import { logger } from '#utils/logger.js';
@@ -16,6 +18,9 @@ const updateActivity = async (clientId: string, updatedActivity: Activity): Prom
 
   const client = await getClientById(clientId);
   if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
+
+  const payrollConfig = await readPayrollConfig(client.payrollConfigFileId);
+  validateActivityFundingSources(updatedActivity.fundingSources, payrollConfig.fundingSources);
 
   const activityWithRemainder: Activity = {
     ...updatedActivity,

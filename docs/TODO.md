@@ -138,9 +138,9 @@ Create local/QA-only tooling for UI development that can reset a known test data
 
 ---
 
-### Validate Activity funding source references
+~~### Validate Activity funding source references~~
 
-`createActivity` and `updateActivity` currently accept funding source names without verifying that those names exist in the client's Funding Sources tab. Add validation so activities can only reference real funding sources.
+~~`createActivity` and `updateActivity` currently accept funding source names without verifying that those names exist in the client's Funding Sources tab. Add validation so activities can only reference real funding sources.~~ — done via `validateActivityFundingSources.ts`, wired into create/update Activity, with unit coverage and integration 422 cases.
 
 ### Validate Holiday dates
 

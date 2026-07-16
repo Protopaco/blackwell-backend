@@ -16,6 +16,15 @@ const { testClient, activity } = vi.hoisted(() => ({
 
 vi.mock('#services/client/getClientById.js', () => ({ default: vi.fn().mockResolvedValue(testClient) }));
 vi.mock('#db/activity/writeActivities.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('#db/payrollConfig/readPayrollConfig.js', () => ({
+  default: vi.fn().mockResolvedValue({
+    fundingSources: [
+      { fundingSourceId: 'fs-1', fundingSourceName: 'Federal Grant', fundingSourceCode: 'FED' },
+      { fundingSourceId: 'fs-2', fundingSourceName: 'A', fundingSourceCode: 'A' },
+      { fundingSourceId: 'fs-3', fundingSourceName: 'B', fundingSourceCode: 'B' },
+    ],
+  }),
+}));
 
 import updateActivity from '#services/activity/updateActivity.js';
 import getClientById from '#services/client/getClientById.js';
@@ -52,6 +61,18 @@ describe('updateActivity', () => {
         ],
       }),
     ).rejects.toThrow('An activity cannot have more than 3 funding sources');
+    expect(writeActivities).not.toHaveBeenCalled();
+  });
+
+  it('throws UnprocessableError when a funding source is not configured for the client', async () => {
+    vi.mocked(writeActivities).mockClear();
+
+    await expect(
+      updateActivity('client-1', {
+        ...activity,
+        fundingSources: [{ fundingSourceName: 'Unknown Grant', percentage: 100 }],
+      }),
+    ).rejects.toThrow('Activity funding source not found: Unknown Grant');
     expect(writeActivities).not.toHaveBeenCalled();
   });
 
