@@ -34,7 +34,7 @@ const router = Router();
  *       404:
  *         description: A supplied existing-folder link does not resolve or is inaccessible
  *       422:
- *         description: A create-new step found an unexpected name collision, or the request is malformed
+ *         description: Duplicate clientCode, create-new name collision, or malformed request
  */
 router.post('/', async (req: Request, res: Response) => {
   logger.info('POST /client — request');

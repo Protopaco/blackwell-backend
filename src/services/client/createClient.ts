@@ -6,7 +6,9 @@ import createTabIfNotExists from '#db/adapter/createTabIfNotExists.js';
 import writeHeaderRow from '#db/adapter/writeHeaderRow.js';
 import writeSettings from '#db/settings/writeSettings.js';
 import appendClient from '#db/client/appendClient.js';
+import readClients from '#db/client/readClients.js';
 import clientsCache from '#utils/caches/clientsCache.js';
+import validateClientCodeIsUnique from '#services/client/validateClientCodeIsUnique.js';
 import Client from '#models/Client.js';
 import ClientCreateRequest from '#models/ClientCreateRequest.js';
 import { ClientStatus } from '#models/ClientStatus.js';
@@ -55,6 +57,9 @@ const createClient = async (request: ClientCreateRequest): Promise<Client> => {
 
   const clientConfigFileId = process.env.CLIENT_CONFIG_FILE_ID;
   if (!clientConfigFileId) throw new Error('CLIENT_CONFIG_FILE_ID is not set');
+
+  const existingClients = await readClients();
+  validateClientCodeIsUnique(existingClients, request.clientCode);
 
   let employeePayrollParentId = '';
   if (request.employeePayrollFolder.createNew) {

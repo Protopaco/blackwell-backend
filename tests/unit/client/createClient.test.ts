@@ -20,6 +20,7 @@ vi.mock('#db/adapter/createTabIfNotExists.js', () => ({ default: vi.fn().mockRes
 vi.mock('#db/adapter/writeHeaderRow.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#db/settings/writeSettings.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#db/client/appendClient.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('#db/client/readClients.js', () => ({ default: vi.fn().mockResolvedValue([]) }));
 
 import createClient from '#services/client/createClient.js';
 import resolveFolder from '#services/client/resolveFolder.js';
@@ -28,6 +29,7 @@ import createOAuthWorkbook from '#db/adapter/createOAuthWorkbook.js';
 import createTabIfNotExists from '#db/adapter/createTabIfNotExists.js';
 import writeHeaderRow from '#db/adapter/writeHeaderRow.js';
 import appendClient from '#db/client/appendClient.js';
+import readClients from '#db/client/readClients.js';
 import clientsCache from '#utils/caches/clientsCache.js';
 import { PAY_PERIOD_HEADERS } from '#config/constants.js';
 
@@ -35,6 +37,7 @@ describe('createClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.CLIENT_CONFIG_FILE_ID = 'client-config-1';
+    vi.mocked(readClients).mockResolvedValue([]);
     vi.mocked(driveChildExists).mockResolvedValue(false);
     vi.mocked(resolveFolder)
       .mockResolvedValueOnce('employee-payroll-1')
@@ -86,6 +89,18 @@ describe('createClient', () => {
     ).rejects.toThrow('rootFolderLink is required');
 
     expect(resolveFolder).not.toHaveBeenCalled();
+  });
+
+  it('throws UnprocessableError when clientCode already exists, without provisioning anything', async () => {
+    vi.mocked(readClients).mockResolvedValueOnce([
+      { clientId: 'existing-client', clientCode: 'ACME' } as any,
+    ]);
+
+    await expect(createClient(baseRequest)).rejects.toThrow('Client code already exists: ACME');
+
+    expect(resolveFolder).not.toHaveBeenCalled();
+    expect(createOAuthWorkbook).not.toHaveBeenCalled();
+    expect(appendClient).not.toHaveBeenCalled();
   });
 
   it('throws UnprocessableError on a Payroll Config file name collision, without creating anything', async () => {

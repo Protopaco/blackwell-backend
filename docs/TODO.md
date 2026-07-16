@@ -146,9 +146,9 @@ Create local/QA-only tooling for UI development that can reset a known test data
 
 ~~`createHoliday` and `updateHoliday` currently accept `holidayDate` without validating the format or calendar value. Add validation, likely strict `YYYY-MM-DD`, then add 422 tests for malformed dates.~~ — done via reusable `validateIsoDateString.ts`, wired into create/update Holiday with unit coverage and integration 422 cases.
 
-### Validate duplicate client codes
+~~### Validate duplicate client codes~~
 
-`createClient` does not directly check whether `clientCode` already exists in the `Clients` sheet. Duplicate client codes can be created when they use different folders and avoid Payroll Config / Pay Period Registry file-name collisions. Add explicit client-code uniqueness validation before provisioning client infrastructure.
+~~`createClient` does not directly check whether `clientCode` already exists in the `Clients` sheet. Duplicate client codes can be created when they use different folders and avoid Payroll Config / Pay Period Registry file-name collisions. Add explicit client-code uniqueness validation before provisioning client infrastructure.~~ — done via `validateClientCodeIsUnique.ts`, checked before folder/workbook provisioning starts, with unit coverage and the existing integration scenario converted from `it.fails`.
 
 ~~### Unit tests for allocation calculation~~
 ~~The allocation math is complex enough to warrant thorough unit tests. Cover: proportion calculation, expense distribution, ignored employees, employees with no hours in a funding source, org-level expense distribution, edge cases (single employee, single funding source, zero expenses).~~ — done, `buildAllocationRows.test.ts` (24 tests) already covers all of this: proportion calculation, expense distribution, ignored/inactive employees, zero-hours edge cases, rounding/remainder handling, and sort order. Item was just never struck through.
