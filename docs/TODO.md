@@ -183,7 +183,7 @@ Implementation chunks:
 4. Add `resetDevTestData` for Fresh Client. It should purge live data, create a fresh `UI_TEST_DATA` folder under `TEST_DATA_ROOT_FOLDER_ID`, then run `createFreshClientScenario` directly against that folder.
 5. Add the reset command script and npm script.
 6. Add focused unit tests around guards, env validation, and Clients row filtering/writing. Add live integration coverage only after the Fresh Client reset works manually.
-7. Do not add Configured Client, Early Client, or Late Client until Fresh Client reset works end to end.
+7. Do not add Early Client or Late Client until Configured Client reset works end to end.
 
 ---
 

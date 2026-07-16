@@ -6,7 +6,7 @@ type ResetDevTestDataResult = {
   testDataRootFolderId: string;
   scenarios: DevTestDataScenarioSummary[];
   clients: {
-    writtenClientCode: string;
+    writtenClientCodes: string[];
   };
 };
 
