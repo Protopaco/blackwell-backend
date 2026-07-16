@@ -132,9 +132,15 @@ Both use the naming convention correction from the map*/build* discussion below:
 
 ## Testing
 
-### Add local/QA test data reset endpoint
+### Add local/QA test data purge endpoint and reset tool
 
-Create local/QA-only tooling for UI development that can reset a known test dataset on demand. Preferred shape is a single `POST /dev/testData/reset` endpoint that deletes the existing seeded test dataset, recreates a fresh known-good dataset, and returns useful created IDs/links for the UI. Guardrails: only register in local/QA, hard-fail in production, require a dev token in QA, and delete only data that is clearly owned by the test dataset (e.g. manifest-tracked IDs or a `UI_TEST_` prefix).
+Create local/QA-only tooling for UI development that can reset a known test dataset on demand. Backend shape: a narrow `POST /dev/test-data/purge` endpoint that only removes scoped test data. It should trash the `UI_TEST_DATA` Drive folder under the configured test-data root and remove Clients rows with the `UI_TEST_` client-code prefix. Guardrails: only register in local/QA, never mount in production, require a dev tool key in QA, and keep scenario creation out of the backend. Reset/seeding should live in a separate CLI tool that calls purge first, then creates Fresh/Configured/Early/Late scenarios through normal API endpoints.
+
+---
+
+### Add integration test data namespace cleanup
+
+Integration tests currently create real Drive/Sheets artifacts across the shared test area without a single owning namespace. Add an integration-test data root folder such as `INTEGRATION_TEST_DATA` and a consistent client-code prefix such as `IT_`, then update builders to create all integration artifacts under that root. Cleanup can then trash one folder tree and remove matching `IT_` clients from the Clients sheet, similar to the UI test data reset flow.
 
 ---
 

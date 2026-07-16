@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import postResetTestDataRouter from './postResetTestData.js';
+import postPurgeTestDataRouter from './postPurgeTestData.js';
 
 const router = Router();
 
-router.use(postResetTestDataRouter);
+router.use(postPurgeTestDataRouter);
 
 export default router;
