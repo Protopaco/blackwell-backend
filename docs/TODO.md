@@ -132,6 +132,12 @@ Both use the naming convention correction from the map*/build* discussion below:
 
 ## Testing
 
+### Add local/QA test data reset endpoint
+
+Create local/QA-only tooling for UI development that can reset a known test dataset on demand. Preferred shape is a single `POST /dev/testData/reset` endpoint that deletes the existing seeded test dataset, recreates a fresh known-good dataset, and returns useful created IDs/links for the UI. Guardrails: only register in local/QA, hard-fail in production, require a dev token in QA, and delete only data that is clearly owned by the test dataset (e.g. manifest-tracked IDs or a `UI_TEST_` prefix).
+
+---
+
 ### Validate Activity funding source references
 
 `createActivity` and `updateActivity` currently accept funding source names without verifying that those names exist in the client's Funding Sources tab. Add validation so activities can only reference real funding sources.
