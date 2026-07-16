@@ -30,6 +30,11 @@
       "development": "./src/db/*.ts",
       "default": "./dist/db/*.js"
     },
+    "#devTestData/*.js": {
+      "types": "./src/devTestData/*.ts",
+      "development": "./src/devTestData/*.ts",
+      "default": "./dist/devTestData/*.js"
+    },
     "#middleware/*.js": {
       "types": "./src/middleware/*.ts",
       "development": "./src/middleware/*.ts",

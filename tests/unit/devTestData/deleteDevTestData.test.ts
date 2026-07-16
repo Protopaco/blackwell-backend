@@ -13,7 +13,7 @@ vi.mock('#db/adapter/trashDriveFile.js', () => ({ default: vi.fn().mockResolvedV
 vi.mock('#db/client/readClients.js', () => ({ default: vi.fn().mockResolvedValue(clients) }));
 vi.mock('#db/client/replaceClients.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 
-import deleteDevTestData from '#services/devTestData/deleteDevTestData.js';
+import deleteDevTestData from '#devTestData/deleteDevTestData.js';
 import findDriveFolderByName from '#db/adapter/findDriveFolderByName.js';
 import trashDriveFile from '#db/adapter/trashDriveFile.js';
 import readClients from '#db/client/readClients.js';
