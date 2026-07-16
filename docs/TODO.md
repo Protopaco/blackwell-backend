@@ -59,9 +59,9 @@
 
 ---
 
-### Remove or restrict `PUT /payPeriod/:clientId/:payPeriodId`
+~~### Remove or restrict `PUT /payPeriod/:clientId/:payPeriodId`~~
 
-Pay periods are backend-owned workflow records: dates/name come from `GET /payPeriod/:clientId/next`, creation persists that suggested period, and status changes should happen through workflow actions (`generateTimesheets`, `generatePayrollReport`, `closePayPeriod`) rather than a generic update endpoint. Decide whether to delete this route entirely or restrict it before adding integration coverage for it.
+~~Pay periods are backend-owned workflow records: dates/name come from `GET /payPeriod/:clientId/next`, creation persists that suggested period, and status changes should happen through workflow actions (`generateTimesheets`, `generatePayrollReport`, `closePayPeriod`) rather than a generic update endpoint. Decide whether to delete this route entirely or restrict it before adding integration coverage for it.~~ — done: removed the public `PUT /payPeriod/:clientId/:payPeriodId` route. Kept the internal `updatePayPeriod` service because workflow services still use it after enforcing business rules.
 
 ---
 
