@@ -49,9 +49,8 @@ Only `status`/`clientName`/`clientCode` are editable; everything else in the bod
 ### getClients — `GET /client`
 - `getClients_returnsList` (200, real) — asserts the array contains a just-created test client by clientId. No error branches — pure passthrough.
 
-### getClientEmployees — `GET /client/:clientId/employees`
-- `getClientEmployees_success` (200, real) — client with 0+ employees, asserts array shape.
-- `getClientEmployees_clientNotFound` (404, real).
+~~### getClientEmployees — `GET /client/:clientId/employees`~~
+~~Removed duplicate route. Use `GET /employee/:clientId` instead.~~
 
 ### getClientSummary — `GET /client/:clientId/summary`
 Composes payrollConfig + non-closed pay periods; filters to active employees only.

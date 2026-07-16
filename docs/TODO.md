@@ -32,9 +32,9 @@
 
 ## Code Cleanup
 
-### Remove duplicate `/client/:clientId/employees` route
+~~### Remove duplicate `/client/:clientId/employees` route~~
 
-`GET /api/v1/employee/:clientId` is the route being covered by the Employee integration tests. The older `/client/:clientId/employees` route appears to duplicate the same responsibility and should be deleted once the Employee route coverage is stable.
+~~`GET /api/v1/employee/:clientId` is the route being covered by the Employee integration tests. The older `/client/:clientId/employees` route appears to duplicate the same responsibility and should be deleted once the Employee route coverage is stable.~~ — done: removed the duplicate Client route and kept the canonical `GET /api/v1/employee/:clientId` endpoint.
 
 ---
 

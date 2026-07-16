@@ -9,7 +9,7 @@ import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import buildPayPeriodResponse from '#services/payPeriod/buildPayPeriodResponse.js';
 
 // Composes a client's payroll config into a summary for the Client Summary landing page.
-// employees is filtered to active-only — inactive employees are still available, unfiltered, via GET /client/:clientId/employees.
+// employees is filtered to active-only — inactive employees are still available, unfiltered, via GET /employee/:clientId.
 const getClientSummary = async (clientId: string): Promise<ClientSummary> => {
   logger.info(`getClientSummary clientId=${clientId}`);
 
