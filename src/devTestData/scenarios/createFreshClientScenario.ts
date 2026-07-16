@@ -5,21 +5,21 @@ import {
   DEV_TEST_DATA_FRESH_CLIENT_CODE,
   DEV_TEST_DATA_FRESH_CLIENT_FOLDER_NAME,
 } from '../constants.js';
-import type DevTestDataTemplateSummary from '../types/DevTestDataTemplateSummary.js';
-import buildFreshClientTemplateRequest from './freshClientTemplate.js';
+import type DevTestDataScenarioSummary from '../types/DevTestDataScenarioSummary.js';
+import buildFreshClientRequest from './buildFreshClientRequest.js';
 
 const createFreshClientScenario = async (
-  templateRootFolderId: string,
-): Promise<DevTestDataTemplateSummary> => {
+  testDataRootFolderId: string,
+): Promise<DevTestDataScenarioSummary> => {
   const freshClientFolderId = await createFolder(
     DEV_TEST_DATA_FRESH_CLIENT_FOLDER_NAME,
-    templateRootFolderId,
+    testDataRootFolderId,
   );
 
-  const freshClientTemplateRequest = buildFreshClientTemplateRequest(
+  const freshClientRequest = buildFreshClientRequest(
     buildDriveFolderLink(freshClientFolderId),
   );
-  await createClient(freshClientTemplateRequest);
+  await createClient(freshClientRequest);
 
   return {
     scenario: DEV_TEST_DATA_FRESH_CLIENT_FOLDER_NAME,

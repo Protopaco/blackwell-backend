@@ -6,7 +6,7 @@ import {
   DEV_TEST_DATA_FRESH_CLIENT_NAME,
 } from '../constants.js';
 
-const buildFreshClientTemplateRequest = (rootFolderLink: string): ClientCreateRequest => ({
+const buildFreshClientRequest = (rootFolderLink: string): ClientCreateRequest => ({
   clientName: DEV_TEST_DATA_FRESH_CLIENT_NAME,
   clientCode: DEV_TEST_DATA_FRESH_CLIENT_CODE,
   employeePayrollFolder: {
@@ -20,4 +20,4 @@ const buildFreshClientTemplateRequest = (rootFolderLink: string): ClientCreateRe
   },
 });
 
-export default buildFreshClientTemplateRequest;
+export default buildFreshClientRequest;
