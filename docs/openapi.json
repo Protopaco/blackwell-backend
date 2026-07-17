@@ -351,7 +351,7 @@
       },
       "EmployeeCreateRequest": {
         "type": "object",
-        "description": "Exactly one of timesheetFileId or timesheetFolderId must be provided.",
+        "description": "Exactly one of timesheetFileLink or timesheetFolderId must be provided.",
         "required": [
           "firstName",
           "lastName",
@@ -399,9 +399,9 @@
               "Inactive"
             ]
           },
-          "timesheetFileId": {
+          "timesheetFileLink": {
             "type": "string",
-            "example": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+            "example": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/edit"
           },
           "timesheetFolderId": {
             "type": "string",
@@ -2125,7 +2125,7 @@
       "post": {
         "operationId": "v1CreateEmployee",
         "summary": "Create a new employee",
-        "description": "employeeId is server-generated — ignored if present in the request body. Exactly one of timesheetFileId (existing file, used as-is) or timesheetFolderId (must be an Active TimesheetFolder configured for this client — a new timesheet workbook is provisioned there) must be provided.\n",
+        "description": "employeeId is server-generated — ignored if present in the request body. Exactly one of timesheetFileLink (existing Google Sheets/Drive file URL — parsed, verified, and stored as Employee.timesheetFileId) or timesheetFolderId (must be an Active TimesheetFolder configured for this client — a new timesheet workbook is provisioned there) must be provided.\n",
         "tags": [
           "Employee"
         ],
@@ -2154,10 +2154,10 @@
             "description": "Employee created"
           },
           "404": {
-            "description": "Client not found, or timesheetFolderId doesn't match an Active TimesheetFolder"
+            "description": "Client not found, inaccessible workbook, or timesheetFolderId doesn't match an Active TimesheetFolder"
           },
           "422": {
-            "description": "Neither timesheetFileId nor timesheetFolderId was provided"
+            "description": "Malformed timesheetFileLink, both fields provided, or neither field provided"
           }
         }
       },
