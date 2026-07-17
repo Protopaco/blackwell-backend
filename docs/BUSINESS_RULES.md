@@ -125,6 +125,12 @@ The `src/utils/dateUtils.ts` module provides:
 - Timesheet files are never deleted through the tool
 - When a new employee is added, their timesheet file is created automatically in the client's `TimesheetFolderId` via OAuth. The file ID is written back to the `TimesheetFileId` column in the Employees config tab automatically.
 
+## TimesheetFolders
+
+- TimesheetFolder names are unique per client, using trimmed, case-insensitive comparison.
+- The Drive folder link/id is set at creation only. Updates can change `TimesheetFolderName` and `Status`, but cannot change `DriveFolderId`.
+- TimesheetFolders are never deleted through the tool. Mark them `Inactive` to preserve audit context when a location should no longer be used for new employees.
+
 ## Holidays
 
 - Holidays are shared across all employees for a client

@@ -181,6 +181,7 @@ Settings is a singleton per client (no id, no create/delete — only get/update)
 ### createTimesheetFolder — `POST /timesheetFolder/:clientId`
 Always created Active regardless of request body; `driveFolderLink` parsed + verified live.
 - `createTimesheetFolder_success` (201, real) — real folder link, anchored under `TEST_DATA_ROOT_FOLDER_ID`.
+- `createTimesheetFolder_duplicateName` (422, real/free after builder) — same client, name compared case-insensitively after trimming.
 - `createTimesheetFolder_clientNotFound` (404, real).
 - `createTimesheetFolder_badFolderLink` (404, real) — syntactically valid but nonexistent Drive folder id, mirrors `createClient_badFolderLink`.
 - `createTimesheetFolder_malformedFolderLink` (422, free) — reuses the same `parseDriveLink` as createClient, so same free/malformed-string branch.
@@ -188,10 +189,11 @@ Always created Active regardless of request body; `driveFolderLink` parsed + ver
 ### updateTimesheetFolder — `PUT /timesheetFolder/:clientId/:timesheetFolderId`
 - `updateTimesheetFolder_nameOnly` (200, real) — only `timesheetFolderName`, driveFolderLink untouched/not re-verified.
 - `updateTimesheetFolder_statusChange` (200, real) — flips Active → Inactive; useful precondition builder for `createEmployee_timesheetFolderInactive` above.
-- `updateTimesheetFolder_newDriveLink` (200, real) — re-verifies the new link live.
+- `updateTimesheetFolder_sameNameSameRecord` (200, real/free after builder) — normalized same-name update is allowed for the same TimesheetFolder.
+- `updateTimesheetFolder_duplicateName` (422, real/free after builder) — cannot rename to another TimesheetFolder's normalized name for the same client.
+- `updateTimesheetFolder_newDriveLink` (422, free) — Drive folder link/id is immutable after creation.
 - `updateTimesheetFolder_clientNotFound` (404, real).
 - `updateTimesheetFolder_timesheetFolderNotFound` (404, real) — checked explicitly in-service, confirmed.
-- `updateTimesheetFolder_badFolderLink` (404, real) — new link doesn't resolve.
 
 ### getTimesheetFolders — `GET /timesheetFolder/:clientId`
 - `getTimesheetFolders_success` (200, real).

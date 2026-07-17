@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import app from '#app.js';
-import createFolder from '#db/adapter/createFolder.js';
 import { TimesheetFolderStatus } from '#models/TimesheetFolderStatus.js';
 import buildDriveFolderLink from '../buildDriveFolderLink.js';
 import createTestClient from '../builders/createTestClient.js';
@@ -50,26 +49,23 @@ describe('PUT /api/v1/timesheetFolder/:clientId/:timesheetFolderId', () => {
     expect(updatedTimesheetFolder.driveFolderId).toBe(timesheetFolder.driveFolderId);
   });
 
-  it('200 - Updates timesheet folder drive link', async () => {
+  it('422 - Rejects timesheet folder drive link update', async () => {
     const client = await createTestClient();
     const timesheetFolder = await createTestTimesheetFolder(client);
-    const newDriveFolderId = await createFolder(
-      `Updated Timesheet Folder ${getUniqueCode('TSFOLDER')}`,
-      client.employeePayrollFolderId,
-    );
+    const newDriveFolderLink = buildDriveFolderLink(`updated-${getUniqueCode('TSFOLDER')}`);
 
     const res = await request(app)
       .put(`/api/v1/timesheetFolder/${client.clientId}/${timesheetFolder.timesheetFolderId}`)
-      .send({ driveFolderLink: buildDriveFolderLink(newDriveFolderId) });
+      .send({ driveFolderLink: newDriveFolderLink });
 
-    expect(res.status).toBe(200);
-    expect(res.body.message).toBe('TimesheetFolder updated');
+    expect(res.status).toBe(422);
+    expect(res.body.message).toContain('driveFolderLink cannot be changed after TimesheetFolder creation');
 
     const updatedTimesheetFolder = await getTimesheetFolderByName(
       client.clientId,
       timesheetFolder.timesheetFolderName,
     );
-    expect(updatedTimesheetFolder.driveFolderId).toBe(newDriveFolderId);
+    expect(updatedTimesheetFolder.driveFolderId).toBe(timesheetFolder.driveFolderId);
     expect(updatedTimesheetFolder.status).toBe(timesheetFolder.status);
   });
 
@@ -97,7 +93,7 @@ describe('PUT /api/v1/timesheetFolder/:clientId/:timesheetFolderId', () => {
     expect(res.body.message).toContain(`TimesheetFolder not found: ${missingTimesheetFolderId}`);
   });
 
-  it('404 - Bad folder link', async () => {
+  it('422 - Bad folder link rejected because drive link is immutable on update', async () => {
     const client = await createTestClient();
     const timesheetFolder = await createTestTimesheetFolder(client);
     const badFolderLink = buildDriveFolderLink('INVALID_FOLDER_ID');
@@ -106,8 +102,7 @@ describe('PUT /api/v1/timesheetFolder/:clientId/:timesheetFolderId', () => {
       .put(`/api/v1/timesheetFolder/${client.clientId}/${timesheetFolder.timesheetFolderId}`)
       .send({ driveFolderLink: badFolderLink });
 
-    expect(res.status).toBe(404);
-    expect(res.body.message).toContain('Folder not found or inaccessible');
-    expect(res.body.message).toContain(badFolderLink);
+    expect(res.status).toBe(422);
+    expect(res.body.message).toContain('driveFolderLink cannot be changed after TimesheetFolder creation');
   });
 });
