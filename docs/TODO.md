@@ -71,6 +71,12 @@ Low priority. The DB-layer helper names `appendPayPeriod` and `writePayPeriod` a
 
 ---
 
+### Quiet expected missing `_manifest` reads
+
+`readManifest` currently logs a Google Sheets 400 as an error when a generated timesheet workbook does not have a `_manifest` tab yet. Callers already treat `null` as a normal "not generated yet" result, so this is noisy rather than actionable. If it gets annoying, check for the `_manifest` tab before reading or downgrade that specific missing-manifest case to debug/info.
+
+---
+
 ## Data Model / Config
 
 ~~### Update employee data model to include all fields, including pay rates~~

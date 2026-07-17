@@ -4,6 +4,7 @@ import {
   DEV_TEST_DATA_CONFIGURED_CLIENT_CODE,
   DEV_TEST_DATA_EARLY_CLIENT_CODE,
   DEV_TEST_DATA_FRESH_CLIENT_CODE,
+  DEV_TEST_DATA_LATE_CLIENT_CODE,
   DEV_TEST_DATA_ROOT_FOLDER_NAME,
 } from './constants.js';
 import getDevTestDataParentFolderId from './getDevTestDataParentFolderId.js';
@@ -11,6 +12,7 @@ import purgeDevTestData from './purgeDevTestData.js';
 import createConfiguredClientScenario from './scenarios/createConfiguredClientScenario.js';
 import createEarlyClientScenario from './scenarios/createEarlyClientScenario.js';
 import createFreshClientScenario from './scenarios/createFreshClientScenario.js';
+import createLateClientScenario from './scenarios/createLateClientScenario.js';
 import type ResetDevTestDataResult from './types/ResetDevTestDataResult.js';
 
 const resetDevTestData = async (): Promise<ResetDevTestDataResult> => {
@@ -24,16 +26,18 @@ const resetDevTestData = async (): Promise<ResetDevTestDataResult> => {
   const freshClient = await createFreshClientScenario(testDataRootFolderId);
   const configuredClient = await createConfiguredClientScenario(testDataRootFolderId);
   const earlyClient = await createEarlyClientScenario(testDataRootFolderId);
+  const lateClient = await createLateClientScenario(testDataRootFolderId);
 
   return {
     purge,
     testDataRootFolderId,
-    scenarios: [freshClient, configuredClient, earlyClient],
+    scenarios: [freshClient, configuredClient, earlyClient, lateClient],
     clients: {
       writtenClientCodes: [
         DEV_TEST_DATA_FRESH_CLIENT_CODE,
         DEV_TEST_DATA_CONFIGURED_CLIENT_CODE,
         DEV_TEST_DATA_EARLY_CLIENT_CODE,
+        DEV_TEST_DATA_LATE_CLIENT_CODE,
       ],
     },
   };
