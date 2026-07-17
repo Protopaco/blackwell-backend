@@ -1,6 +1,7 @@
 import getClientById from '#services/client/getClientById.js';
 import readPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
+import { TimesheetFolderStatus } from '#models/TimesheetFolderStatus.js';
 import ClientSummary from '#models/ClientSummary.js';
 import { logger } from '#utils/logger.js';
 import { NotFoundError } from '#utils/errors.js';
@@ -9,7 +10,8 @@ import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import buildPayPeriodResponse from '#services/payPeriod/buildPayPeriodResponse.js';
 
 // Composes a client's payroll config into a summary for the Client Summary landing page.
-// employees is filtered to active-only — inactive employees are still available, unfiltered, via GET /employee/:clientId.
+// employees and timesheetFolders are filtered to active-only for dashboard cards; inactive records
+// remain available through their dedicated endpoints.
 const getClientSummary = async (clientId: string): Promise<ClientSummary> => {
   logger.info(`getClientSummary clientId=${clientId}`);
 
@@ -26,6 +28,9 @@ const getClientSummary = async (clientId: string): Promise<ClientSummary> => {
   const activeEmployees = payrollConfig.employees.filter(
     (employee) => employee.status === EmployeeStatus.Active,
   );
+  const activeTimesheetFolders = payrollConfig.timesheetFolders.filter(
+    (timesheetFolder) => timesheetFolder.status === TimesheetFolderStatus.Active,
+  );
 
   return {
     employees: activeEmployees,
@@ -33,6 +38,7 @@ const getClientSummary = async (clientId: string): Promise<ClientSummary> => {
     activities: payrollConfig.activities,
     fundingSources: payrollConfig.fundingSources,
     holidays: payrollConfig.holidays,
+    timesheetFolders: activeTimesheetFolders,
     settings: payrollConfig.settings,
     payPeriods: nonClosedPayPeriods,
   };
