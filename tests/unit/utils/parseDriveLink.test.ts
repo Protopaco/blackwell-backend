@@ -18,4 +18,16 @@ describe('parseDriveLink', () => {
   it('throws UnprocessableError for an unrecognized link', () => {
     expect(() => parseDriveLink('https://example.com/not-a-drive-link')).toThrow(UnprocessableError);
   });
+
+  it('extracts the ID from a Google Sheets file link', () => {
+    expect(parseDriveLink('https://docs.google.com/spreadsheets/d/file123/edit#gid=0')).toBe('file123');
+  });
+
+  it('extracts the ID from a Drive file link', () => {
+    expect(parseDriveLink('https://drive.google.com/file/d/file123/view?usp=sharing')).toBe('file123');
+  });
+
+  it('extracts the ID from a Drive open file link', () => {
+    expect(parseDriveLink('https://drive.google.com/open?id=file123')).toBe('file123');
+  });
 });

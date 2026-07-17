@@ -29,6 +29,7 @@ const { testClient, baseEmployee, activeFolder, inactiveFolder } = vi.hoisted(()
 vi.mock('#services/client/getClientById.js', () => ({ default: vi.fn().mockResolvedValue(testClient) }));
 vi.mock('#db/employee/appendEmployee.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#db/adapter/createOAuthWorkbook.js', () => ({ default: vi.fn().mockResolvedValue('new-file-id') }));
+vi.mock('#db/adapter/workbookExists.js', () => ({ default: vi.fn().mockResolvedValue(true) }));
 vi.mock('#db/payrollConfig/readPayrollConfig.js', () => ({
   default: vi.fn().mockResolvedValue({ timesheetFolders: [activeFolder, inactiveFolder] }),
 }));
@@ -37,14 +38,19 @@ import createEmployee from '#services/employee/createEmployee.js';
 import getClientById from '#services/client/getClientById.js';
 import appendEmployee from '#db/employee/appendEmployee.js';
 import createOAuthWorkbook from '#db/adapter/createOAuthWorkbook.js';
+import workbookExists from '#db/adapter/workbookExists.js';
 import payrollConfigCache from '#utils/caches/payrollConfigCache.js';
 
 describe('createEmployee', () => {
-  it('uses the caller-supplied timesheetFileId when provided', async () => {
+  it('parses and stores the caller-supplied timesheetFileLink when provided', async () => {
     payrollConfigCache.set('config-1', { employees: [] } as any);
 
-    await createEmployee('client-1', { ...baseEmployee, timesheetFileId: 'existing-file-id' } as any);
+    await createEmployee('client-1', {
+      ...baseEmployee,
+      timesheetFileLink: 'https://docs.google.com/spreadsheets/d/existing-file-id/edit',
+    } as any);
 
+    expect(workbookExists).toHaveBeenCalledWith('existing-file-id');
     expect(createOAuthWorkbook).not.toHaveBeenCalled();
     expect(appendEmployee).toHaveBeenCalledWith(
       'config-1',
@@ -66,9 +72,38 @@ describe('createEmployee', () => {
     );
   });
 
-  it('throws UnprocessableError when neither timesheetFileId nor timesheetFolderId is provided', async () => {
+  it('throws UnprocessableError when neither timesheetFileLink nor timesheetFolderId is provided', async () => {
     await expect(createEmployee('client-1', { ...baseEmployee } as any)).rejects.toThrow(
-      'Either timesheetFileId or timesheetFolderId is required',
+      'Either timesheetFileLink or timesheetFolderId is required',
+    );
+  });
+
+  it('throws UnprocessableError when both timesheetFileLink and timesheetFolderId are provided', async () => {
+    await expect(createEmployee('client-1', {
+      ...baseEmployee,
+      timesheetFileLink: 'https://docs.google.com/spreadsheets/d/existing-file-id/edit',
+      timesheetFolderId: 'folder-record-1',
+    } as any)).rejects.toThrow(
+      'Provide either timesheetFileLink or timesheetFolderId, not both',
+    );
+  });
+
+  it('throws UnprocessableError when timesheetFileLink is malformed', async () => {
+    await expect(
+      createEmployee('client-1', { ...baseEmployee, timesheetFileLink: 'not-a-drive-file-link' } as any),
+    ).rejects.toThrow('Unrecognized Drive link: not-a-drive-file-link');
+  });
+
+  it('throws NotFoundError when timesheetFileLink is inaccessible or not a workbook', async () => {
+    vi.mocked(workbookExists).mockResolvedValueOnce(false);
+
+    await expect(
+      createEmployee('client-1', {
+        ...baseEmployee,
+        timesheetFileLink: 'https://docs.google.com/spreadsheets/d/missing-file/edit',
+      } as any),
+    ).rejects.toThrow(
+      'Workbook not found or inaccessible: https://docs.google.com/spreadsheets/d/missing-file/edit',
     );
   });
 
@@ -88,7 +123,10 @@ describe('createEmployee', () => {
     vi.mocked(getClientById).mockResolvedValueOnce(null);
 
     await expect(
-      createEmployee('unknown-client', { ...baseEmployee, timesheetFileId: 'x' } as any),
+      createEmployee('unknown-client', {
+        ...baseEmployee,
+        timesheetFileLink: 'https://docs.google.com/spreadsheets/d/x/edit',
+      } as any),
     ).rejects.toThrow('Client not found: unknown-client');
   });
 });

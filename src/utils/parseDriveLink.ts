@@ -1,18 +1,34 @@
 import { UnprocessableError } from '#utils/errors.js';
 
-// Extracts a Drive folder ID from a pasted Drive URL. Supports the two real-world link shapes:
-// https://drive.google.com/drive/folders/{id} and https://drive.google.com/drive/u/{n}/folders/{id},
-// with or without a trailing query string (e.g. ?usp=sharing).
-const parseDriveLink = (link: string): string => {
-  const marker = '/folders/';
+const parsePathId = (link: string, marker: string): string | null => {
   const markerIndex = link.indexOf(marker);
-  if (markerIndex === -1) throw new UnprocessableError(`Unrecognized Drive folder link: ${link}`);
+  if (markerIndex === -1) return null;
 
   const afterMarker = link.slice(markerIndex + marker.length);
   const id = afterMarker.split('?')[0].split('/')[0];
-  if (!id) throw new UnprocessableError(`Unrecognized Drive folder link: ${link}`);
+  return id || null;
+};
 
-  return id;
+// Extracts a Drive resource ID from a pasted Google Drive/Sheets URL. Resource type validation lives
+// in the Drive adapters that look up the parsed ID.
+const parseDriveLink = (link: string): string => {
+  const pathId =
+    parsePathId(link, '/folders/') ??
+    parsePathId(link, '/spreadsheets/d/') ??
+    parsePathId(link, '/file/d/');
+  if (pathId) return pathId;
+
+  try {
+    const url = new URL(link);
+    const openId = url.hostname === 'drive.google.com' && url.pathname === '/open'
+      ? url.searchParams.get('id')
+      : null;
+    if (openId) return openId;
+  } catch {
+    // Fall through to the uniform business error below.
+  }
+
+  throw new UnprocessableError(`Unrecognized Drive link: ${link}`);
 };
 
 export default parseDriveLink;
