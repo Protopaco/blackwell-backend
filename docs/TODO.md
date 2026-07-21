@@ -251,6 +251,12 @@ Low priority. Generated timesheets are being created, but the visual styling nee
 
 ---
 
+### Represent the TimesheetStatus progression as data, not an if/else chain
+
+Noted 2026-07-21 while working on the frontend's Timesheet Status table. `deriveTimesheetStatus.ts` encodes the five-state lifecycle (`NotGenerated` → `Generated` → `Submitted` → `Approved` → `Complete`) implicitly as an if/else chain — there's no explicit ordered representation of "what comes after what" anywhere in the backend. The frontend hit the same underlying concept (needed the progression order to sort a status column) and modeled it explicitly as an ordered array (`TIMESHEET_STATUS_PROGRESSION` in `src/models/timesheetStatusProgression.ts`), from which sort rank is derived via `indexOf` rather than hand-maintained separately. Worth reviewing whether the backend should represent the progression the same explicit way — e.g. deriving `deriveTimesheetStatus.ts`'s branching from an ordered array of conditions, or at minimum exposing the same ordering as data for any future consumer that needs "is this status at or past X" rather than just "what is this status." Not scoped or started — flagging for later.
+
+---
+
 ~~### Add derived status to timesheet status endpoint~~
 ~~`GET /timesheet/status/:clientId/:payPeriodId` only returned raw `totalHours`/`employeeSigned`/`supervisorSigned` — UI needs a labeled status per employee.~~ — done via `deriveTimesheetStatus.ts`, wired into `getTimesheetStatuses.ts`. Uses the five-state `TimesheetStatus` enum (`NotGenerated`/`Generated`/`Submitted`/`Approved`/`Complete`); distinguishes `Approved` from `Complete` by checking whether the employee's hours appear in `current_hours` for the pay period.
 
