@@ -39,6 +39,9 @@ const router = Router();
  *                     type: number
  *                   totalFlatRate:
  *                     type: number
+ *                   totalExpense:
+ *                     type: number
+ *                     nullable: true
  *                   hourly:
  *                     type: array
  *                     items:
