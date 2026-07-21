@@ -3,7 +3,8 @@ const timesheetStatusResponse = {
     type: 'object',
     properties: {
       employeeId: { type: 'string', format: 'uuid' },
-      employeeName: { type: 'string', example: 'Morgan Haynes' },
+      firstName: { type: 'string', example: 'Morgan' },
+      lastName: { type: 'string', example: 'Haynes' },
       timesheetFileId: { type: 'string' },
       totalHours: { type: 'number', nullable: true, example: 72.5 },
       flatRateQuantity: { type: 'number', nullable: true, example: 2 },

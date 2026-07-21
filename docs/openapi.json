@@ -420,9 +420,6 @@
             "type": "string",
             "example": "Jane Smith"
           },
-          "activeThisPayPeriod": {
-            "type": "boolean"
-          },
           "totalExpense": {
             "type": "number",
             "nullable": true,
@@ -640,9 +637,13 @@
             "type": "string",
             "format": "uuid"
           },
-          "employeeName": {
+          "firstName": {
             "type": "string",
-            "example": "Morgan Haynes"
+            "example": "Morgan"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Haynes"
           },
           "timesheetFileId": {
             "type": "string"
@@ -1121,7 +1122,7 @@
       "put": {
         "operationId": "v1UpdateEmployeeExpensesBatch",
         "summary": "Upsert totalExpense for multiple employees in a pay period at once",
-        "description": "For each employeeId with an existing EmployeeExpense record, overlays totalExpense onto it. For each employeeId without one, creates a new record (employeeName resolved from PayrollConfig, activeThisPayPeriod defaulted to true). If any employeeId doesn't match a known employee in the client's PayrollConfig, the entire batch is rejected and nothing is written.\n",
+        "description": "For each employeeId with an existing EmployeeExpense record, overlays totalExpense onto it. For each employeeId without one, creates a new record (employeeName resolved from PayrollConfig). If any employeeId doesn't match a known employee in the client's PayrollConfig, the entire batch is rejected and nothing is written.\n",
         "tags": [
           "PayrollReport"
         ],
@@ -1210,9 +1211,6 @@
           },
           "404": {
             "description": "Client, pay period, or payroll report not found"
-          },
-          "422": {
-            "description": "Employee has hours this pay period and cannot be marked inactive"
           }
         }
       },
