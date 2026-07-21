@@ -9,6 +9,7 @@ interface EmployeeTimesheetStatus {
   flatRateQuantity: number | null;
   employeeSigned: boolean;
   supervisorSigned: boolean;
+  includeInPayroll: boolean;
   status: TimesheetStatusType;
 }
 

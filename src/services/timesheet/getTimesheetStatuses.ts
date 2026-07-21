@@ -42,6 +42,7 @@ const getTimesheetStatuses = async (
         flatRateQuantity: detail.flatRateQuantity,
         employeeSigned: detail.employeeSigned,
         supervisorSigned: detail.supervisorSigned,
+        includeInPayroll: detail.includeInPayroll,
         status,
       };
     }),

@@ -9,6 +9,7 @@ const timesheetStatusResponse = {
       flatRateQuantity: { type: 'number', nullable: true, example: 2 },
       employeeSigned: { type: 'boolean' },
       supervisorSigned: { type: 'boolean' },
+      includeInPayroll: { type: 'boolean' },
       status: { type: 'string', enum: ['NotGenerated', 'Generated', 'Submitted', 'Approved', 'Complete'] },
     },
   },
