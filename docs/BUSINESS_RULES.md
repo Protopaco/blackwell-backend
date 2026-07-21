@@ -238,9 +238,20 @@ On each run:
 1. Check if the report file exists — create it via OAuth if not
 2. Scan all active employee timesheets — only process employees whose timesheet is `Complete` (both employee and supervisor signatures present)
 3. If no timesheets are Complete, throw an error and do nothing
-4. If `current_hours` exists, rename it to `hrs_MMDD_HHmm` (e.g. `hrs_0626_1430`)
-5. If `current_payroll_summary` exists, rename it to `adp_MMDD_HHmm` using the same timestamp
-6. Write fresh `current_hours` and `current_payroll_summary` tabs with all currently-Complete employees
+4. For each Complete timesheet, apply the `includeInPayroll` rule (see below) before including it
+5. If `current_hours` exists, rename it to `hrs_MMDD_HHmm` (e.g. `hrs_0626_1430`)
+6. If `current_payroll_summary` exists, rename it to `adp_MMDD_HHmm` using the same timestamp
+7. Write fresh `current_hours` and `current_payroll_summary` tabs with all currently-included Complete employees
+
+### Include/Ignore for Payroll (`includeInPayroll`)
+
+- Each generated timesheet has a real Google Sheets checkbox (label: "Supervisor approval: Include in payroll"), placed next to the supervisor signature. Defaults checked (`TRUE`) when the timesheet is generated. Edited directly in the sheet by a supervisor — there is no API to set it; the app only reads it.
+- The checkbox is only honored once the timesheet is otherwise `Complete` (both signatures present) — an unsigned timesheet is excluded by the existing signature rule regardless of the checkbox value.
+- Once Complete:
+  - `includeInPayroll = TRUE` — employee is included, same as before this rule existed.
+  - `includeInPayroll = FALSE` and the employee has zero total hours and zero flat-rate quantity — employee is silently skipped (not an error; this is the normal "supervisor unchecked it, nothing to lose" case).
+  - `includeInPayroll = FALSE` but the employee has any hours or flat-rate quantity — payroll report generation fails outright with a validation error naming the employee, rather than silently dropping recorded hours. The supervisor/admin must resolve this on the timesheet (either re-check the box or zero out the hours) before generation can proceed.
+- `EmployeeExpenses` no longer carries an Include/Ignore flag — it's expenses-only (`employeeId`, `employeeName`, `totalExpense`). The allocation report (`buildAllocationRows.ts`) simply includes any expense record with a non-null `totalExpense`; employees excluded from payroll never appear in the hours data it computes from, so they contribute nothing regardless.
 
 > The archive tabs use the timestamp of when they were archived, not when they were originally generated. MMDD_HHmm format (e.g. `hrs_0626_1430`) is used to keep tab names short.
 

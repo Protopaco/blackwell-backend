@@ -161,16 +161,16 @@ Vitest 4, using `test.projects` in `vitest.config.ts`:
 **Employee Timesheet** (one per employee, file ID = `Employee.timesheetFileId`, created on first timesheet generation)
 
 - One tab per pay period, named by `PayPeriodName`. Ordered newest-first via `sortTimesheetTabs.ts` (sorts by the real `PayPeriod.startDate`, not by parsing the tab name).
-- One `_manifest` tab (`MANIFEST_TAB` constant), pinned to the far right — internal bookkeeping (JSON blob per pay period describing exact row/column layout), never shown to users. Structure: `TimesheetManifest` model.
+- One `_manifest` tab (`MANIFEST_TAB` constant), pinned to the far right — internal bookkeeping (JSON blob per pay period describing exact row/column layout), never shown to users. Structure: `TimesheetManifest` model, including `includeInPayrollCell` — the location of the generated "Supervisor approval: Include in payroll" checkbox (real Sheets checkbox, defaults `TRUE`, edited directly in the sheet by the supervisor, not via any API).
 
 **Payroll Report workbook** (one per pay period, once generated — file ID = `PayPeriod.payrollReportFileId`)
 
 - Active tabs (left, in this order, filtered to whichever exist): `current_hours`, `current_payroll_summary`, `EmployeeExpenses`, `AdditionalExpenses`, `AllocationReport`
 - Archive tabs (right): `hrs_MMDD_HHmm` / `payroll_MMDD_HHmm` pairs (same timestamp per run), sorted newest-first, pairs kept adjacent. Ordering enforced by `sortPayrollReportTabs.ts` after any write, via the shared `reorderTabs.ts`/`listTabNames.ts` adapters.
-- `EmployeeExpenses` columns: `employeeId`, `employeeName`, `activeThisPayPeriod`, `totalExpense` (nullable — not yet entered vs. entered as zero)
+- `EmployeeExpenses` columns: `employeeId`, `employeeName`, `totalExpense` (nullable — not yet entered vs. entered as zero). Expenses-only — Include/Ignore for payroll is owned by the timesheet (`includeInPayrollCell`), not this tab.
 - `AdditionalExpenses` columns: `expenseName`, `amount`
 - `AllocationReport` columns: `fundingSourceName`, `wagesAllocation`, `additionalExpenses`, `total`
-- `current_hours` / `current_payroll_summary`: written by `generatePayrollReport.ts` from signed timesheets only (both employee + supervisor signatures present)
+- `current_hours` / `current_payroll_summary`: written by `generatePayrollReport.ts` from signed timesheets (both employee + supervisor signatures present), further gated by each timesheet's `includeInPayroll` checkbox once the supervisor has signed — see `BUSINESS_RULES.md` for the exact rule.
 
 **Read functions for the report sub-tabs return `T[] | null`** (as of 2026-07-08): `null` = tab doesn't exist yet (that step of the process hasn't happened), `[]` = tab exists but has no rows. The public `GET` services (`getEmployeeExpenses`, `getAdditionalExpenses`, `getAllocationReport`) currently coalesce `null → []` at their boundary to keep the external API returning a plain array — but the distinction is preserved at the `db/` layer for any future caller that wants it (e.g. `getPayrollReport.ts` already propagates `null` directly, since its contract was already `T | null`).
 

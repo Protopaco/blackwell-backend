@@ -10,7 +10,6 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses', ()
     const expense = {
       employeeId: incompleteEmployee.employeeId,
       employeeName: `${incompleteEmployee.firstName} ${incompleteEmployee.lastName}`,
-      activeThisPayPeriod: true,
       totalExpense: 123.45,
     };
 
@@ -36,27 +35,10 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses', ()
       .send({
         employeeId: incompleteEmployee.employeeId,
         employeeName: `${incompleteEmployee.firstName} ${incompleteEmployee.lastName}`,
-        activeThisPayPeriod: true,
         totalExpense: 123.45,
       });
 
     expect(res.status).toBe(404);
     expect(res.body.message).toContain(`No payroll report file exists for pay period: ${payPeriod.payPeriodId}`);
-  });
-
-  it('422 - Rejects marking an employee inactive when they have hours', async () => {
-    const { client, completeEmployee, payPeriod } = await createGeneratedPayrollReportPayPeriod();
-
-    const res = await request(app)
-      .put(`/api/v1/payrollReport/${client.clientId}/${payPeriod.payPeriodId}/employeeExpenses`)
-      .send({
-        employeeId: completeEmployee.employeeId,
-        employeeName: `${completeEmployee.firstName} ${completeEmployee.lastName}`,
-        activeThisPayPeriod: false,
-        totalExpense: 123.45,
-      });
-
-    expect(res.status).toBe(422);
-    expect(res.body.message).toContain('has hours this pay period and cannot be marked inactive');
   });
 });
