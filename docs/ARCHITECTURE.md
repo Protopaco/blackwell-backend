@@ -156,7 +156,7 @@ Vitest 4, using `test.projects` in `vitest.config.ts`:
 
 **Pay-Period-Registry** (one per client, file ID = `Client.payPeriodRegistryFileId`) — one tab per calendar year (e.g. `"2026"`)
 
-- Columns: `PayPeriodId`, `PayPeriodName` (e.g. `"06/01 - 06/14"`), `Status` (`Pending`→`Open`→`Processed`→`Closed`, forward-only, no enforcement), `StartDate`, `EndDate`, `CreatedDate`, `PayrollReportFileId` (empty string until first report generation)
+- Columns: `PayPeriodId`, `PayPeriodName` (e.g. `"06/01 - 06/14"`), `Status` (`Pending`→`Open`→`Processed`→`Allocated`→`Closed`, forward-only), `StartDate`, `EndDate`, `CreatedDate`, `PayrollReportFileId` (empty string until first report generation). `Processed` is set by `generatePayrollReport.ts`, `Allocated` by `generateAllocationReport.ts` (both guarded to skip the write once `Closed`, and both regenerable — re-running `generatePayrollReport.ts` after `Allocated` intentionally regresses status back to `Processed`, since the existing allocation numbers are now stale against the freshly regenerated payroll data). `closePayPeriod.ts` requires `status === Allocated` — an allocation report must exist before a pay period can close; this is the one place status is actually enforced, not just descriptive.
 
 **Employee Timesheet** (one per employee, file ID = `Employee.timesheetFileId`, created on first timesheet generation)
 

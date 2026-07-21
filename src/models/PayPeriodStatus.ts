@@ -2,6 +2,7 @@ const PayPeriodStatus = {
   Pending: 'Pending',
   Open: 'Open',
   Processed: 'Processed',
+  Allocated: 'Allocated',
   Closed: 'Closed',
 } as const;
 

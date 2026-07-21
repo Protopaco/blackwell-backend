@@ -506,6 +506,7 @@
               "Pending",
               "Open",
               "Processed",
+              "Allocated",
               "Closed"
             ]
           },

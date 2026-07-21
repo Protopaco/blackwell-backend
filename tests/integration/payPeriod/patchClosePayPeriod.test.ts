@@ -7,8 +7,32 @@ import createTestClient from '../builders/createTestClient.js';
 import createTestPayPeriod from '../builders/createTestPayPeriod.js';
 
 describe('PATCH /api/v1/payPeriod/:clientId/:payPeriodId/close', () => {
-  it('200 - Closes processed pay period', async () => {
-    const { client, payPeriod } = await createGeneratedPayrollReportPayPeriod();
+  it('200 - Closes allocated pay period', async () => {
+    const { client, completeEmployee, payPeriod } = await createGeneratedPayrollReportPayPeriod();
+    const employeeExpense = {
+      employeeId: completeEmployee.employeeId,
+      employeeName: `${completeEmployee.firstName} ${completeEmployee.lastName}`,
+      totalExpense: 200,
+    };
+    const additionalExpenses = [
+      { expenseName: 'Mileage', amount: 40 },
+      { expenseName: 'Supplies', amount: 60 },
+    ];
+
+    const employeeExpensesRes = await request(app)
+      .put(`/api/v1/payrollReport/${client.clientId}/${payPeriod.payPeriodId}/employeeExpenses`)
+      .send(employeeExpense);
+    expect(employeeExpensesRes.status).toBe(200);
+
+    const additionalExpensesRes = await request(app)
+      .put(`/api/v1/payrollReport/${client.clientId}/${payPeriod.payPeriodId}/additionalExpenses`)
+      .send(additionalExpenses);
+    expect(additionalExpensesRes.status).toBe(200);
+
+    const allocationReportRes = await request(app).post(
+      `/api/v1/payrollReport/${client.clientId}/${payPeriod.payPeriodId}/allocationReport`,
+    );
+    expect(allocationReportRes.status).toBe(200);
 
     const res = await request(app).patch(
       `/api/v1/payPeriod/${client.clientId}/${payPeriod.payPeriodId}/close`,
@@ -34,7 +58,20 @@ describe('PATCH /api/v1/payPeriod/:clientId/:payPeriodId/close', () => {
 
     expect(res.status).toBe(422);
     expect(res.body.message).toContain(
-      `Cannot close pay period ${payPeriod.payPeriodId} with status ${PayPeriodStatus.Pending}. Must be Processed.`,
+      `Cannot close pay period ${payPeriod.payPeriodId} with status ${PayPeriodStatus.Pending}. Must be Allocated.`,
+    );
+  });
+
+  it('422 - Rejects pay period that is Processed but not yet Allocated', async () => {
+    const { client, payPeriod } = await createGeneratedPayrollReportPayPeriod();
+
+    const res = await request(app).patch(
+      `/api/v1/payPeriod/${client.clientId}/${payPeriod.payPeriodId}/close`,
+    );
+
+    expect(res.status).toBe(422);
+    expect(res.body.message).toContain(
+      `Cannot close pay period ${payPeriod.payPeriodId} with status ${PayPeriodStatus.Processed}. Must be Allocated.`,
     );
   });
 

@@ -1,4 +1,5 @@
 import getClientAndPayPeriod from '#services/payPeriod/getClientAndPayPeriod.js';
+import writePayPeriod from '#db/payPeriod/writePayPeriod.js';
 import readPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
 import readCurrentHoursTab from '#db/payrollReport/readCurrentHoursTab.js';
 import readEmployeeExpensesTab from '#db/payrollReport/readEmployeeExpensesTab.js';
@@ -6,6 +7,7 @@ import readAdditionalExpensesTab from '#db/payrollReport/readAdditionalExpensesT
 import writeAllocationReportTab from '#db/payrollReport/writeAllocationReportTab.js';
 import AllocationReportRow from '#models/AllocationReportRow.js';
 import Guid from '#models/Guid.js';
+import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import { logger } from '#utils/logger.js';
 import { UnprocessableError } from '#utils/errors.js';
 import buildAllocationRows from './buildAllocationRows.js';
@@ -38,6 +40,11 @@ const generateAllocationReport = async (clientId: Guid, payPeriodId: Guid): Prom
   const rows = buildAllocationRows(hoursRows, employeeExpenses ?? [], additionalExpenses ?? [], activityMap, employeeMap);
 
   await writeAllocationReportTab(reportFileId, rows);
+
+  if (payPeriod.status !== PayPeriodStatus.Closed) {
+    await writePayPeriod(client.payPeriodRegistryFileId, { ...payPeriod, status: PayPeriodStatus.Allocated });
+    logger.info(`generateAllocationReport: pay period status updated to Allocated`);
+  }
 
   logger.info(`generateAllocationReport: wrote ${rows.length} rows for pay period ${payPeriod.payPeriodName}`);
 

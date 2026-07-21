@@ -14,9 +14,9 @@ const closePayPeriod = async (clientId: string, payPeriodId: string): Promise<vo
     return;
   }
 
-  if (payPeriod.status !== PayPeriodStatus.Processed) {
+  if (payPeriod.status !== PayPeriodStatus.Allocated) {
     throw new UnprocessableError(
-      `Cannot close pay period ${payPeriodId} with status ${payPeriod.status}. Must be Processed.`,
+      `Cannot close pay period ${payPeriodId} with status ${payPeriod.status}. Must be Allocated.`,
     );
   }
 

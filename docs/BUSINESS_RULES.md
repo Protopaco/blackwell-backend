@@ -306,6 +306,14 @@ Rolled up from the Hours tab data — total hours per employee per payroll categ
 
 Flat rate activities are counted by shifts, not summed as hours. In the `Hours` tab, `hours` for a flat rate activity is `1` if the employee worked that day or `0` if not. The `payrollCategory` is `FlatRate` to distinguish them from hourly rows.
 
+### Closing a Pay Period
+
+`PayPeriod.status` progresses `Pending → Open → Processed → Allocated → Closed`. `Processed` is set when the payroll report is generated (`generatePayrollReport.ts`); `Allocated` is set when the allocation report is generated (`generateAllocationReport.ts`) — both guarded to leave a `Closed` pay period's status untouched if either is re-run afterward.
+
+`closePayPeriod.ts` requires `status === Allocated` — an allocation report must exist before a pay period can be closed. This is a real business rule, not just a descriptive label: producing the allocation report (the funding-source cost breakdown a bookkeeper allocates expenses against in QuickBooks) is the actual purpose of running this system for a pay period, so closing without one is disallowed rather than merely discouraged.
+
+Regenerating the payroll report after the allocation report already exists intentionally regresses status from `Allocated` back to `Processed` — the previously generated allocation numbers were computed from the payroll data that just changed, so they're stale, the Allocation Report tab/action is hidden again in the UI, and the allocation report must be regenerated (and its status re-earned) before the pay period can close.
+
 ## Funding Source Allocation
 
 - Allocation percentages are stored per activity, not per pay period
