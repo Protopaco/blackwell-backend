@@ -55,10 +55,9 @@ const makeHoursRow = (
   Hours: hours,
 });
 
-const makeExpense = (employeeId: string, totalExpense: number | null, activeThisPayPeriod = true): EmployeeExpense => ({
+const makeExpense = (employeeId: string, totalExpense: number | null): EmployeeExpense => ({
   employeeId,
   employeeName: 'Jane Smith',
-  activeThisPayPeriod,
   totalExpense,
 });
 
@@ -258,30 +257,6 @@ describe('buildAllocationRows', () => {
   });
 
   describe('filtering active employees', () => {
-    it('excludes employees where activeThisPayPeriod is false', () => {
-      const activeEmployee = makeEmployee();
-      const inactiveEmployee = makeEmployee();
-      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
-      const hoursRows = [
-        makeHoursRow(activeEmployee.employeeId, 'Programs', 8),
-        makeHoursRow(inactiveEmployee.employeeId, 'Programs', 8),
-      ];
-      const expenses = [
-        makeExpense(activeEmployee.employeeId, 1000),
-        makeExpense(inactiveEmployee.employeeId, 1000, false),
-      ];
-      const activityMap = new Map([[activity.activityName, activity]]);
-      const employeeMap = new Map([
-        [activeEmployee.employeeId, activeEmployee],
-        [inactiveEmployee.employeeId, inactiveEmployee],
-      ]);
-
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
-
-      expect(rows).toHaveLength(1);
-      expect(rows[0].wagesAllocation).toBe(1000);
-    });
-
     it('excludes employees where totalExpense is null', () => {
       const employee = makeEmployee();
       const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
@@ -442,19 +417,6 @@ describe('buildAllocationRows', () => {
   describe('edge cases', () => {
     it('returns empty array when there are no active employees with expenses', () => {
       const rows = buildAllocationRows([], [], [], new Map(), new Map());
-      expect(rows).toHaveLength(0);
-    });
-
-    it('returns empty array when all employees are inactive', () => {
-      const employee = makeEmployee();
-      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
-      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
-      const expenses = [makeExpense(employee.employeeId, 1000, false)];
-      const activityMap = new Map([[activity.activityName, activity]]);
-      const employeeMap = new Map([[employee.employeeId, employee]]);
-
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
-
       expect(rows).toHaveLength(0);
     });
 

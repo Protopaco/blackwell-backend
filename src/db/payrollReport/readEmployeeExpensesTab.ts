@@ -5,7 +5,7 @@ import { logger } from '#utils/logger.js';
 import employeeExpensesCache from '#utils/caches/employeeExpensesCache.js';
 import EmployeeExpense from '#models/EmployeeExpense.js';
 
-const [employeeId, employeeName, activeThisPayPeriod, totalExpense] = EMPLOYEE_EXPENSES_HEADERS;
+const [employeeId, employeeName, totalExpense] = EMPLOYEE_EXPENSES_HEADERS;
 
 // Reads all rows from the EmployeeExpenses tab, cached for 5 minutes. Returns null if the tab doesn't
 // exist yet, or an empty array if it exists but has no rows.
@@ -22,7 +22,6 @@ const readEmployeeExpensesTab = async (workbookId: string): Promise<EmployeeExpe
   const expenses = rows.map((row) => ({
     employeeId: row[employeeId] as string,
     employeeName: row[employeeName] as string,
-    activeThisPayPeriod: row[activeThisPayPeriod] === true || row[activeThisPayPeriod] === 'TRUE',
     totalExpense: row[totalExpense] !== '' && row[totalExpense] != null
       ? Number(row[totalExpense])
       : null,

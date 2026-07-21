@@ -32,9 +32,7 @@ const buildAllocationRows = (
   const wagesAllocationByFundingSource = new Map<string, number>();
   let processedWagesTotal = 0;
 
-  const activeExpenses = employeeExpenses.filter(
-    (expense) => expense.activeThisPayPeriod && expense.totalExpense !== null,
-  );
+  const activeExpenses = employeeExpenses.filter((expense) => expense.totalExpense !== null);
 
   for (const expense of activeExpenses) {
     const employee = employeeMap.get(expense.employeeId);

@@ -663,6 +663,9 @@
           "supervisorSigned": {
             "type": "boolean"
           },
+          "includeInPayroll": {
+            "type": "boolean"
+          },
           "status": {
             "type": "string",
             "enum": [
