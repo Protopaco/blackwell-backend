@@ -71,6 +71,9 @@ const buildSummaryRow = (label: string, formula: string): unknown[] =>
 // Builds a signature row with just a label and an empty cell for the signature — cell location is tracked in the manifest.
 const buildSignatureRow = (label: string): unknown[] => [label];
 
+// Builds the include-in-payroll checkbox row with a label and a default-checked value — cell location is tracked in the manifest.
+const buildIncludeInPayrollRow = (label: string): unknown[] => [label, true];
+
 export {
   colLetter,
   buildHeaderRow,
@@ -83,4 +86,5 @@ export {
   buildDailyTotalRow,
   buildSummaryRow,
   buildSignatureRow,
+  buildIncludeInPayrollRow,
 };

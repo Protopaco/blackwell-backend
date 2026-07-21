@@ -8,6 +8,7 @@ import formatColumnWidths from "./formatting/formatColumnWidths.js";
 import formatHeaderRows from "./formatting/formatHeaderRows.js";
 import formatWeekSection from "./formatting/formatWeekSection.js";
 import formatSignatureRows from "./formatting/formatSignatureRows.js";
+import formatIncludeInPayrollRow from "./formatting/formatIncludeInPayrollRow.js";
 import formatSummaryRows from "./formatting/formatSummaryRows.js";
 
 // Applies all visual formatting to a timesheet tab in a single batchUpdate call.
@@ -52,6 +53,7 @@ const applyTimesheetFormatting = async (
       manifest.employeeSignatureCell,
       manifest.supervisorSignatureCell,
     ),
+    ...formatIncludeInPayrollRow(sheetId, manifest.includeInPayrollCell),
     ...formatSummaryRows(sheetId, manifest.summaryRows),
   ];
 

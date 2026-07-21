@@ -38,6 +38,7 @@ interface TimesheetManifest {
   weeks: WeekManifest[];
   employeeSignatureCell: SignatureCell;
   supervisorSignatureCell: SignatureCell;
+  includeInPayrollCell: SignatureCell;
   summaryRows: SummaryRowManifest[];
 }
 
