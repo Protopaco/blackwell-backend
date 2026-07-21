@@ -11,7 +11,6 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses/batc
     const completeEmployeeExpense = {
       employeeId: completeEmployee.employeeId,
       employeeName: `${completeEmployee.firstName} ${completeEmployee.lastName}`,
-      activeThisPayPeriod: true,
       totalExpense: 10,
     };
 
@@ -41,7 +40,6 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses/batc
     expect(getRes.body).toContainEqual({
       employeeId: incompleteEmployee.employeeId,
       employeeName: `${incompleteEmployee.firstName} ${incompleteEmployee.lastName}`,
-      activeThisPayPeriod: true,
       totalExpense: 20,
     });
   });
@@ -62,7 +60,6 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses/batc
     const existingExpense = {
       employeeId: completeEmployee.employeeId,
       employeeName: `${completeEmployee.firstName} ${completeEmployee.lastName}`,
-      activeThisPayPeriod: true,
       totalExpense: 10,
     };
 

@@ -11,7 +11,6 @@ describe('POST /api/v1/payrollReport/:clientId/:payPeriodId/allocationReport', (
     const employeeExpense = {
       employeeId: completeEmployee.employeeId,
       employeeName: `${completeEmployee.firstName} ${completeEmployee.lastName}`,
-      activeThisPayPeriod: true,
       totalExpense: 200,
     };
     const additionalExpenses = [
