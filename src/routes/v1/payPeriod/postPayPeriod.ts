@@ -24,10 +24,9 @@ const router = Router();
  */
 router.post('/:clientId', async (req: Request, res: Response) => {
   const { clientId } = req.params as { clientId: string };
-  const { payPeriod } = req.body;
   logger.info(`POST /payPeriod/${clientId} — request`);
 
-  await createPayPeriodService(clientId, payPeriod);
+  await createPayPeriodService(clientId);
   logger.info(`POST /payPeriod/${clientId} — response 201`);
   return res.status(201).json({ message: 'Pay period created' });
 });

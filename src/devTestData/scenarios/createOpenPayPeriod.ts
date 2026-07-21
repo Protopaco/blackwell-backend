@@ -6,7 +6,7 @@ import PayPeriod from '#models/PayPeriod.js';
 
 const createOpenPayPeriod = async (clientId: string): Promise<PayPeriod> => {
   const nextPayPeriod = await getNextPayPeriod(clientId);
-  await createPayPeriod(clientId, nextPayPeriod);
+  await createPayPeriod(clientId);
 
   const payPeriods = await getPayPeriods(clientId);
   const createdPayPeriod = payPeriods.find(
