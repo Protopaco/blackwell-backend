@@ -1,5 +1,6 @@
 import getOAuthDriveClient from './getOAuthDriveClient.js';
 import oauthDriveLimiter from '#utils/rateLimiters/oauthDriveLimiter.js';
+import scheduleGoogleApiCall from '#utils/rateLimiters/scheduleGoogleApiCall.js';
 import { PermissionDeniedError } from '#utils/errors.js';
 
 // Returns true if the given file ID resolves to a real, non-trashed Google Sheets workbook accessible
@@ -9,7 +10,7 @@ const workbookExists = async (fileId: string): Promise<boolean> => {
   const drive = getOAuthDriveClient();
 
   try {
-    const response = await oauthDriveLimiter.schedule(() => drive.files.get({
+    const response = await scheduleGoogleApiCall(oauthDriveLimiter, () => drive.files.get({
       fileId,
       fields: 'id, trashed, mimeType',
     }));

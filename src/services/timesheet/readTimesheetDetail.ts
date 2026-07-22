@@ -1,75 +1,52 @@
-import readTabValues from '#db/adapter/readTabValues.js';
-import readManifest from '#db/manifest/readManifest.js';
+import readTimesheetDetailFromSheets from './readTimesheetDetailFromSheets.js';
+import getFileModifiedTime from '#db/adapter/getFileModifiedTime.js';
+import timesheetDetailCache from '#utils/caches/timesheetDetailCache.js';
+import TimesheetDetail from '#models/TimesheetDetail.js';
 import { logger } from '#utils/logger.js';
 
-interface TimesheetDetail {
-  totalHours: number | null;
-  flatRateQuantity: number | null;
-  employeeSigned: boolean;
-  supervisorSigned: boolean;
-  includeInPayroll: boolean;
-}
+// Reads in flight for a given cache key, so concurrent callers for the same tab share one Sheets read
+// instead of each firing their own.
+const pendingReadsByCacheKey = new Map<string, Promise<TimesheetDetail>>();
 
-// A real Sheets checkbox can come back as the boolean `false` or the string "FALSE" — unlike the
-// signature cells (any non-empty string counts as signed), includeInPayroll defaults to true and is
-// only false when explicitly unchecked, so treat everything else (including a blank/undefined cell) as true.
-const readCheckboxValue = (raw: unknown): boolean => raw !== false && raw !== 'FALSE' && raw !== 'false';
+// A workbook has one tab per pay period, so the cache key must include both.
+const cacheKeyFor = (timesheetFileId: string, tabName: string): string => `${timesheetFileId}:${tabName}`;
 
-// Reads a single timesheet tab and returns total hours and whether each signature cell is filled.
-// Returns null totalHours, false for both signed flags, and includeInPayroll true (default) if the
-// timesheet has not been generated.
-// Called once per employee by getTimesheetStatuses — reads tab values once and extracts all values from that single call.
+// Returns timesheet detail for one employee's pay-period tab. Checks the workbook's Drive modifiedTime
+// first — if it matches what was stored on the last read, returns the cached detail instead of doing a
+// full Sheets read. Concurrent calls for the same tab are coalesced onto a single in-flight read.
 const readTimesheetDetail = async (
   timesheetFileId: string,
   tabName: string,
 ): Promise<TimesheetDetail> => {
-  const notGenerated: TimesheetDetail = {
-    totalHours: null,
-    flatRateQuantity: null,
-    employeeSigned: false,
-    supervisorSigned: false,
-    includeInPayroll: true,
-  };
+  if (!timesheetFileId) return readTimesheetDetailFromSheets(timesheetFileId, tabName);
 
-  if (!timesheetFileId) return notGenerated;
+  const cacheKey = cacheKeyFor(timesheetFileId, tabName);
 
-  const manifest = await readManifest(timesheetFileId, tabName);
-  if (!manifest) return notGenerated;
+  const pendingRead = pendingReadsByCacheKey.get(cacheKey);
+  if (pendingRead) return pendingRead;
 
-  const { employeeSignatureCell, supervisorSignatureCell, includeInPayrollCell, summaryRows } = manifest;
-  if (!employeeSignatureCell || !supervisorSignatureCell) return notGenerated;
+  const read = (async (): Promise<TimesheetDetail> => {
+    try {
+      const cached = timesheetDetailCache.get(cacheKey);
+      const modifiedTime = await getFileModifiedTime(timesheetFileId);
 
-  logger.debug(`readTimesheetDetail reading tab values: ${tabName}`);
-  const rows = await readTabValues(timesheetFileId, tabName);
+      if (cached && modifiedTime && cached.modifiedTime === modifiedTime) {
+        logger.debug(`readTimesheetDetail cache hit: ${cacheKey}`);
+        return cached.detail;
+      }
 
-  const employeeSigned = Boolean(rows[employeeSignatureCell.row - 1]?.[employeeSignatureCell.column - 1]);
-  const supervisorSigned = Boolean(rows[supervisorSignatureCell.row - 1]?.[supervisorSignatureCell.column - 1]);
+      const detail = await readTimesheetDetailFromSheets(timesheetFileId, tabName);
+      if (modifiedTime) {
+        timesheetDetailCache.set(cacheKey, { modifiedTime, detail });
+      }
+      return detail;
+    } finally {
+      pendingReadsByCacheKey.delete(cacheKey);
+    }
+  })();
 
-  // Older manifests predate includeInPayrollCell (no migration performed) — default to true.
-  const includeInPayroll = includeInPayrollCell
-    ? readCheckboxValue(rows[includeInPayrollCell.row - 1]?.[includeInPayrollCell.column - 1])
-    : true;
-
-  const totalHoursManifestRow = summaryRows?.find((summaryRow) => summaryRow.label === 'Total Hours Worked');
-  const totalHoursRawValue = totalHoursManifestRow
-    ? rows[totalHoursManifestRow.row - 1]?.[1]
-    : undefined;
-  const totalHours = totalHoursRawValue !== undefined && totalHoursRawValue !== ''
-    ? Number(totalHoursRawValue)
-    : 0;
-
-  const flatRateQuantityManifestRow = summaryRows?.find((summaryRow) => summaryRow.label === 'Flat Rate Shifts');
-  const flatRateQuantityRawValue = flatRateQuantityManifestRow
-    ? rows[flatRateQuantityManifestRow.row - 1]?.[1]
-    : undefined;
-  const flatRateQuantity = flatRateQuantityManifestRow
-    ? flatRateQuantityRawValue !== undefined && flatRateQuantityRawValue !== ''
-      ? Number(flatRateQuantityRawValue)
-      : 0
-    : null;
-
-  return { totalHours, flatRateQuantity, employeeSigned, supervisorSigned, includeInPayroll };
+  pendingReadsByCacheKey.set(cacheKey, read);
+  return read;
 };
 
-export type { TimesheetDetail };
 export default readTimesheetDetail;

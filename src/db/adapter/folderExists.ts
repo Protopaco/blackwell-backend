@@ -1,5 +1,6 @@
 import getOAuthDriveClient from './getOAuthDriveClient.js';
 import oauthDriveLimiter from '#utils/rateLimiters/oauthDriveLimiter.js';
+import scheduleGoogleApiCall from '#utils/rateLimiters/scheduleGoogleApiCall.js';
 import { PermissionDeniedError } from '#utils/errors.js';
 
 // Returns true if the given folder ID resolves to a real, non-trashed folder accessible via the OAuth
@@ -10,7 +11,7 @@ const folderExists = async (folderId: string): Promise<boolean> => {
   const drive = getOAuthDriveClient();
 
   try {
-    const response = await oauthDriveLimiter.schedule(() => drive.files.get({
+    const response = await scheduleGoogleApiCall(oauthDriveLimiter, () => drive.files.get({
       fileId: folderId,
       fields: 'id, trashed, mimeType',
     }));

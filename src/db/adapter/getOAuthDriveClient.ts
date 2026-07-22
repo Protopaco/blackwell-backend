@@ -14,7 +14,9 @@ const getOAuthDriveClient = () => {
   const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
   oauth2Client.setCredentials({ refresh_token: refreshToken });
 
-  return google.drive({ version: 'v3', auth: oauth2Client });
+  // retry: false — retries on 429 are handled by scheduleGoogleApiCall instead, so each retry attempt
+  // goes through the rate limiter and is accounted for, rather than firing silently inside gaxios.
+  return google.drive({ version: 'v3', auth: oauth2Client, retry: false });
 };
 
 export default getOAuthDriveClient;

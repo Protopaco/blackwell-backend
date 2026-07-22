@@ -18,3 +18,10 @@ export class UnprocessableError extends Error {
     this.name = 'UnprocessableError';
   }
 }
+
+export class TabNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TabNotFoundError';
+  }
+}
