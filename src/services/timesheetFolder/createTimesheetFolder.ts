@@ -1,5 +1,7 @@
 import appendTimesheetFolder from '#db/timesheetFolder/appendTimesheetFolder.js';
+import readPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
 import getClientById from '#services/client/getClientById.js';
+import validateTimesheetFolderNameIsUnique from '#services/timesheetFolder/validateTimesheetFolderNameIsUnique.js';
 import parseDriveLink from '#utils/parseDriveLink.js';
 import folderExists from '#db/adapter/folderExists.js';
 import payrollConfigCache from '#utils/caches/payrollConfigCache.js';
@@ -20,13 +22,17 @@ const createTimesheetFolder = async (
   const client = await getClientById(clientId);
   if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
 
+  const timesheetFolderName = request.timesheetFolderName.trim();
+  const payrollConfig = await readPayrollConfig(client.payrollConfigFileId);
+  validateTimesheetFolderNameIsUnique(payrollConfig.timesheetFolders, timesheetFolderName);
+
   const driveFolderId = parseDriveLink(request.driveFolderLink);
   const exists = await folderExists(driveFolderId);
   if (!exists) throw new NotFoundError(`Folder not found or inaccessible: ${request.driveFolderLink}`);
 
   const newTimesheetFolder: TimesheetFolder = {
     timesheetFolderId: crypto.randomUUID(),
-    timesheetFolderName: request.timesheetFolderName,
+    timesheetFolderName,
     driveFolderId,
     status: TimesheetFolderStatus.Active,
   };

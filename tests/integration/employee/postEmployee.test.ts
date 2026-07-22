@@ -62,7 +62,9 @@ describe('POST /api/v1/employee/:clientId', () => {
       `Existing Timesheet ${uniqueCode}`,
       client.employeePayrollFolderId,
     );
-    const employeeRequest = buildEmployeeRequest({ timesheetFileId });
+    const employeeRequest = buildEmployeeRequest({
+      timesheetFileLink: `https://docs.google.com/spreadsheets/d/${timesheetFileId}/edit`,
+    });
 
     const res = await request(app).post(`/api/v1/employee/${client.clientId}`).send(employeeRequest);
 
@@ -78,19 +80,21 @@ describe('POST /api/v1/employee/:clientId', () => {
     });
   });
 
-  it('422 - Missing timesheetFolderId and timesheetFileId', async () => {
+  it('422 - Missing timesheetFolderId and timesheetFileLink', async () => {
     const client = await createTestClient();
     const employeeRequest = buildEmployeeRequest();
 
     const res = await request(app).post(`/api/v1/employee/${client.clientId}`).send(employeeRequest);
 
     expect(res.status).toBe(422);
-    expect(res.body.message).toContain('Either timesheetFileId or timesheetFolderId is required');
+    expect(res.body.message).toContain('Either timesheetFileLink or timesheetFolderId is required');
   });
 
   it('404 - Client not found', async () => {
     const missingClientId = crypto.randomUUID();
-    const employeeRequest = buildEmployeeRequest({ timesheetFileId: 'existing-timesheet-file-id' });
+    const employeeRequest = buildEmployeeRequest({
+      timesheetFileLink: 'https://docs.google.com/spreadsheets/d/existing-timesheet-file-id/edit',
+    });
 
     const res = await request(app).post(`/api/v1/employee/${missingClientId}`).send(employeeRequest);
 

@@ -50,7 +50,6 @@ const updateEmployeeExpensesBatch = async (
       mergedExpenses.push({
         employeeId,
         employeeName: `${employee.firstName} ${employee.lastName}`,
-        activeThisPayPeriod: true,
         totalExpense: totalExpenseByEmployeeId.get(employeeId) ?? null,
       });
     }

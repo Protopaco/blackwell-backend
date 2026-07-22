@@ -1,22 +1,25 @@
 import writeTimesheetFolders from '#db/timesheetFolder/writeTimesheetFolders.js';
 import readPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
 import getClientById from '#services/client/getClientById.js';
-import parseDriveLink from '#utils/parseDriveLink.js';
-import folderExists from '#db/adapter/folderExists.js';
+import validateTimesheetFolderNameIsUnique from '#services/timesheetFolder/validateTimesheetFolderNameIsUnique.js';
 import payrollConfigCache from '#utils/caches/payrollConfigCache.js';
 import TimesheetFolder from '#models/TimesheetFolder.js';
 import TimesheetFolderUpdateRequest from '#models/TimesheetFolderUpdateRequest.js';
 import { logger } from '#utils/logger.js';
-import { NotFoundError } from '#utils/errors.js';
+import { NotFoundError, UnprocessableError } from '#utils/errors.js';
 
-// Updates only the fields provided — timesheetFolderName, driveFolderLink (re-parsed and re-verified
-// if given), and/or status. Everything else is kept as-is.
+// Updates only the fields provided — timesheetFolderName and/or status. The Drive folder is immutable
+// after creation so historical employee placement remains auditable.
 const updateTimesheetFolder = async (
   clientId: string,
   timesheetFolderId: string,
   request: TimesheetFolderUpdateRequest,
 ): Promise<void> => {
   logger.info(`updateTimesheetFolder clientId=${clientId} timesheetFolderId=${timesheetFolderId}`);
+
+  if (Object.prototype.hasOwnProperty.call(request, 'driveFolderLink')) {
+    throw new UnprocessableError('driveFolderLink cannot be changed after TimesheetFolder creation');
+  }
 
   const client = await getClientById(clientId);
   if (!client) throw new NotFoundError(`Client not found: ${clientId}`);
@@ -27,17 +30,18 @@ const updateTimesheetFolder = async (
   );
   if (!existing) throw new NotFoundError(`TimesheetFolder not found: ${timesheetFolderId}`);
 
-  let driveFolderId = existing.driveFolderId;
-  if (request.driveFolderLink) {
-    driveFolderId = parseDriveLink(request.driveFolderLink);
-    const exists = await folderExists(driveFolderId);
-    if (!exists) throw new NotFoundError(`Folder not found or inaccessible: ${request.driveFolderLink}`);
+  const timesheetFolderName = request.timesheetFolderName?.trim() ?? existing.timesheetFolderName;
+  if (request.timesheetFolderName !== undefined) {
+    validateTimesheetFolderNameIsUnique(
+      payrollConfig.timesheetFolders,
+      timesheetFolderName,
+      timesheetFolderId,
+    );
   }
 
   const updatedTimesheetFolder: TimesheetFolder = {
     ...existing,
-    timesheetFolderName: request.timesheetFolderName ?? existing.timesheetFolderName,
-    driveFolderId,
+    timesheetFolderName,
     status: request.status ?? existing.status,
   };
 

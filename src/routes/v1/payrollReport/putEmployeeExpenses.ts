@@ -34,8 +34,6 @@ const router = Router();
  *         description: Employee expense updated
  *       404:
  *         description: Client, pay period, or payroll report not found
- *       422:
- *         description: Employee has hours this pay period and cannot be marked inactive
  */
 router.put('/:clientId/:payPeriodId/employeeExpenses', async (req: Request, res: Response) => {
   const { clientId, payPeriodId } = req.params as { clientId: string; payPeriodId: string };

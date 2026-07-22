@@ -5,6 +5,7 @@ interface EmployeePayrollSummary {
   employeeName: string;
   totalHours: number;
   totalFlatRate: number;
+  totalExpense: number | null;
   hourly: HourlyEntry[];
   flatRate: FlatRateEntry[];
 }

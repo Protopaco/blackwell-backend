@@ -1,4 +1,5 @@
 import getPayPeriodById from '#services/payPeriod/getPayPeriodById.js';
+import readEmployeeExpensesTab from '#db/payrollReport/readEmployeeExpensesTab.js';
 import readPayrollReportSummary from '#db/payrollReport/readPayrollReportSummary.js';
 import Guid from '#models/Guid.js';
 import PayrollReportResponse from '#models/PayrollReportResponse.js';
@@ -16,7 +17,9 @@ const getPayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise<Payr
   const rawRows = await readPayrollReportSummary(payPeriod.payrollReportFileId);
   if (!rawRows || rawRows.length === 0) return null;
 
-  return buildPayrollReportResponse(rawRows);
+  const employeeExpenses = await readEmployeeExpensesTab(payPeriod.payrollReportFileId);
+
+  return buildPayrollReportResponse(rawRows, employeeExpenses);
 };
 
 export default getPayrollReport;

@@ -125,6 +125,12 @@ The `src/utils/dateUtils.ts` module provides:
 - Timesheet files are never deleted through the tool
 - When a new employee is added, their timesheet file is created automatically in the client's `TimesheetFolderId` via OAuth. The file ID is written back to the `TimesheetFileId` column in the Employees config tab automatically.
 
+## TimesheetFolders
+
+- TimesheetFolder names are unique per client, using trimmed, case-insensitive comparison.
+- The Drive folder link/id is set at creation only. Updates can change `TimesheetFolderName` and `Status`, but cannot change `DriveFolderId`.
+- TimesheetFolders are never deleted through the tool. Mark them `Inactive` to preserve audit context when a location should no longer be used for new employees.
+
 ## Holidays
 
 - Holidays are shared across all employees for a client
@@ -232,9 +238,20 @@ On each run:
 1. Check if the report file exists — create it via OAuth if not
 2. Scan all active employee timesheets — only process employees whose timesheet is `Complete` (both employee and supervisor signatures present)
 3. If no timesheets are Complete, throw an error and do nothing
-4. If `current_hours` exists, rename it to `hrs_MMDD_HHmm` (e.g. `hrs_0626_1430`)
-5. If `current_payroll_summary` exists, rename it to `adp_MMDD_HHmm` using the same timestamp
-6. Write fresh `current_hours` and `current_payroll_summary` tabs with all currently-Complete employees
+4. For each Complete timesheet, apply the `includeInPayroll` rule (see below) before including it
+5. If `current_hours` exists, rename it to `hrs_MMDD_HHmm` (e.g. `hrs_0626_1430`)
+6. If `current_payroll_summary` exists, rename it to `adp_MMDD_HHmm` using the same timestamp
+7. Write fresh `current_hours` and `current_payroll_summary` tabs with all currently-included Complete employees
+
+### Include/Ignore for Payroll (`includeInPayroll`)
+
+- Each generated timesheet has a real Google Sheets checkbox (label: "Supervisor approval: Include in payroll"), placed next to the supervisor signature. Defaults checked (`TRUE`) when the timesheet is generated. Edited directly in the sheet by a supervisor — there is no API to set it; the app only reads it.
+- The checkbox is only honored once the timesheet is otherwise `Complete` (both signatures present) — an unsigned timesheet is excluded by the existing signature rule regardless of the checkbox value.
+- Once Complete:
+  - `includeInPayroll = TRUE` — employee is included, same as before this rule existed.
+  - `includeInPayroll = FALSE` and the employee has zero total hours and zero flat-rate quantity — employee is silently skipped (not an error; this is the normal "supervisor unchecked it, nothing to lose" case).
+  - `includeInPayroll = FALSE` but the employee has any hours or flat-rate quantity — payroll report generation fails outright with a validation error naming the employee, rather than silently dropping recorded hours. The supervisor/admin must resolve this on the timesheet (either re-check the box or zero out the hours) before generation can proceed.
+- `EmployeeExpenses` no longer carries an Include/Ignore flag — it's expenses-only (`employeeId`, `employeeName`, `totalExpense`). The allocation report (`buildAllocationRows.ts`) simply includes any expense record with a non-null `totalExpense`; employees excluded from payroll never appear in the hours data it computes from, so they contribute nothing regardless.
 
 > The archive tabs use the timestamp of when they were archived, not when they were originally generated. MMDD_HHmm format (e.g. `hrs_0626_1430`) is used to keep tab names short.
 
@@ -288,6 +305,14 @@ Rolled up from the Hours tab data — total hours per employee per payroll categ
 ### Flat Rate Activities in Reports
 
 Flat rate activities are counted by shifts, not summed as hours. In the `Hours` tab, `hours` for a flat rate activity is `1` if the employee worked that day or `0` if not. The `payrollCategory` is `FlatRate` to distinguish them from hourly rows.
+
+### Closing a Pay Period
+
+`PayPeriod.status` progresses `Pending → Open → Processed → Allocated → Closed`. `Processed` is set when the payroll report is generated (`generatePayrollReport.ts`); `Allocated` is set when the allocation report is generated (`generateAllocationReport.ts`) — both guarded to leave a `Closed` pay period's status untouched if either is re-run afterward.
+
+`closePayPeriod.ts` requires `status === Allocated` — an allocation report must exist before a pay period can be closed. This is a real business rule, not just a descriptive label: producing the allocation report (the funding-source cost breakdown a bookkeeper allocates expenses against in QuickBooks) is the actual purpose of running this system for a pay period, so closing without one is disallowed rather than merely discouraged.
+
+Regenerating the payroll report after the allocation report already exists intentionally regresses status from `Allocated` back to `Processed` — the previously generated allocation numbers were computed from the payroll data that just changed, so they're stale, the Allocation Report tab/action is hidden again in the UI, and the allocation report must be regenerated (and its status re-earned) before the pay period can close.
 
 ## Funding Source Allocation
 

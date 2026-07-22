@@ -22,6 +22,10 @@ const clientSummary = {
         type: 'array',
         items: { $ref: '#/components/schemas/Holiday' },
       },
+      timesheetFolders: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/TimesheetFolder' },
+      },
       settings: { $ref: '#/components/schemas/Settings' },
       payPeriods: {
         type: 'array',

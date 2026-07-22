@@ -36,12 +36,14 @@ const getTimesheetStatuses = async (
       });
       return {
         employeeId: employee.employeeId,
-        employeeName: `${employee.firstName} ${employee.lastName}`,
+        firstName: employee.firstName,
+        lastName: employee.lastName,
         timesheetFileId: employee.timesheetFileId,
         totalHours: detail.totalHours,
         flatRateQuantity: detail.flatRateQuantity,
         employeeSigned: detail.employeeSigned,
         supervisorSigned: detail.supervisorSigned,
+        includeInPayroll: detail.includeInPayroll,
         status,
       };
     }),

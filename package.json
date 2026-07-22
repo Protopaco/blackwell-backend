@@ -12,7 +12,9 @@
     "test": "vitest --project unit",
     "test:unit": "vitest --project unit",
     "test:integration": "vitest --project integration",
-    "generate": "npx tsx src/utils/swagger/exportSwagger.ts"
+    "dev:test-data:reset": "tsx --conditions=development src/devTestData/scripts/reset.ts",
+    "generate": "npx tsx src/utils/swagger/exportSwagger.ts",
+    "oauth:refresh": "tsx src/utils/oauth/getRefreshToken.ts"
   },
   "imports": {
     "#app.js": {
@@ -29,6 +31,11 @@
       "types": "./src/db/*.ts",
       "development": "./src/db/*.ts",
       "default": "./dist/db/*.js"
+    },
+    "#devTestData/*.js": {
+      "types": "./src/devTestData/*.ts",
+      "development": "./src/devTestData/*.ts",
+      "default": "./dist/devTestData/*.js"
     },
     "#middleware/*.js": {
       "types": "./src/middleware/*.ts",

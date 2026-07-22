@@ -85,6 +85,43 @@ describe('buildPayrollReportResponse', () => {
     });
   });
 
+  describe('totalExpense', () => {
+    it('joins totalExpense from employeeExpenses by employeeId', () => {
+      const response = buildPayrollReportResponse(
+        [{ EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' }],
+        [{ employeeId: 'e1', employeeName: 'Jane Smith', totalExpense: 42.5 }],
+      );
+
+      expect(response.e1.totalExpense).toBe(42.5);
+    });
+
+    it('defaults totalExpense to null when no matching expense entry exists', () => {
+      const response = buildPayrollReportResponse(
+        [{ EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' }],
+        [],
+      );
+
+      expect(response.e1.totalExpense).toBeNull();
+    });
+
+    it('defaults totalExpense to null when employeeExpenses is null', () => {
+      const response = buildPayrollReportResponse(
+        [{ EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' }],
+        null,
+      );
+
+      expect(response.e1.totalExpense).toBeNull();
+    });
+
+    it('defaults totalExpense to null when employeeExpenses is omitted', () => {
+      const response = buildPayrollReportResponse([
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+      ]);
+
+      expect(response.e1.totalExpense).toBeNull();
+    });
+  });
+
   describe('isHoliday coercion', () => {
     it('treats the string "TRUE" as true', () => {
       const response = buildPayrollReportResponse([

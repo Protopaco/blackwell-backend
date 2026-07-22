@@ -1,7 +1,7 @@
 const employeeCreateRequest = {
   EmployeeCreateRequest: {
     type: 'object',
-    description: 'Exactly one of timesheetFileId or timesheetFolderId must be provided.',
+    description: 'Exactly one of timesheetFileLink or timesheetFolderId must be provided.',
     required: ['firstName', 'lastName', 'position', 'hourlyPayRate1', 'hourlyPayRate2', 'holidayPayRate', 'email', 'status'],
     properties: {
       firstName: { type: 'string', example: 'Jane' },
@@ -12,7 +12,10 @@ const employeeCreateRequest = {
       holidayPayRate: { type: 'number', example: 38.94 },
       email: { type: 'string', format: 'email', example: 'jane.smith@example.org' },
       status: { type: 'string', enum: ['Active', 'Inactive'] },
-      timesheetFileId: { type: 'string', example: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms' },
+      timesheetFileLink: {
+        type: 'string',
+        example: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/edit',
+      },
       timesheetFolderId: { type: 'string', format: 'uuid' },
     },
   },

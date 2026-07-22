@@ -36,6 +36,7 @@ src/
     client/, employee/, activity/, fundingSource/, holiday/, supervisor/,
     payPeriod/, payrollConfig/, payrollReport/, settings/, manifest/
                              — domain-specific read*/write*/append*/map* functions
+  devTestData/              — local/QA-only operator cleanup for scoped test data; not production business logic
   models/                   — one interface (or controlled-vocab const) per file
   services/                 — business logic, organized by domain folder
   routes/v1/<resource>/     — one file per endpoint, wired together via each resource's index.ts, then into app.ts
@@ -74,6 +75,28 @@ Imports: everything in `src/` uses `#`-prefixed subpath imports (`#services/...`
 This 5-verb split (`map`/`build`/`sort`/`get`/`create`+`update`) was deliberately revisited on 2026-07-08 and confirmed to hold up — don't introduce a 6th verb (`to*`/`from*`/`resolve*` were all considered and rejected) without a similarly deliberate reason; the existing split already has a crisp, mechanical rule for each category.
 
 **`Client + PayPeriod` resolution**: every payroll-report/pay-period service needs `clientId → client → payPeriodRegistryFileId → payPeriod`, because pay periods live in a per-client Google Sheets file — there's no way to resolve a bare `payPeriodId` without first knowing which client's registry to look in (no real fix short of a DB migration; a reverse-index cache was considered and rejected — it has a cold-start problem, since the first lookup for any given ID still needs `clientId`). This is centralized in `services/payPeriod/getClientAndPayPeriod.ts` (returns `{ client, payPeriod }`, for the few callers that need client fields afterward — `generateAllocationReport.ts`, `generatePayrollReport.ts`, `generateTimesheets.ts`) with `services/payPeriod/getPayPeriodById.ts` as a one-line wrapper around it (for callers that only need the pay period). Don't re-implement this chain inline — call one of these two.
+
+---
+
+## Dev test-data fixture commands
+
+Dev/QA test-data management is backend-owned command tooling, not HTTP API surface. No external app needs to trigger it, and the backend already owns Google Drive/Sheets auth plus the Clients registry shape.
+
+Planned commands:
+
+- `npm run dev:test-data:purge`
+- `npm run dev:test-data:build-templates`
+- `npm run dev:test-data:reset`
+
+Guardrails:
+
+- Commands only run when `NODE_ENV` is `development` or `qa`.
+- No `/api/v1/dev` route, no Swagger/OpenAPI entry, no `DEV_TOOL_KEY`, and no application startup hook.
+- Template data lives under `TEST_DATA_TEMPLATE_FOLDER_ID`.
+- Disposable live UI test data lives under `TEST_DATA_ROOT_FOLDER_ID` in a known `UI_TEST_DATA` folder.
+- Commands only remove/write Clients rows whose `clientCode` starts with `UI_TEST_`.
+
+Current purge scope lives in `devTestData/purgeDevTestData.ts`: trash the `UI_TEST_DATA` Drive folder under `TEST_DATA_ROOT_FOLDER_ID`, remove Clients rows whose `clientCode` starts with `UI_TEST_`, and invalidate `clientsCache` for `CLIENT_CONFIG_FILE_ID`. The purge target is parameterized (`folderName`, `clientCodePrefix`) so integration-test cleanup can later use the same mechanism with a separate namespace.
 
 ---
 
@@ -129,25 +152,25 @@ Vitest 4, using `test.projects` in `vitest.config.ts`:
 - `Activities`: `ActivityId`, `ActivityName`, `TrackSeparately` (bool), `PayrollCategory` (`Regular`/`ETO`/`PTO`/`STO`), `FundingSource1Name`/`Percentage` through `FundingSource3Name`/`Percentage` (hardcoded max 3, known limitation), `PayRate` (`HourlyPayRate1`/`HourlyPayRate2`/`FlatPayRate1`/`FlatPayRate2`)
 - `Settings`: `TimesheetTemplate` (maps to `Settings.timeInputMethod` in code — deliberate rename, common confusion point), `PayPeriodInterval` (`Weekly`/`Bi-Weekly`/`Monthly`), `PayPeriodStartDate`
 - `Holidays`: `HolidayId`, `HolidayName`, `HolidayDate`
-- `TimesheetFolders`: `TimesheetFolderId` (app-generated UUID, not the Drive folder ID itself — kept separate for consistency with every other entity's ID convention, even though the Drive folder ID is already unique), `TimesheetFolderName`, `DriveFolderId`, `Status` (`Active`/`Inactive`, no delete — same reasoning as `Client`: unlike `Supervisors`/`FundingSources`/`Activities`/`Holidays`, which are effectively snapshotted into each pay period's payroll report at generation time, `Employee`/`TimesheetFolder` persist and get referenced indefinitely with no compensating snapshot, so hard-deleting either would destroy an audit trail with no real benefit). Replaces the earlier single `Client.timesheetsFolderId` design (2026-07-13) — real clients can have several timesheet locations, so this is a proper one-to-many PayrollConfig entity instead of a single client-level field; `createEmployee.ts` requires a `timesheetFolderId` (validated against this list, must be `Active`) whenever `timesheetFileId` isn't supplied directly.
+- `TimesheetFolders`: `TimesheetFolderId` (app-generated UUID, not the Drive folder ID itself — kept separate for consistency with every other entity's ID convention, even though the Drive folder ID is already unique), `TimesheetFolderName`, `DriveFolderId`, `Status` (`Active`/`Inactive`, no delete — same reasoning as `Client`: unlike `Supervisors`/`FundingSources`/`Activities`/`Holidays`, which are effectively snapshotted into each pay period's payroll report at generation time, `Employee`/`TimesheetFolder` persist and get referenced indefinitely with no compensating snapshot, so hard-deleting either would destroy an audit trail with no real benefit). Folder names are unique per client after trimming whitespace and comparing case-insensitively. `DriveFolderId` is set only at creation from a parsed and verified Drive folder link, then immutable; users should create a new TimesheetFolder and mark the old one `Inactive` when a client changes locations. Replaces the earlier single `Client.timesheetsFolderId` design (2026-07-13) — real clients can have several timesheet locations, so this is a proper one-to-many PayrollConfig entity instead of a single client-level field; `createEmployee.ts` requires exactly one of `timesheetFileLink` (parsed/verified as an accessible Google Sheets workbook, then stored as `Employee.timesheetFileId`) or `timesheetFolderId` (validated against this list, must be `Active`, then used to provision a new workbook).
 
 **Pay-Period-Registry** (one per client, file ID = `Client.payPeriodRegistryFileId`) — one tab per calendar year (e.g. `"2026"`)
 
-- Columns: `PayPeriodId`, `PayPeriodName` (e.g. `"06/01 - 06/14"`), `Status` (`Pending`→`Open`→`Processed`→`Closed`, forward-only, no enforcement), `StartDate`, `EndDate`, `CreatedDate`, `PayrollReportFileId` (empty string until first report generation)
+- Columns: `PayPeriodId`, `PayPeriodName` (e.g. `"06/01 - 06/14"`), `Status` (`Pending`→`Open`→`Processed`→`Allocated`→`Closed`, forward-only), `StartDate`, `EndDate`, `CreatedDate`, `PayrollReportFileId` (empty string until first report generation). `Processed` is set by `generatePayrollReport.ts`, `Allocated` by `generateAllocationReport.ts` (both guarded to skip the write once `Closed`, and both regenerable — re-running `generatePayrollReport.ts` after `Allocated` intentionally regresses status back to `Processed`, since the existing allocation numbers are now stale against the freshly regenerated payroll data). `closePayPeriod.ts` requires `status === Allocated` — an allocation report must exist before a pay period can close; this is the one place status is actually enforced, not just descriptive.
 
 **Employee Timesheet** (one per employee, file ID = `Employee.timesheetFileId`, created on first timesheet generation)
 
 - One tab per pay period, named by `PayPeriodName`. Ordered newest-first via `sortTimesheetTabs.ts` (sorts by the real `PayPeriod.startDate`, not by parsing the tab name).
-- One `_manifest` tab (`MANIFEST_TAB` constant), pinned to the far right — internal bookkeeping (JSON blob per pay period describing exact row/column layout), never shown to users. Structure: `TimesheetManifest` model.
+- One `_manifest` tab (`MANIFEST_TAB` constant), pinned to the far right — internal bookkeeping (JSON blob per pay period describing exact row/column layout), never shown to users. Structure: `TimesheetManifest` model, including `includeInPayrollCell` — the location of the generated "Supervisor approval: Include in payroll" checkbox (real Sheets checkbox, defaults `TRUE`, edited directly in the sheet by the supervisor, not via any API).
 
 **Payroll Report workbook** (one per pay period, once generated — file ID = `PayPeriod.payrollReportFileId`)
 
 - Active tabs (left, in this order, filtered to whichever exist): `current_hours`, `current_payroll_summary`, `EmployeeExpenses`, `AdditionalExpenses`, `AllocationReport`
 - Archive tabs (right): `hrs_MMDD_HHmm` / `payroll_MMDD_HHmm` pairs (same timestamp per run), sorted newest-first, pairs kept adjacent. Ordering enforced by `sortPayrollReportTabs.ts` after any write, via the shared `reorderTabs.ts`/`listTabNames.ts` adapters.
-- `EmployeeExpenses` columns: `employeeId`, `employeeName`, `activeThisPayPeriod`, `totalExpense` (nullable — not yet entered vs. entered as zero)
+- `EmployeeExpenses` columns: `employeeId`, `employeeName`, `totalExpense` (nullable — not yet entered vs. entered as zero). Expenses-only — Include/Ignore for payroll is owned by the timesheet (`includeInPayrollCell`), not this tab.
 - `AdditionalExpenses` columns: `expenseName`, `amount`
 - `AllocationReport` columns: `fundingSourceName`, `wagesAllocation`, `additionalExpenses`, `total`
-- `current_hours` / `current_payroll_summary`: written by `generatePayrollReport.ts` from signed timesheets only (both employee + supervisor signatures present)
+- `current_hours` / `current_payroll_summary`: written by `generatePayrollReport.ts` from signed timesheets (both employee + supervisor signatures present), further gated by each timesheet's `includeInPayroll` checkbox once the supervisor has signed — see `BUSINESS_RULES.md` for the exact rule.
 
 **Read functions for the report sub-tabs return `T[] | null`** (as of 2026-07-08): `null` = tab doesn't exist yet (that step of the process hasn't happened), `[]` = tab exists but has no rows. The public `GET` services (`getEmployeeExpenses`, `getAdditionalExpenses`, `getAllocationReport`) currently coalesce `null → []` at their boundary to keep the external API returning a plain array — but the distinction is preserved at the `db/` layer for any future caller that wants it (e.g. `getPayrollReport.ts` already propagates `null` directly, since its contract was already `T | null`).
 
@@ -165,7 +188,7 @@ Don't flag these as gaps — they're deliberate, not missed:
 
 ## Endpoint reference
 
-Don't maintain a hand-written route list here — it'll drift the same way `BlackwellTime.md`'s did. `docs/openapi.json` is the generated, always-accurate source of truth (regenerated via `npm run generate` from the `@swagger` JSDoc blocks above each route handler — run this after adding or changing a schema so it stays in sync). Current resources: `client` (list, `:clientId/employees`, `:clientId/summary`, create, update), `payPeriod` (list, `next`, `:payPeriodId`, create, update, close), `timesheet` (generate, status), `timesheetFolder` (list, create, update), `payrollReport` (get report, generate, employeeExpenses get/put/batch, additionalExpenses get/put, allocationReport get/generate), `admin` (`cache/clear`), `health`.
+Don't maintain a hand-written route list here — it'll drift the same way `BlackwellTime.md`'s did. `docs/openapi.json` is the generated, always-accurate source of truth (regenerated via `npm run generate` from the `@swagger` JSDoc blocks above each route handler — run this after adding or changing a schema so it stays in sync). Current documented resources: `client` (list, `:clientId/summary`, create, update), `payPeriod` (list, `next`, `:payPeriodId`, create, close), `timesheet` (generate, status), `timesheetFolder` (list, create, update), `payrollReport` (get report, generate, employeeExpenses get/put/batch, additionalExpenses get/put, allocationReport get/generate), `admin` (`cache/clear`), `health`. The local/QA-only dev purge endpoint is intentionally not included in OpenAPI; see "Dev test-data purge endpoint" above.
 
 ---
 

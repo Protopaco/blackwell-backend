@@ -1,10 +1,8 @@
 import { TimesheetFolderStatusType } from '#models/TimesheetFolderStatus.js';
 
-// All fields optional — only send what's actually changing. driveFolderLink, if provided, is
-// re-parsed and re-verified via folderExists before being stored as driveFolderId.
+// All fields optional — only send what's actually changing. Drive folder links are immutable after creation.
 interface TimesheetFolderUpdateRequest {
   timesheetFolderName?: string;
-  driveFolderLink?: string;
   status?: TimesheetFolderStatusType;
 }
 

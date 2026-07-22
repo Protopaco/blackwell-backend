@@ -1,10 +1,16 @@
 import { isFlatRate } from '#models/PayRate.js';
+import EmployeeExpense from '#models/EmployeeExpense.js';
 import EmployeePayrollSummary from '#models/EmployeePayrollSummary.js';
 import PayrollReportResponse from '#models/PayrollReportResponse.js';
 
 // Transforms flat PayrollReportSummaryRow records (read from the spreadsheet) into a grouped-by-employee response shape.
-const buildPayrollReportResponse = (rawRows: Record<string, unknown>[]): PayrollReportResponse => {
+// employeeExpenses is joined in by employeeId; an employee with no expense entry gets totalExpense: null.
+const buildPayrollReportResponse = (
+  rawRows: Record<string, unknown>[],
+  employeeExpenses: EmployeeExpense[] | null = [],
+): PayrollReportResponse => {
   const response: PayrollReportResponse = {};
+  const totalExpenseByEmployeeId = new Map((employeeExpenses ?? []).map((expense) => [expense.employeeId, expense.totalExpense]));
 
   for (const row of rawRows) {
     const employeeId = row['EmployeeId'] as string;
@@ -15,6 +21,7 @@ const buildPayrollReportResponse = (rawRows: Record<string, unknown>[]): Payroll
         employeeName: row['EmployeeName'] as string,
         totalHours: 0,
         totalFlatRate: 0,
+        totalExpense: totalExpenseByEmployeeId.get(employeeId) ?? null,
         hourly: [],
         flatRate: [],
       } satisfies EmployeePayrollSummary;

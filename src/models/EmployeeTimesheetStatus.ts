@@ -3,12 +3,14 @@ import { TimesheetStatusType } from '#models/TimesheetStatus.js';
 
 interface EmployeeTimesheetStatus {
   employeeId: Guid;
-  employeeName: string;
+  firstName: string;
+  lastName: string;
   timesheetFileId: string;
   totalHours: number | null;
   flatRateQuantity: number | null;
   employeeSigned: boolean;
   supervisorSigned: boolean;
+  includeInPayroll: boolean;
   status: TimesheetStatusType;
 }
 

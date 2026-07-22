@@ -30,6 +30,7 @@ import {
   buildDividerRow,
   buildEmployeeRow,
   buildHeaderRow,
+  buildIncludeInPayrollRow,
   buildSignatureRow,
   buildSummaryRow,
   colLetter,
@@ -160,6 +161,9 @@ const generateTimesheets = async (
     const supervisorSignatureCell = { row: allRows.length + 1, column: 2 };
     allRows.push(buildSignatureRow("Supervisor Signature:"));
 
+    const includeInPayrollCell = { row: allRows.length + 1, column: 2 };
+    allRows.push(buildIncludeInPayrollRow("Supervisor approval: Include in payroll"));
+
     // Blank row between signatures and summary totals
     allRows.push(buildDividerRow());
 
@@ -251,6 +255,7 @@ const generateTimesheets = async (
       weeks: weekManifests,
       employeeSignatureCell,
       supervisorSignatureCell,
+      includeInPayrollCell,
       summaryRows,
     };
 

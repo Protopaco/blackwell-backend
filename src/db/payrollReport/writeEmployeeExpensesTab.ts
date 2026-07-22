@@ -22,7 +22,6 @@ const writeEmployeeExpensesTab = async (
     ...expenses.map((expense) => [
       expense.employeeId,
       expense.employeeName,
-      expense.activeThisPayPeriod,
       expense.totalExpense ?? '',
     ]),
   ];

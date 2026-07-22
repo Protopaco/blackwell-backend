@@ -1,4 +1,5 @@
 import readTabValues from '#db/adapter/readTabValues.js';
+import findManifestEntry from './findManifestEntry.js';
 import { MANIFEST_TAB } from '#config/constants.js';
 import TimesheetManifest from '#models/TimesheetManifest.js';
 import { logger } from '#utils/logger.js';
@@ -7,9 +8,7 @@ import { logger } from '#utils/logger.js';
 const readManifest = async (timesheetFileId: string, tabName: string): Promise<TimesheetManifest | null> => {
   try {
     const rows = await readTabValues(timesheetFileId, MANIFEST_TAB);
-    const matchingRow = rows.find((row) => row[0] === tabName);
-    if (!matchingRow) return null;
-    return JSON.parse(matchingRow[1] as string) as TimesheetManifest;
+    return findManifestEntry(rows, tabName);
   } catch (error) {
     logger.error({ error, timesheetFileId, tabName }, 'readManifest failed — returning null');
     return null;

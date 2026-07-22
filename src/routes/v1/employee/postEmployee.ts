@@ -12,9 +12,9 @@ const router = Router();
  *     summary: Create a new employee
  *     description: >
  *       employeeId is server-generated — ignored if present in the request body. Exactly one of
- *       timesheetFileId (existing file, used as-is) or timesheetFolderId (must be an Active
- *       TimesheetFolder configured for this client — a new timesheet workbook is provisioned there)
- *       must be provided.
+ *       timesheetFileLink (existing Google Sheets/Drive file URL — parsed, verified, and stored as
+ *       Employee.timesheetFileId) or timesheetFolderId (must be an Active TimesheetFolder configured
+ *       for this client — a new timesheet workbook is provisioned there) must be provided.
  *     tags:
  *       - Employee
  *     parameters:
@@ -33,9 +33,9 @@ const router = Router();
  *       201:
  *         description: Employee created
  *       404:
- *         description: Client not found, or timesheetFolderId doesn't match an Active TimesheetFolder
+ *         description: Client not found, inaccessible workbook, or timesheetFolderId doesn't match an Active TimesheetFolder
  *       422:
- *         description: Neither timesheetFileId nor timesheetFolderId was provided
+ *         description: Malformed timesheetFileLink, both fields provided, or neither field provided
  */
 router.post('/:clientId', async (req: Request, res: Response) => {
   const { clientId } = req.params as { clientId: string };

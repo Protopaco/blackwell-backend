@@ -23,7 +23,8 @@ const expectStatus = async (status: TimesheetStatusType) => {
   const employeeStatus = await getEmployeeStatus(client.clientId, payPeriod.payPeriodId);
 
   expect(employeeStatus.employeeId).toBe(employee.employeeId);
-  expect(employeeStatus.employeeName).toBe(`${employee.firstName} ${employee.lastName}`);
+  expect(employeeStatus.firstName).toBe(employee.firstName);
+  expect(employeeStatus.lastName).toBe(employee.lastName);
   expect(employeeStatus.timesheetFileId).toBe(employee.timesheetFileId);
   expect(employeeStatus.status).toBe(status);
   return employeeStatus;

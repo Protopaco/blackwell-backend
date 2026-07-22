@@ -1,7 +1,7 @@
 import { EmployeeStatusType } from '#models/EmployeeStatus.js';
 
-// Exactly one of timesheetFileId (an existing file, used as-is) or timesheetFolderId (creates a new
-// file inside that client's configured, Active TimesheetFolder) must be provided.
+// Exactly one of timesheetFileLink (an existing Google Sheets/Drive file URL) or timesheetFolderId
+// (creates a new file inside that client's configured, Active TimesheetFolder) must be provided.
 interface EmployeeCreateRequest {
   firstName: string;
   lastName: string;
@@ -11,7 +11,7 @@ interface EmployeeCreateRequest {
   holidayPayRate: number;
   email: string;
   status: EmployeeStatusType;
-  timesheetFileId?: string;
+  timesheetFileLink?: string;
   timesheetFolderId?: string;
 }
 

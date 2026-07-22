@@ -32,9 +32,9 @@
 
 ## Code Cleanup
 
-### Remove duplicate `/client/:clientId/employees` route
+~~### Remove duplicate `/client/:clientId/employees` route~~
 
-`GET /api/v1/employee/:clientId` is the route being covered by the Employee integration tests. The older `/client/:clientId/employees` route appears to duplicate the same responsibility and should be deleted once the Employee route coverage is stable.
+~~`GET /api/v1/employee/:clientId` is the route being covered by the Employee integration tests. The older `/client/:clientId/employees` route appears to duplicate the same responsibility and should be deleted once the Employee route coverage is stable.~~ — done: removed the duplicate Client route and kept the canonical `GET /api/v1/employee/:clientId` endpoint.
 
 ---
 
@@ -59,15 +59,21 @@
 
 ---
 
-### Remove or restrict `PUT /payPeriod/:clientId/:payPeriodId`
+~~### Remove or restrict `PUT /payPeriod/:clientId/:payPeriodId`~~
 
-Pay periods are backend-owned workflow records: dates/name come from `GET /payPeriod/:clientId/next`, creation persists that suggested period, and status changes should happen through workflow actions (`generateTimesheets`, `generatePayrollReport`, `closePayPeriod`) rather than a generic update endpoint. Decide whether to delete this route entirely or restrict it before adding integration coverage for it.
+~~Pay periods are backend-owned workflow records: dates/name come from `GET /payPeriod/:clientId/next`, creation persists that suggested period, and status changes should happen through workflow actions (`generateTimesheets`, `generatePayrollReport`, `closePayPeriod`) rather than a generic update endpoint. Decide whether to delete this route entirely or restrict it before adding integration coverage for it.~~ — done: removed the public `PUT /payPeriod/:clientId/:payPeriodId` route. Kept the internal `updatePayPeriod` service because workflow services still use it after enforcing business rules.
 
 ---
 
 ### Rename Pay Period row persistence helpers
 
 Low priority. The DB-layer helper names `appendPayPeriod` and `writePayPeriod` are awkward: both write to Sheets, but one inserts a new pay period row and the other updates an existing one. Rename them to something clearer, such as `createPayPeriodRow` / `updatePayPeriodRow` or `insertPayPeriod` / `updatePayPeriodRow`, once the current integration-test work settles.
+
+---
+
+### Quiet expected missing `_manifest` reads
+
+`readManifest` currently logs a Google Sheets 400 as an error when a generated timesheet workbook does not have a `_manifest` tab yet. Callers already treat `null` as a normal "not generated yet" result, so this is noisy rather than actionable. If it gets annoying, check for the `_manifest` tab before reading or downgrade that specific missing-manifest case to debug/info.
 
 ---
 
@@ -132,17 +138,78 @@ Both use the naming convention correction from the map*/build* discussion below:
 
 ## Testing
 
-### Validate Activity funding source references
+### Replace dev test-data endpoint/sower plan with backend fixture commands
 
-`createActivity` and `updateActivity` currently accept funding source names without verifying that those names exist in the client's Funding Sources tab. Add validation so activities can only reference real funding sources.
+Decision: do not build a separate `blackwell-sower` repo for now, and do not expose test-data reset actions as HTTP endpoints. No other application needs to trigger these actions. They should be backend-owned dev/QA commands because the backend already owns Google Drive/Sheets auth and the client registry shape.
 
-### Validate Holiday dates
+Target commands:
 
-`createHoliday` and `updateHoliday` currently accept `holidayDate` without validating the format or calendar value. Add validation, likely strict `YYYY-MM-DD`, then add 422 tests for malformed dates.
+- `npm run dev:test-data:reset`
 
-### Validate duplicate client codes
+Backend-owned env vars:
 
-`createClient` does not directly check whether `clientCode` already exists in the `Clients` sheet. Duplicate client codes can be created when they use different folders and avoid Payroll Config / Pay Period Registry file-name collisions. Add explicit client-code uniqueness validation before provisioning client infrastructure.
+- `TEST_DATA_ROOT_FOLDER_ID` — disposable live UI test data parent
+- `CLIENT_CONFIG_FILE_ID` — existing Clients registry
+
+Guardrails:
+
+- Commands only run in `development` or `qa`.
+- No Swagger/OpenAPI route, no mounted dev endpoint, no `DEV_TOOL_KEY`.
+- Never call these from app startup.
+- Only trash/create known folders such as `UI_TEST_DATA`.
+- Only remove/write Clients rows with the `UI_TEST_` client-code prefix.
+- Print explicit summaries of trashed folders, created scenarios, and written Clients rows.
+
+Suggested structure:
+
+```text
+src/devTestData/
+  constants.ts
+  purgeDevTestData.ts
+  resetDevTestData.ts
+  scenarios/
+    buildFreshClientRequest.ts
+    createFreshClientScenario.ts
+  scripts/
+    reset.ts
+```
+
+Milestone 1 scope: Fresh Client only.
+
+- Scenario: `Fresh Client`
+- Live client name/code: `UI Test Fresh Client` / `UI_TEST_FC`
+- Create client with settings.
+- No employees, supervisors, funding sources, activities, holidays, pay periods, or payroll state.
+
+Implementation chunks:
+
+1. Remove the dev test-data purge HTTP route, route mounting, Swagger/OpenAPI exposure if any, and route-specific tests. Keep reusable purge logic as internal dev tooling.
+2. Add command guard helpers for `development`/`qa` only and required backend env validation.
+3. Refactor `purgeDevTestData` into a command-safe service that trashes live `UI_TEST_DATA` under `TEST_DATA_ROOT_FOLDER_ID`, removes `UI_TEST_` Clients rows, and clears relevant caches.
+4. Add `resetDevTestData` for Fresh Client. It should purge live data, create a fresh `UI_TEST_DATA` folder under `TEST_DATA_ROOT_FOLDER_ID`, then run `createFreshClientScenario` directly against that folder.
+5. Add the reset command script and npm script.
+6. Add focused unit tests around guards, env validation, and Clients row filtering/writing. Add live integration coverage only after the Fresh Client reset works manually.
+7. Do not add Late Client until Early Client reset works end to end.
+
+---
+
+### Add integration test data namespace cleanup
+
+Integration tests currently create real Drive/Sheets artifacts across the shared test area without a single owning namespace. Add an integration-test data root folder such as `INTEGRATION_TEST_DATA` and a consistent client-code prefix such as `IT_`, then update builders to create all integration artifacts under that root. Cleanup can then trash one folder tree and remove matching `IT_` clients from the Clients sheet, similar to the UI test data reset flow.
+
+---
+
+~~### Validate Activity funding source references~~
+
+~~`createActivity` and `updateActivity` currently accept funding source names without verifying that those names exist in the client's Funding Sources tab. Add validation so activities can only reference real funding sources.~~ — done via `validateActivityFundingSources.ts`, wired into create/update Activity, with unit coverage and integration 422 cases.
+
+~~### Validate Holiday dates~~
+
+~~`createHoliday` and `updateHoliday` currently accept `holidayDate` without validating the format or calendar value. Add validation, likely strict `YYYY-MM-DD`, then add 422 tests for malformed dates.~~ — done via reusable `validateIsoDateString.ts`, wired into create/update Holiday with unit coverage and integration 422 cases.
+
+~~### Validate duplicate client codes~~
+
+~~`createClient` does not directly check whether `clientCode` already exists in the `Clients` sheet. Duplicate client codes can be created when they use different folders and avoid Payroll Config / Pay Period Registry file-name collisions. Add explicit client-code uniqueness validation before provisioning client infrastructure.~~ — done via `validateClientCodeIsUnique.ts`, checked before folder/workbook provisioning starts, with unit coverage and the existing integration scenario converted from `it.fails`.
 
 ~~### Unit tests for allocation calculation~~
 ~~The allocation math is complex enough to warrant thorough unit tests. Cover: proportion calculation, expense distribution, ignored employees, employees with no hours in a funding source, org-level expense distribution, edge cases (single employee, single funding source, zero expenses).~~ — done, `buildAllocationRows.test.ts` (24 tests) already covers all of this: proportion calculation, expense distribution, ignored/inactive employees, zero-hours edge cases, rounding/remainder handling, and sort order. Item was just never struck through.
@@ -184,6 +251,12 @@ Low priority. Generated timesheets are being created, but the visual styling nee
 
 ---
 
+### Represent the TimesheetStatus progression as data, not an if/else chain
+
+Noted 2026-07-21 while working on the frontend's Timesheet Status table. `deriveTimesheetStatus.ts` encodes the five-state lifecycle (`NotGenerated` → `Generated` → `Submitted` → `Approved` → `Complete`) implicitly as an if/else chain — there's no explicit ordered representation of "what comes after what" anywhere in the backend. The frontend hit the same underlying concept (needed the progression order to sort a status column) and modeled it explicitly as an ordered array (`TIMESHEET_STATUS_PROGRESSION` in `src/models/timesheetStatusProgression.ts`), from which sort rank is derived via `indexOf` rather than hand-maintained separately. Worth reviewing whether the backend should represent the progression the same explicit way — e.g. deriving `deriveTimesheetStatus.ts`'s branching from an ordered array of conditions, or at minimum exposing the same ordering as data for any future consumer that needs "is this status at or past X" rather than just "what is this status." Not scoped or started — flagging for later.
+
+---
+
 ~~### Add derived status to timesheet status endpoint~~
 ~~`GET /timesheet/status/:clientId/:payPeriodId` only returned raw `totalHours`/`employeeSigned`/`supervisorSigned` — UI needs a labeled status per employee.~~ — done via `deriveTimesheetStatus.ts`, wired into `getTimesheetStatuses.ts`. Uses the five-state `TimesheetStatus` enum (`NotGenerated`/`Generated`/`Submitted`/`Approved`/`Complete`); distinguishes `Approved` from `Complete` by checking whether the employee's hours appear in `current_hours` for the pay period.
 
@@ -192,7 +265,7 @@ Low priority. Generated timesheets are being created, but the visual styling nee
 ## Client Summary
 
 ~~### Add client summary/config data endpoint~~
-~~Client Summary page needs: current pay period, number of employees, timesheet template, pay period interval. The template (`Settings.timeInputMethod`) and interval (`Settings.payPeriodInterval`) already exist in `PayrollConfig`/`Settings` but nothing exposes them via a GET endpoint today — `readPayrollConfig` is only used internally by generation services. Need a new endpoint (e.g. `GET /client/:clientId/summary`) that surfaces this data. Open question: is "current pay period" derived from the existing `GET /payPeriod` list (most recent non-Closed), or does it need its own resolution logic?~~ — done via `getClientSummary.ts` / `GET /client/:clientId/summary`. Scope ended up broader than originally planned: returns the full active-employee list plus supervisors/activities/fundingSources/holidays/settings from `PayrollConfig`, not just the four original fields. `payPeriods` (all non-Closed pay periods, `PayPeriodResponse[]` shape via `buildPayPeriodResponse`) was added after the initial cut — there's no single "current" pay period since multiple non-Closed ones can coexist, so the array is returned as-is and the UI picks/displays from it; `GET /payPeriod/:clientId` still exists separately if the full (including Closed) list is ever needed.
+~~Client Summary page needs: current pay period, number of employees, timesheet template, pay period interval. The template (`Settings.timeInputMethod`) and interval (`Settings.payPeriodInterval`) already exist in `PayrollConfig`/`Settings` but nothing exposes them via a GET endpoint today — `readPayrollConfig` is only used internally by generation services. Need a new endpoint (e.g. `GET /client/:clientId/summary`) that surfaces this data. Open question: is "current pay period" derived from the existing `GET /payPeriod` list (most recent non-Closed), or does it need its own resolution logic?~~ — done via `getClientSummary.ts` / `GET /client/:clientId/summary`. Scope ended up broader than originally planned: returns the full active-employee list plus active TimesheetFolders, supervisors/activities/fundingSources/holidays/settings from `PayrollConfig`, not just the four original fields. `payPeriods` (all non-Closed pay periods, `PayPeriodResponse[]` shape via `buildPayPeriodResponse`) was added after the initial cut — there's no single "current" pay period since multiple non-Closed ones can coexist, so the array is returned as-is and the UI picks/displays from it; `GET /payPeriod/:clientId` still exists separately if the full (including Closed) list is ever needed.
 
 ---
 
@@ -208,7 +281,7 @@ One deviation worth knowing if touching this again: the two Sheets files are nam
 
 ~~Design session same day. `Client.timesheetsFolderId` (nullable, no resolution path) was a stopgap — real clients can have several timesheet locations (different sites, changed over time), not just one. Replaced entirely with a proper one-to-many `TimesheetFolder` PayrollConfig entity (`TimesheetFolderId` app-generated UUID, `TimesheetFolderName`, `DriveFolderId`, `Status`) rather than a single client-level field.~~ — done. `Client.timesheetsFolderId` removed everywhere (model, column, mapper, create/update flows, schemas). New `TimesheetFolder` entity built full-width: model, own `TimesheetFolderStatus` enum, db layer (`mapTimesheetFolder.ts`/`readTimesheetFolders.ts`/`appendTimesheetFolder.ts`/`writeTimesheetFolders.ts`), services (`getTimesheetFolders.ts`/`createTimesheetFolder.ts`/`updateTimesheetFolder.ts`), routes (`GET`/`POST`/`PUT /api/v1/timesheetFolder`), wired into `readPayrollConfig.ts` as the 7th tab. Create/Update accept a raw Drive link (parsed via the existing `parseDriveLink` util, verified via the existing `folderExists` adapter — reused from Client CRUD, no new Drive mechanics). Status-only, no delete — same reasoning as `Client`: unlike `Supervisors`/`FundingSources`/`Activities`/`Holidays` (effectively snapshotted into each pay period's payroll report, so deleting old config doesn't corrupt historical reports), `Employee`/`TimesheetFolder` persist and get referenced indefinitely with no compensating snapshot — hard-delete would destroy an audit trail for no benefit.
 
-`createEmployee.ts` now takes a new `EmployeeCreateRequest` type requiring exactly one of `timesheetFileId` (existing file) or `timesheetFolderId` (validated against this client's `TimesheetFolders` — must exist and be `Active` — then used to provision a new file there). `generateTimesheets.ts`'s lazy timesheet-file-creation fallback was removed entirely — a missing `timesheetFileId` on an active employee at generation time is now a data error, checked upfront (before the per-employee loop) and reported as one clear error naming every affected employee, rather than something generation tries to silently fix mid-batch.
+`createEmployee.ts` now takes a new `EmployeeCreateRequest` type requiring exactly one of `timesheetFileLink` (existing Google Sheets/Drive file URL, parsed/verified, stored as `Employee.timesheetFileId`) or `timesheetFolderId` (validated against this client's `TimesheetFolders` — must exist and be `Active` — then used to provision a new file there). `generateTimesheets.ts`'s lazy timesheet-file-creation fallback was removed entirely — a missing `timesheetFileId` on an active employee at generation time is now a data error, checked upfront (before the per-employee loop) and reported as one clear error naming every affected employee, rather than something generation tries to silently fix mid-batch.
 
 Not touched, flagged for awareness: `db/employee/updateEmployeeTimesheetFile.ts` is now orphaned dead code (was only called from the removed `generateTimesheets.ts` fallback) — left in place, not deleted, since it wasn't asked for.
 

@@ -13,14 +13,14 @@ const createTestEmployee = async (
 ): Promise<Employee> => {
   const client = await getClientById(clientId);
   const uniqueCode = getUniqueCode('EMP');
-  const timesheetFileId =
-    overrides.timesheetFileId ??
+  const timesheetFileLink =
+    overrides.timesheetFileLink ??
     (overrides.timesheetFolderId
       ? undefined
-      : await createOAuthWorkbook(
+      : `https://docs.google.com/spreadsheets/d/${await createOAuthWorkbook(
           `Test Employee ${uniqueCode} Timesheet`,
           client.employeePayrollFolderId,
-        ));
+        )}/edit`);
 
   const requestBody: EmployeeCreateRequest = {
     firstName: 'Test',
@@ -31,7 +31,7 @@ const createTestEmployee = async (
     holidayPayRate: 30,
     email: `test.employee.${uniqueCode.toLowerCase()}@example.com`,
     status: EmployeeStatus.Active,
-    timesheetFileId,
+    timesheetFileLink,
     ...overrides,
   };
 

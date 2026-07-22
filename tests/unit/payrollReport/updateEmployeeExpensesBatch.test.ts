@@ -33,14 +33,14 @@ describe('updateEmployeeExpensesBatch', () => {
 
   it('overlays totalExpense onto an employee that already has an EmployeeExpense record', async () => {
     vi.mocked(readEmployeeExpensesTab).mockResolvedValue([
-      { employeeId: 'e1', employeeName: 'Jane Smith', activeThisPayPeriod: true, totalExpense: 100 },
+      { employeeId: 'e1', employeeName: 'Jane Smith', totalExpense: 100 },
     ]);
 
     await updateEmployeeExpensesBatch('client-1', 'pp-1', [{ employeeId: 'e1', totalExpense: 250 }]);
 
     expect(getClientById).not.toHaveBeenCalled();
     expect(writeEmployeeExpensesTab).toHaveBeenCalledWith('report-1', [
-      { employeeId: 'e1', employeeName: 'Jane Smith', activeThisPayPeriod: true, totalExpense: 250 },
+      { employeeId: 'e1', employeeName: 'Jane Smith', totalExpense: 250 },
     ]);
   });
 
@@ -48,13 +48,13 @@ describe('updateEmployeeExpensesBatch', () => {
     await updateEmployeeExpensesBatch('client-1', 'pp-1', [{ employeeId: 'e2', totalExpense: 75 }]);
 
     expect(writeEmployeeExpensesTab).toHaveBeenCalledWith('report-1', [
-      { employeeId: 'e2', employeeName: 'John Doe', activeThisPayPeriod: true, totalExpense: 75 },
+      { employeeId: 'e2', employeeName: 'John Doe', totalExpense: 75 },
     ]);
   });
 
   it('handles a mix of overlay and create in the same batch', async () => {
     vi.mocked(readEmployeeExpensesTab).mockResolvedValue([
-      { employeeId: 'e1', employeeName: 'Jane Smith', activeThisPayPeriod: true, totalExpense: 100 },
+      { employeeId: 'e1', employeeName: 'Jane Smith', totalExpense: 100 },
     ]);
 
     await updateEmployeeExpensesBatch('client-1', 'pp-1', [
@@ -63,8 +63,8 @@ describe('updateEmployeeExpensesBatch', () => {
     ]);
 
     expect(writeEmployeeExpensesTab).toHaveBeenCalledWith('report-1', [
-      { employeeId: 'e1', employeeName: 'Jane Smith', activeThisPayPeriod: true, totalExpense: 200 },
-      { employeeId: 'e2', employeeName: 'John Doe', activeThisPayPeriod: true, totalExpense: 50 },
+      { employeeId: 'e1', employeeName: 'Jane Smith', totalExpense: 200 },
+      { employeeId: 'e2', employeeName: 'John Doe', totalExpense: 50 },
     ]);
   });
 

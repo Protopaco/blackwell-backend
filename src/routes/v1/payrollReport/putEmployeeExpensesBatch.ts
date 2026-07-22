@@ -12,9 +12,9 @@ const router = Router();
  *     summary: Upsert totalExpense for multiple employees in a pay period at once
  *     description: >
  *       For each employeeId with an existing EmployeeExpense record, overlays totalExpense onto it.
- *       For each employeeId without one, creates a new record (employeeName resolved from PayrollConfig,
- *       activeThisPayPeriod defaulted to true). If any employeeId doesn't match a known employee in the
- *       client's PayrollConfig, the entire batch is rejected and nothing is written.
+ *       For each employeeId without one, creates a new record (employeeName resolved from PayrollConfig).
+ *       If any employeeId doesn't match a known employee in the client's PayrollConfig, the entire batch
+ *       is rejected and nothing is written.
  *     tags:
  *       - PayrollReport
  *     parameters:

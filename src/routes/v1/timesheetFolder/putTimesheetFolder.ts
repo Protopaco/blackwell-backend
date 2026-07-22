@@ -11,8 +11,8 @@ const router = Router();
  *     operationId: v1UpdateTimesheetFolder
  *     summary: Update a timesheet folder
  *     description: >
- *       All body fields are optional; only what's provided is changed. driveFolderLink, if provided,
- *       is re-parsed and re-verified against Drive before being stored.
+ *       All body fields are optional; only what's provided is changed. The Drive folder link/id is
+ *       immutable after creation.
  *     tags:
  *       - TimesheetFolder
  *     parameters:
@@ -36,7 +36,9 @@ const router = Router();
  *       200:
  *         description: TimesheetFolder updated
  *       404:
- *         description: Client or timesheet folder not found, or the supplied driveFolderLink doesn't resolve/is inaccessible
+ *         description: Client or timesheet folder not found
+ *       422:
+ *         description: Duplicate timesheet folder name, or driveFolderLink was supplied on update
  */
 router.put('/:clientId/:timesheetFolderId', async (req: Request, res: Response) => {
   const { clientId, timesheetFolderId } = req.params as { clientId: string; timesheetFolderId: string };

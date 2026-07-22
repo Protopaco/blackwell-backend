@@ -30,6 +30,8 @@ const router = Router();
  *         description: Holiday created
  *       404:
  *         description: Client not found
+ *       422:
+ *         description: holidayDate is not a valid YYYY-MM-DD date
  */
 router.post('/:clientId', async (req: Request, res: Response) => {
   const { clientId } = req.params as { clientId: string };

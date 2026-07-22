@@ -56,6 +56,16 @@ const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise
       logger.info(`Skipping ${employee.firstName} ${employee.lastName} — timesheet not Complete`);
       continue;
     }
+    if (!detail.includeInPayroll) {
+      const hasHours = (detail.totalHours ?? 0) > 0 || (detail.flatRateQuantity ?? 0) > 0;
+      if (hasHours) {
+        throw new UnprocessableError(
+          `${employee.firstName} ${employee.lastName} has hours logged but is marked not included in payroll — resolve on their timesheet before generating.`,
+        );
+      }
+      logger.info(`Skipping ${employee.firstName} ${employee.lastName} — marked not included in payroll`);
+      continue;
+    }
     const entries = await readTimesheetEntries(employee, payPeriod.payPeriodName, activityMap, payrollConfig.holidays);
     allEntries.push(...entries);
   }

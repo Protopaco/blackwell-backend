@@ -30,4 +30,13 @@ describe('updateHoliday', () => {
 
     await expect(updateHoliday('unknown-client', holiday)).rejects.toThrow('Client not found: unknown-client');
   });
+
+  it('throws UnprocessableError when holidayDate is invalid', async () => {
+    vi.mocked(writeHolidays).mockClear();
+
+    await expect(
+      updateHoliday('client-1', { ...holiday, holidayDate: '2026-02-30' }),
+    ).rejects.toThrow('holidayDate must be a valid YYYY-MM-DD date');
+    expect(writeHolidays).not.toHaveBeenCalled();
+  });
 });

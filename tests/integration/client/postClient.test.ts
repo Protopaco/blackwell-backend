@@ -66,7 +66,7 @@ describe('POST /api/v1/client', () => {
     expect(res.body.payPeriodRegistryFileId).toBeDefined();
   });
 
-  it.fails('422 - Client Code already exists', async () => {
+  it('422 - Client Code already exists', async () => {
     const existingClient = await createTestClient();
     const root = await createTestRootFolder('createClient_duplicateClientCode');
 
@@ -85,8 +85,7 @@ describe('POST /api/v1/client', () => {
       });
 
     expect(res.status).toBe(422);
-    expect(res.body.message).toContain('already exists');
-    expect(res.body.message).toContain('Client Code');
+    expect(res.body.message).toContain(`Client code already exists: ${existingClient.clientCode}`);
   });
 
   it('422 - Payroll Config file already exists', async () => {

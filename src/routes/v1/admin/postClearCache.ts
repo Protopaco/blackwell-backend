@@ -6,6 +6,7 @@ import currentHoursCache from '#utils/caches/currentHoursCache.js';
 import employeeExpensesCache from '#utils/caches/employeeExpensesCache.js';
 import additionalExpensesCache from '#utils/caches/additionalExpensesCache.js';
 import allocationReportCache from '#utils/caches/allocationReportCache.js';
+import timesheetDetailCache from '#utils/caches/timesheetDetailCache.js';
 import { logger } from '#utils/logger.js';
 
 const router = Router();
@@ -30,6 +31,7 @@ router.post('/cache/clear', (_req: Request, res: Response) => {
   employeeExpensesCache.clear();
   additionalExpensesCache.clear();
   allocationReportCache.clear();
+  timesheetDetailCache.clear();
   logger.info('POST /admin/cache/clear — all caches cleared');
   return res.status(200).json({ message: 'Cache cleared' });
 });

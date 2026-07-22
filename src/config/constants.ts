@@ -19,7 +19,7 @@ export const SUMMARY_HEADERS: (keyof PayrollReportSummaryRow)[] = [
   'PayrollCategory', 'PayRate', 'IsHoliday', 'TotalHours',
 ];
 export const EMPLOYEE_EXPENSES_TAB = 'EmployeeExpenses';
-export const EMPLOYEE_EXPENSES_HEADERS: (keyof EmployeeExpense)[] = ['employeeId', 'employeeName', 'activeThisPayPeriod', 'totalExpense'];
+export const EMPLOYEE_EXPENSES_HEADERS: (keyof EmployeeExpense)[] = ['employeeId', 'employeeName', 'totalExpense'];
 export const ADDITIONAL_EXPENSES_TAB = 'AdditionalExpenses';
 export const ADDITIONAL_EXPENSES_HEADERS: (keyof AdditionalExpense)[] = ['expenseName', 'amount'];
 export const ALLOCATION_REPORT_TAB = 'AllocationReport';
@@ -93,6 +93,7 @@ export const PAY_PERIOD_REGISTRY_FILE_LABEL = 'Pay Period Registry';
 export const CACHE_TTL_SHORT_MS = 60 * 1000;
 export const CACHE_TTL_MEDIUM_MS = 5 * 60 * 1000;
 export const CACHE_TTL_LONG_MS = 30 * 60 * 1000;
+export const CACHE_TTL_DAY_MS = 24 * 60 * 60 * 1000;
 
 // ─── Google API Rate Limits ────────────────────────────────────────────────────
 // Starting value for all three limiters (Sheets, service-account Drive, OAuth Drive) — only the
@@ -102,3 +103,13 @@ export const CACHE_TTL_LONG_MS = 30 * 60 * 1000;
 
 export const GOOGLE_API_RATE_LIMIT_PER_MINUTE = 60;
 export const GOOGLE_API_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+
+// Each limiter's reservoir trickles back in one token at a time on this interval, instead of resetting
+// to full every GOOGLE_API_RATE_LIMIT_WINDOW_MS — smooths request pacing so a depleted reservoir refills
+// gradually rather than releasing another burst of GOOGLE_API_RATE_LIMIT_PER_MINUTE all at once.
+export const GOOGLE_API_RATE_LIMIT_REFILL_INTERVAL_MS = GOOGLE_API_RATE_LIMIT_WINDOW_MS / GOOGLE_API_RATE_LIMIT_PER_MINUTE;
+
+// Retry behavior for scheduleGoogleApiCall when Google responds 429 (quota exceeded). Exponential
+// backoff starting at this base delay, doubling per attempt, plus jitter up to one base delay.
+export const RATE_LIMIT_RETRY_MAX_ATTEMPTS = 5;
+export const RATE_LIMIT_RETRY_BASE_DELAY_MS = 1000;

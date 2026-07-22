@@ -3,13 +3,16 @@ import readEmployeeExpensesTab from '#db/payrollReport/readEmployeeExpensesTab.j
 import EmployeeExpense from '#models/EmployeeExpense.js';
 import Guid from '#models/Guid.js';
 import { logger } from '#utils/logger.js';
+import { NotFoundError } from '#utils/errors.js';
 
 const getEmployeeExpenses = async (clientId: Guid, payPeriodId: Guid): Promise<EmployeeExpense[]> => {
   logger.info(`getEmployeeExpenses clientId=${clientId} payPeriodId=${payPeriodId}`);
 
   const payPeriod = await getPayPeriodById(clientId, payPeriodId);
 
-  if (!payPeriod.payrollReportFileId) return [];
+  if (!payPeriod.payrollReportFileId) {
+    throw new NotFoundError(`No payroll report file exists for pay period: ${payPeriodId}`);
+  }
 
   return (await readEmployeeExpensesTab(payPeriod.payrollReportFileId)) ?? [];
 };
