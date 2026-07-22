@@ -13,9 +13,11 @@ const INTERVAL_DAYS: Record<string, number> = {
 };
 
 // Returns a new date string offset by the given number of days — used to compute pay period start/end dates.
+// Arithmetic stays entirely in UTC (setUTCDate/getUTCDate) rather than local time — mixing a UTC-midnight-parsed
+// Date with local getDate()/setDate() can silently lose or gain a day across a DST transition.
 const addDays = (dateStr: string, days: number): string => {
   const date = new Date(dateStr);
-  date.setDate(date.getDate() + days);
+  date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().split('T')[0];
 };
 
