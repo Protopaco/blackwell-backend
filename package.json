@@ -5,7 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "tsx --conditions=development src/app.ts | pino-pretty",
+    "start": "node dist/app.js",
+    "dev": "tsx --conditions=development src/app.ts | pino-pretty",
     "watch": "tsx watch --conditions=development src/app.ts | pino-pretty",
     "build": "tsc -p config/typescript.json",
     "typecheck": "tsc -p config/tsconfig.tests.json",
