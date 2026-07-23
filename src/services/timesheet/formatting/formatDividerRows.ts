@@ -1,8 +1,7 @@
 import {
   PRIMARY,
-  WHITE,
+  HEADER_TEXT,
   MUTED_ACCENT,
-  BLACK,
   ACCENT,
 } from "#utils/timesheetTheme.js";
 import fillRow from "./fillRow.js";
@@ -32,7 +31,7 @@ const formatDividerRows = (
           labelColumnIndex,
           totalColumnCount,
           PRIMARY,
-          WHITE,
+          HEADER_TEXT,
           false,
         ),
       );
@@ -45,7 +44,7 @@ const formatDividerRows = (
             specialColumnIndex,
             specialColumnIndex + 1,
             ACCENT,
-            BLACK,
+            HEADER_TEXT,
             false,
             "CENTER",
           ),

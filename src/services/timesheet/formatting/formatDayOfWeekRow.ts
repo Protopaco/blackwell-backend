@@ -1,8 +1,8 @@
-import { PRIMARY, WHITE, MUTED, ACCENT } from "#utils/timesheetTheme.js";
+import { PRIMARY_DARK, HEADER_TEXT, MUTED, ACCENT } from "#utils/timesheetTheme.js";
 import fillRow from "./fillRow.js";
 import outlineBorder from "./outlineBorder.js";
 
-// Builds the fill request for the day-of-week row (Mon, Tue, etc.) — PRIMARY background, white bold centered text.
+// Builds the fill request for the day-of-week row (Mon, Tue, etc.) — PRIMARY_DARK background, header-text bold centered text.
 const formatDayOfWeekRow = (
   sheetId: number,
   dayOfWeekRowNumber: number,
@@ -16,8 +16,8 @@ const formatDayOfWeekRow = (
       dayOfWeekRowNumber,
       labelColumnIndex,
       totalColumnCount,
-      PRIMARY,
-      WHITE,
+      PRIMARY_DARK,
+      HEADER_TEXT,
       true,
       "CENTER",
     ),
@@ -44,7 +44,7 @@ const formatDayOfWeekRow = (
         holidayColumnIndex,
         holidayColumnIndex + 1,
         ACCENT,
-        WHITE,
+        HEADER_TEXT,
         true,
         "CENTER",
       ),

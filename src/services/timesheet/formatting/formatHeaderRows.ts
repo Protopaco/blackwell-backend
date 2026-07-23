@@ -1,14 +1,21 @@
-import { MUTED, PRIMARY, SECONDARY, WHITE } from "#utils/timesheetTheme.js";
+import { SECONDARY, HEADER_TEXT, MUTED } from "#utils/timesheetTheme.js";
 import fillRow from "./fillRow.js";
 import outlineBorder from "./outlineBorder.js";
 
-// Builds fill requests for the pay period header row (row 1) and employee name row (row 2) — called by formatWeekSection.
-const formatHeaderRows = (sheetId: number): object[] => [
-  fillRow(sheetId, 1, 0, 1, PRIMARY, WHITE, true),
-  fillRow(sheetId, 1, 1, 2, SECONDARY, WHITE, true),
-  fillRow(sheetId, 2, 0, 2, SECONDARY, WHITE, true),
-  outlineBorder(sheetId, 1, 0, 2, MUTED, true, true, true, true, true, true),
-  outlineBorder(sheetId, 2, 0, 2, MUTED, true, true, true, true, true, true),
-];
+const HEADER_ROW_COUNT = 4;
+
+// Builds fill requests for the 4-row identity block at the top of the sheet — pay period label (row 1),
+// pay period date range (row 2), employee name (row 3), and position (row 4) — each its own single-column
+// SECONDARY row. Called by formatWeekSection.
+const formatHeaderRows = (sheetId: number): object[] => {
+  const requests: object[] = [];
+  for (let rowNumber = 1; rowNumber <= HEADER_ROW_COUNT; rowNumber++) {
+    requests.push(
+      fillRow(sheetId, rowNumber, 0, 1, SECONDARY, HEADER_TEXT, true),
+      outlineBorder(sheetId, rowNumber, 0, 1, MUTED, true, true, true, true, true, true),
+    );
+  }
+  return requests;
+};
 
 export default formatHeaderRows;

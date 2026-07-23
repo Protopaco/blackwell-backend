@@ -1,8 +1,8 @@
-import { PRIMARY, WHITE, MUTED, ACCENT } from "#utils/timesheetTheme.js";
+import { PRIMARY_DARK, HEADER_TEXT, MUTED, ACCENT } from "#utils/timesheetTheme.js";
 import fillRow from "./fillRow.js";
 import outlineBorder from "./outlineBorder.js";
 
-// Builds the fill request for the date number row — PRIMARY background, white bold centered text.
+// Builds the fill request for the date number row — PRIMARY_DARK background, header-text bold centered text.
 const formatDateRow = (
   sheetId: number,
   dateRowNumber: number,
@@ -16,8 +16,8 @@ const formatDateRow = (
       dateRowNumber,
       labelColumnIndex,
       totalColumnCount,
-      PRIMARY,
-      WHITE,
+      PRIMARY_DARK,
+      HEADER_TEXT,
       true,
       "CENTER",
     ),
@@ -44,7 +44,7 @@ const formatDateRow = (
         holidayColumnIndex,
         holidayColumnIndex + 1,
         ACCENT,
-        WHITE,
+        HEADER_TEXT,
         true,
         "CENTER",
       ),
