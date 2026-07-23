@@ -9,9 +9,11 @@ Node/TypeScript API service that automates timesheet generation and payroll cost
 ```bash
 npm install
 npm run watch             # development with hot reload + pretty logs
+npm run dev               # same development server, matching the production start/dev script split
 npm test                  # unit tests only — fast, no external calls (default/safe to run anytime)
 npm run test:integration  # integration tests — hits the live Google Sheets API, on demand only
 npm run build              # compile TypeScript to dist/
+npm run start              # run the compiled app from dist/
 npm run generate           # regenerate docs/openapi.json from the swagger annotations
 ```
 
@@ -25,7 +27,20 @@ npm run generate           # regenerate docs/openapi.json from the swagger annot
 | `GOOGLE_OAUTH_REFRESH_TOKEN` | Offline refresh token — bootstrap it with `tsx src/utils/oauth/getRefreshToken.ts` |
 | `CLIENT_CONFIG_FILE_ID` | Google Sheets file ID of the shared Client-Config spreadsheet |
 | `FRONTEND_BASE_URL` | Frontend origin for CORS (production) |
+| `APP_ENV` | Blackwell environment label, e.g. `local`, `demo`, or `production` |
+| `HOST` | HTTP bind host. Render demo services should use `0.0.0.0` |
 | `PORT` | HTTP port (default 3000) |
+
+Render demo backend settings:
+
+```bash
+Build Command: npm install && npm run build
+Start Command: npm run start
+
+NODE_ENV=production
+APP_ENV=demo
+HOST=0.0.0.0
+```
 
 ---
 

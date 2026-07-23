@@ -1,4 +1,4 @@
-import { PRIMARY, WHITE } from "#utils/timesheetTheme.js";
+import { PRIMARY, HEADER_TEXT } from "#utils/timesheetTheme.js";
 import { type SignatureCell } from "#models/TimesheetManifest.js";
 import fillRow from "./fillRow.js";
 
@@ -8,7 +8,7 @@ const formatIncludeInPayrollRow = (
   sheetId: number,
   includeInPayrollCell: SignatureCell,
 ): object[] => [
-  fillRow(sheetId, includeInPayrollCell.row, 0, 1, PRIMARY, WHITE, false, "LEFT"),
+  fillRow(sheetId, includeInPayrollCell.row, 0, 1, PRIMARY, HEADER_TEXT, false, "LEFT"),
   {
     setDataValidation: {
       range: {

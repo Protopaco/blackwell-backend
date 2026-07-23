@@ -44,7 +44,7 @@ const buildWeek = (
   const activityRows = [];
 
   for (let workIndex = 0; workIndex < workCount; workIndex++) {
-    rows.push(buildActivityRow(workActivities[workIndex], dayCount));
+    rows.push(buildActivityRow(workActivities[workIndex], dayCount, startRow + rows.length));
     activityRows.push({
       activityId: workActivities[workIndex].activityId,
       activityName: workActivities[workIndex].activityName,
@@ -53,7 +53,7 @@ const buildWeek = (
   }
 
   for (let timeOffIndex = 0; timeOffIndex < timeOffCount; timeOffIndex++) {
-    rows.push(buildActivityRow(timeOffActivities[timeOffIndex], dayCount));
+    rows.push(buildActivityRow(timeOffActivities[timeOffIndex], dayCount, startRow + rows.length));
     activityRows.push({
       activityId: timeOffActivities[timeOffIndex].activityId,
       activityName: timeOffActivities[timeOffIndex].activityName,
@@ -84,7 +84,7 @@ const buildWeek = (
   if (flatRateCount > 0) {
     rows.push(buildDividerRow());
     for (let flatRateIndex = 0; flatRateIndex < flatRateCount; flatRateIndex++) {
-      rows.push(buildActivityRow(flatRateActivities[flatRateIndex], dayCount));
+      rows.push(buildActivityRow(flatRateActivities[flatRateIndex], dayCount, startRow + rows.length));
       flatRateRows.push({
         activityId: flatRateActivities[flatRateIndex].activityId,
         activityName: flatRateActivities[flatRateIndex].activityName,

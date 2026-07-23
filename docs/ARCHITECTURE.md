@@ -15,7 +15,7 @@ services/<domain>/*.ts      — business logic. Calls db/<domain>/ functions. Ne
         ↓
 db/<domain>/*.ts            — domain-specific reads/writes/mappers. Calls db/adapter/ functions. Never touches googleapis directly.
         ↓
-db/adapter/*.ts             — the ONLY files allowed to import 'googleapis' or call getSheetsClient()/getAuthClient()/getDriveClient()/getOAuthDriveClient(). ~20 files, one Sheets/Drive operation per file.
+db/adapter/*.ts             — the ONLY files allowed to import 'googleapis' or call getSheetsClient()/getAuthClient()/getDriveClient()/getOAuthDriveClient(). ~30 files, one Sheets/Drive operation per file.
 ```
 
 **Why this matters**: the whole point of this boundary is that a future migration to a real database only touches `db/adapter/` (discarded entirely) and `db/<domain>/*.ts` (rewritten to call SQL/an ORM instead, same function signatures). `services/`, `routes/`, and `models/` shouldn't need to change at all.
@@ -46,6 +46,7 @@ src/
   utils/
     cache.ts                — createCache<T>(ttlMs) generic in-memory TTL cache
     caches/                 — one file per cache instance (see "Caching" below)
+    rateLimiters/           — one Bottleneck instance per Google API/auth mode, plus scheduleGoogleApiCall (see "Google API rate limiting" below)
     swagger/
       schema/                — one OpenAPI schema per file, spread into schema/index.ts
       swaggerSpec.ts, exportSwagger.ts
@@ -107,18 +108,35 @@ Current purge scope lives in `devTestData/purgeDevTestData.ts`: trash the `UI_TE
 - Express 5's native async error propagation means route handlers never need `try`/`catch` — an awaited rejection in a route handler is automatically forwarded to the error middleware. Audited clean: zero manual `try`/`catch` in any route file.
 - `mapErrorResponse.ts` also has `pg.DatabaseError` handling (unique constraint, FK violation, etc.) — this is pre-built for the Postgres/auth work that hasn't started yet (`pg` is never instantiated anywhere in the app today). It's intentionally-early, not dead code to clean up.
 - **Don't swallow errors broadly.** A past pattern of bare `catch { return [] }` in several `db/payrollReport/read*.ts` functions (intended to mean "tab not created yet") was masking real failures (quota, auth, network) as empty results — fixed 2026-07-08 by checking `tabExists()` explicitly before reading, rather than interpreting caught exceptions. If a read might legitimately find nothing (a report section not generated yet), check for that condition explicitly; don't rely on catching whatever exception the API happens to throw.
+- **`TabNotFoundError`** (`#utils/errors.js`, added 2026-07-22) is a different kind of error from the other three — it's internal-only, never registered in `mapErrorResponse.ts`. `db/adapter/readTabValuesBatch.ts` throws it when Sheets returns 400 (invalid range) because a requested tab doesn't exist in the workbook; `readTimesheetDetailFromSheets.ts` catches it via `instanceof` and converts it to a "not generated" result before it ever reaches a route handler. If it ever did leak past that catch, `mapErrorResponse.ts`'s unmapped-error fallback (500) is the safety net — deliberately not given its own HTTP mapping, since "one of these tabs doesn't exist yet" isn't a REST-shaped 404 in the way `NotFoundError` is.
 
 ---
 
 ## Caching
 
-`utils/cache.ts` exports `createCache<T>(ttlMs)` — a generic in-memory `Map`-backed TTL cache (`get`/`set`/`delete`/`clear`). One instance per cached resource lives in its own file under `utils/caches/`, created with `CACHE_TTL_MEDIUM_MS` (5 min) from `config/constants.ts`. Current instances: `clientsCache`, `payPeriodsCache`, `payrollConfigCache`, `additionalExpensesCache`, `employeeExpensesCache`, `allocationReportCache`, `currentHoursCache`.
+`utils/cache.ts` exports `createCache<T>(ttlMs)` — a generic in-memory `Map`-backed TTL cache (`get`/`set`/`delete`/`clear`). One instance per cached resource lives in its own file under `utils/caches/`, created with `CACHE_TTL_MEDIUM_MS` (5 min) from `config/constants.ts`. Current instances: `clientsCache`, `payPeriodsCache`, `payrollConfigCache`, `additionalExpensesCache`, `employeeExpensesCache`, `allocationReportCache`, `currentHoursCache`, `timesheetDetailCache`.
 
 **Pattern**: the `db/<domain>/read*.ts` function checks its cache first, populates it on a miss. Whichever `db/<domain>/write*.ts` (or generation service) invalidates that data calls `<cache>.delete(key)` right after a successful write — always a single, trivial call, never conditional logic. `clientsCache` is invalidated from `services/client/createClient.ts` and `services/client/updateClient.ts`, the only two write paths to the `Clients` tab.
+
+**`timesheetDetailCache` is a different variant** (added 2026-07-22, ticket 012): TTL-checked caches above assume nothing else can tell them whether data changed, so a fixed TTL is the only staleness signal. Timesheets are different — Google Drive exposes a file's `modifiedTime`, so `readTimesheetDetail.ts` (`services/timesheet/`) uses that as the *primary* staleness check (a cheap `db/adapter/getFileModifiedTime.ts` Drive call before deciding whether to do a full Sheets read), with `CACHE_TTL_DAY_MS` (24h) on `timesheetDetailCache` itself only as a safety-net ceiling for entries nobody's re-read in a long time. It also does request coalescing — an in-flight-promise `Map` keyed by `${timesheetFileId}:${tabName}`, so concurrent callers for the same tab share one Sheets read instead of each firing their own. `readTimesheetDetailFromSheets.ts` holds the actual Sheets-reading logic (called only on a cache miss); don't call it directly, always go through `readTimesheetDetail.ts` so reads benefit from the cache.
 
 **Known limitation**: this cache is per-process/in-memory — not shared across multiple server instances. Not an issue today (single instance), worth knowing if this ever scales horizontally.
 
 **Testing the invalidation wiring**: since every invalidation site is the same trivial `<cache>.delete(key)` shape, it's unit-tested by mocking the underlying `db/adapter/` calls with `vi.mock()` and asserting the cache transitions from populated to `null` across the write call — no live API needed. See `tests/unit/db/write*Tab.test.ts` for the pattern. `currentHoursCache`'s invalidation (inside `generatePayrollReport.ts`) was deliberately left without an equivalent unit test — that function has ~10 dependencies that would all need mocking to reach one assertion, disproportionate for the value; it's covered by an existing (occasionally flaky, accepted) integration test instead.
+
+---
+
+## Google API rate limiting
+
+Added/hardened 2026-07-22 (ticket 012) after hitting real 429s (`sheets.googleapis.com`'s "Read requests per minute per user," documented limit 60). Three `Bottleneck` instances in `utils/rateLimiters/` (`sheetsLimiter`, `driveLimiter` for the service-account Drive client, `oauthDriveLimiter` for the OAuth Drive client) each gate one client, `maxConcurrent: 1`. Every `db/adapter/*.ts` call site goes through `utils/rateLimiters/scheduleGoogleApiCall.ts` instead of calling `<limiter>.schedule()` directly — audited clean, zero direct `.schedule()` calls left outside that file.
+
+**Reservoir refill is smoothed, not bursty**: `reservoirIncreaseAmount: 1` / `reservoirIncreaseInterval: GOOGLE_API_RATE_LIMIT_REFILL_INTERVAL_MS` (1000ms) / `reservoirIncreaseMaximum: 60`, trickling one token back per second, instead of `reservoirRefreshAmount`/`reservoirRefreshInterval` (the original config, which reset the full 60 back at once every 60s — bursty, and prone to releasing another synchronized burst right as real usage was still catching up to the true rolling quota window).
+
+**`scheduleGoogleApiCall` retries 429s reactively**, exponential backoff + jitter (`RATE_LIMIT_RETRY_BASE_DELAY_MS` = 1s, doubling, capped at `RATE_LIMIT_RETRY_MAX_ATTEMPTS` = 5), rescheduling each retry through the *same* limiter so every attempt is actually accounted for in the reservoir. This exists because of a subtle bug: `googleapis`' underlying `gaxios` HTTP client retries 429s **silently by default** (3 attempts, exponential backoff) *inside* a single `limiter.schedule()` call — invisible to Bottleneck's own reservoir bookkeeping, so real outbound request volume could exceed what the limiter thought it was allowing. Fixed by passing `retry: false` at client construction in `getSheetsClient.ts`/`getDriveClient.ts`/`getOAuthDriveClient.ts`, so `scheduleGoogleApiCall` is now the only retry mechanism, and every retry attempt is a real, counted `schedule()` call.
+
+**Halving call volume beats retrying after the fact**: `readTimesheetDetailFromSheets.ts` used to make two sequential Sheets calls per employee (`readManifest` then `readTabValues`); merged into one `spreadsheets.values.batchGet` via `db/adapter/readTabValuesBatch.ts`. See `TabNotFoundError` above for how a missing tab is distinguished from a real failure in that merged call.
+
+**Known remaining limitation**: `services/timesheet/getTimesheetStatuses.ts` still fires `readTimesheetDetail` for every active employee via `Promise.all` — on a cold cache (first read, or first read after the 24h `timesheetDetailCache` TTL) this can still burst past the reservoir and trigger the retry path. Deliberately not addressed further as of 2026-07-22 — capping concurrency there (batches of 5-10 instead of all-at-once) was discussed and set aside pending evidence it's a *recurring* problem in normal use, not just under adversarial/rapid test-driving.
 
 ---
 
@@ -162,6 +180,7 @@ Vitest 4, using `test.projects` in `vitest.config.ts`:
 
 - One tab per pay period, named by `PayPeriodName`. Ordered newest-first via `sortTimesheetTabs.ts` (sorts by the real `PayPeriod.startDate`, not by parsing the tab name).
 - One `_manifest` tab (`MANIFEST_TAB` constant), pinned to the far right — internal bookkeeping (JSON blob per pay period describing exact row/column layout), never shown to users. Structure: `TimesheetManifest` model, including `includeInPayrollCell` — the location of the generated "Supervisor approval: Include in payroll" checkbox (real Sheets checkbox, defaults `TRUE`, edited directly in the sheet by the supervisor, not via any API).
+- Reading an employee's current-pay-period detail (`readTimesheetDetailFromSheets.ts`) fetches the `_manifest` tab and the pay-period tab together in one `readTabValuesBatch` call rather than two sequential reads (see "Google API rate limiting" above) — the manifest-row lookup itself (`findManifestEntry.ts`) is a pure function shared with `readManifest.ts` (still used standalone by `readTimesheetEntries.ts`, `generateTimesheets.ts`, and dev test data, where only the manifest is needed).
 
 **Payroll Report workbook** (one per pay period, once generated — file ID = `PayPeriod.payrollReportFileId`)
 

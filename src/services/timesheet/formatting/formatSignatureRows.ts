@@ -1,4 +1,4 @@
-import { PRIMARY, WHITE } from "#utils/timesheetTheme.js";
+import { PRIMARY, HEADER_TEXT, MUTED, TEXT } from "#utils/timesheetTheme.js";
 import { type SignatureCell } from "#models/TimesheetManifest.js";
 import fillRow from "./fillRow.js";
 import mergeCells from "./mergeCells.js";
@@ -10,10 +10,12 @@ const formatSignatureRows = (
   employeeSignatureCell: SignatureCell,
   supervisorSignatureCell: SignatureCell,
 ): object[] => [
-  fillRow(sheetId, employeeSignatureCell.row, 0, 1, PRIMARY, WHITE, false, "LEFT"),
+  fillRow(sheetId, employeeSignatureCell.row, 0, 1, PRIMARY, HEADER_TEXT, false, "LEFT"),
+  fillRow(sheetId, employeeSignatureCell.row, 1, 4, MUTED, TEXT, false, "LEFT"),
   outlineBorder(sheetId, employeeSignatureCell.row, 1, 4),
   mergeCells(sheetId, employeeSignatureCell.row, 1, 4),
-  fillRow(sheetId, supervisorSignatureCell.row, 0, 1, PRIMARY, WHITE, false, "LEFT"),
+  fillRow(sheetId, supervisorSignatureCell.row, 0, 1, PRIMARY, HEADER_TEXT, false, "LEFT"),
+  fillRow(sheetId, supervisorSignatureCell.row, 1, 4, MUTED, TEXT, false, "LEFT"),
   outlineBorder(sheetId, supervisorSignatureCell.row, 1, 4),
   mergeCells(sheetId, supervisorSignatureCell.row, 1, 4),
 ];

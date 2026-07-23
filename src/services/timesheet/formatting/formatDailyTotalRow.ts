@@ -1,8 +1,8 @@
-import { MUTED, PRIMARY, WHITE, ACCENT } from "#utils/timesheetTheme.js";
+import { MUTED, PRIMARY_DARK, HEADER_TEXT, ACCENT } from "#utils/timesheetTheme.js";
 import fillRow from "./fillRow.js";
 import outlineBorder from "./outlineBorder.js";
 
-// Builds fill requests for the daily total row — full row PRIMARY centered, then label cell overridden to left-aligned.
+// Builds fill requests for the daily total row — full row PRIMARY_DARK centered, then label cell overridden to left-aligned.
 const formatDailyTotalRow = (
   sheetId: number,
   dailyTotalRowNumber: number,
@@ -16,8 +16,8 @@ const formatDailyTotalRow = (
       dailyTotalRowNumber,
       labelColumnIndex,
       totalColumnCount,
-      PRIMARY,
-      WHITE,
+      PRIMARY_DARK,
+      HEADER_TEXT,
       true,
       "CENTER",
     ),
@@ -26,8 +26,8 @@ const formatDailyTotalRow = (
       dailyTotalRowNumber,
       labelColumnIndex,
       labelColumnIndex + 1,
-      PRIMARY,
-      WHITE,
+      PRIMARY_DARK,
+      HEADER_TEXT,
       true,
       "LEFT",
     ),
@@ -41,7 +41,7 @@ const formatDailyTotalRow = (
         holidayColumnIndex,
         holidayColumnIndex + 1,
         ACCENT,
-        WHITE,
+        HEADER_TEXT,
         true,
         "CENTER",
       ),

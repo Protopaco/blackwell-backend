@@ -28,8 +28,10 @@ import applyTimesheetFormatting from "./applyTimesheetFormatting.js";
 import sortTimesheetTabs from "./sortTimesheetTabs.js";
 import {
   buildDividerRow,
-  buildEmployeeRow,
-  buildHeaderRow,
+  buildEmployeeNameRow,
+  buildPositionRow,
+  buildPayPeriodLabelRow,
+  buildPayPeriodValueRow,
   buildIncludeInPayrollRow,
   buildSignatureRow,
   buildSummaryRow,
@@ -125,14 +127,10 @@ const generateTimesheets = async (
     const allRows: unknown[][] = [];
     const weekManifests: WeekManifest[] = [];
 
-    allRows.push(buildHeaderRow(payPeriod.payPeriodName));
-    allRows.push(
-      buildEmployeeRow(
-        employee.firstName,
-        employee.lastName,
-        employee.position,
-      ),
-    );
+    allRows.push(buildEmployeeNameRow(employee.firstName, employee.lastName));
+    allRows.push(buildPositionRow(employee.position));
+    allRows.push(buildPayPeriodLabelRow());
+    allRows.push(buildPayPeriodValueRow(payPeriod.payPeriodName));
     allRows.push(buildDividerRow());
 
     let currentRow = allRows.length + 1; // 1-based; starts after the header section
@@ -162,7 +160,7 @@ const generateTimesheets = async (
     allRows.push(buildSignatureRow("Supervisor Signature:"));
 
     const includeInPayrollCell = { row: allRows.length + 1, column: 2 };
-    allRows.push(buildIncludeInPayrollRow("Supervisor approval: Include in payroll"));
+    allRows.push(buildIncludeInPayrollRow("Include in Payroll"));
 
     // Blank row between signatures and summary totals
     allRows.push(buildDividerRow());

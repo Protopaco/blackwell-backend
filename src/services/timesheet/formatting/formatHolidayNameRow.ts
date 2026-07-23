@@ -1,8 +1,8 @@
-import { PRIMARY, ACCENT, WHITE, MUTED } from "#utils/timesheetTheme.js";
+import { PRIMARY_DARK, ACCENT, HEADER_TEXT, MUTED } from "#utils/timesheetTheme.js";
 import fillRow from "./fillRow.js";
 import outlineBorder from "./outlineBorder.js";
 
-// Builds fill requests for the holiday name row: full row in PRIMARY, individual holiday cells overridden to ACCENT.
+// Builds fill requests for the holiday name row: full row in PRIMARY_DARK, individual holiday cells overridden to ACCENT.
 const formatHolidayNameRow = (
   sheetId: number,
   holidayNameRowNumber: number,
@@ -16,8 +16,8 @@ const formatHolidayNameRow = (
       holidayNameRowNumber,
       labelColumnIndex,
       totalColumnCount,
-      PRIMARY,
-      WHITE,
+      PRIMARY_DARK,
+      HEADER_TEXT,
       false,
       "CENTER",
     ),
@@ -31,7 +31,7 @@ const formatHolidayNameRow = (
         holidayColumnIndex,
         holidayColumnIndex + 1,
         ACCENT,
-        WHITE,
+        HEADER_TEXT,
         true,
         "CENTER",
       ),

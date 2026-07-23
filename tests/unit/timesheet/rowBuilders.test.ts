@@ -5,8 +5,10 @@ import { PayrollCategory } from '#models/PayrollCategory.js';
 import Holiday from '#models/Holiday.js';
 import {
   colLetter,
-  buildHeaderRow,
-  buildEmployeeRow,
+  buildPayPeriodLabelRow,
+  buildPayPeriodValueRow,
+  buildEmployeeNameRow,
+  buildPositionRow,
   buildDividerRow,
   buildHolidayRow,
   buildDayRow,
@@ -51,15 +53,27 @@ describe('colLetter', () => {
   it('converts 52 to BA', () => expect(colLetter(52)).toBe('BA'));
 });
 
-describe('buildHeaderRow', () => {
-  it('returns pay period label and name', () => {
-    expect(buildHeaderRow('6/1 - 6/14')).toEqual(['Pay Period:', '6/1 - 6/14']);
+describe('buildPayPeriodLabelRow', () => {
+  it('returns the pay period label', () => {
+    expect(buildPayPeriodLabelRow()).toEqual(['Pay Period:']);
   });
 });
 
-describe('buildEmployeeRow', () => {
-  it('combines first and last name, includes position', () => {
-    expect(buildEmployeeRow('Jane', 'Smith', 'Director')).toEqual(['Jane Smith', 'Director']);
+describe('buildPayPeriodValueRow', () => {
+  it('returns the pay period date range as a single-cell row', () => {
+    expect(buildPayPeriodValueRow('6/1 - 6/14')).toEqual(['6/1 - 6/14']);
+  });
+});
+
+describe('buildEmployeeNameRow', () => {
+  it('combines first and last name', () => {
+    expect(buildEmployeeNameRow('Jane', 'Smith')).toEqual(['Jane Smith']);
+  });
+});
+
+describe('buildPositionRow', () => {
+  it('returns the position as a single-cell row', () => {
+    expect(buildPositionRow('Director')).toEqual(['Director']);
   });
 });
 
@@ -132,14 +146,19 @@ describe('buildDateRow', () => {
 
 describe('buildActivityRow', () => {
   it('puts the activity name in the label column', () => {
-    const row = buildActivityRow(makeActivity('Programs'), 7);
+    const row = buildActivityRow(makeActivity('Programs'), 7, 9);
     expect(row[0]).toBe('Programs');
   });
 
   it('fills day columns with empty strings for data entry', () => {
-    const row = buildActivityRow(makeActivity('Programs'), 7);
-    expect(row).toHaveLength(8);
-    expect(row.slice(1).every((cell) => cell === '')).toBe(true);
+    const row = buildActivityRow(makeActivity('Programs'), 7, 9);
+    expect(row).toHaveLength(9);
+    expect(row.slice(1, 8).every((cell) => cell === '')).toBe(true);
+  });
+
+  it('sums the row\'s own day columns in the weekly total column', () => {
+    const row = buildActivityRow(makeActivity('Programs'), 7, 9);
+    expect(row[8]).toBe('=SUM(B9:H9)');
   });
 });
 

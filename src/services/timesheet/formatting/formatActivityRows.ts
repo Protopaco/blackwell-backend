@@ -1,7 +1,8 @@
 import {
   PRIMARY,
   WHITE,
-  BLACK,
+  TEXT,
+  HEADER_TEXT,
   MUTED,
   MUTED_ACCENT,
   MUTED_ACCENT_DARK,
@@ -31,7 +32,7 @@ const formatActivityRows = (
     const rowNumber = activityRow.row;
     const isEvenRow = rowAlternationIndex % 2 === 0;
 
-    // Step 1: entire row gets PRIMARY — establishes the label column background and white text.
+    // Step 1: entire row gets PRIMARY — establishes the label column background and header text.
     requests.push(
       fillRow(
         sheetId,
@@ -39,7 +40,7 @@ const formatActivityRows = (
         labelColumnIndex,
         totalColumnCount,
         PRIMARY,
-        WHITE,
+        HEADER_TEXT,
         false,
         "LEFT",
       ),
@@ -69,7 +70,7 @@ const formatActivityRows = (
         firstDayColumnIndex,
         totalColumnCount,
         isEvenRow ? WHITE : MUTED,
-        BLACK,
+        TEXT,
         false,
         "CENTER",
       ),
@@ -82,7 +83,7 @@ const formatActivityRows = (
         totalColumnCount - 1,
         totalColumnCount,
         PRIMARY,
-        WHITE,
+        HEADER_TEXT,
         false,
         "CENTER",
       ),
@@ -128,7 +129,7 @@ const formatActivityRows = (
           specialColumnIndex,
           specialColumnIndex + 1,
           isEvenRow ? evenHolidayColor : oddHolidayColor,
-          BLACK,
+          TEXT,
           false,
           "CENTER",
         ),

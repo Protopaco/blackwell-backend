@@ -14,13 +14,18 @@ const colLetter = (colIndex: number): string => {
   return result;
 };
 
-// Builds the top header row showing the pay period name.
-const buildHeaderRow = (payPeriodName: string): unknown[] =>
-  ['Pay Period:', payPeriodName];
+// Builds the top header row's label.
+const buildPayPeriodLabelRow = (): unknown[] => ['Pay Period:'];
 
-// Builds the employee name and position row below the header.
-const buildEmployeeRow = (firstName: string, lastName: string, position: string): unknown[] =>
-  [`${firstName} ${lastName}`, position];
+// Builds the row showing the pay period date range, directly below the label row.
+const buildPayPeriodValueRow = (payPeriodName: string): unknown[] => [payPeriodName];
+
+// Builds the employee name row below the header.
+const buildEmployeeNameRow = (firstName: string, lastName: string): unknown[] =>
+  [`${firstName} ${lastName}`];
+
+// Builds the employee position row directly below the name row.
+const buildPositionRow = (position: string): unknown[] => [position];
 
 // Returns an empty row used as a visual separator between sections.
 const buildDividerRow = (): unknown[] => [];
@@ -42,9 +47,17 @@ const buildDayRow = (dates: Date[]): unknown[] =>
 const buildDateRow = (dates: Date[], maxDays: number): unknown[] =>
   ['', ...dates.map(formatDateHeader), ...Array(maxDays - dates.length).fill(''), 'Total'];
 
-// Builds a blank data-entry row for a single activity with one empty cell per day.
-const buildActivityRow = (activity: Activity, numberOfDays: number): unknown[] =>
-  [activity.activityName, ...Array(numberOfDays).fill('')];
+// Builds a blank data-entry row for a single activity with one empty cell per day, plus a SUM formula
+// in the weekly total column covering that row's day cells. rowNumber is this row's own 1-based sheet row.
+const buildActivityRow = (activity: Activity, numberOfDays: number, rowNumber: number): unknown[] => {
+  const firstDayCol = colLetter(1);
+  const lastDayCol = colLetter(numberOfDays);
+  return [
+    activity.activityName,
+    ...Array(numberOfDays).fill(''),
+    `=SUM(${firstDayCol}${rowNumber}:${lastDayCol}${rowNumber})`,
+  ];
+};
 
 // Builds the daily total row with SUM formulas covering all hourly activity rows for each day.
 const buildDailyTotalRow = (
@@ -76,8 +89,10 @@ const buildIncludeInPayrollRow = (label: string): unknown[] => [label, true];
 
 export {
   colLetter,
-  buildHeaderRow,
-  buildEmployeeRow,
+  buildPayPeriodLabelRow,
+  buildPayPeriodValueRow,
+  buildEmployeeNameRow,
+  buildPositionRow,
   buildDividerRow,
   buildHolidayRow,
   buildDayRow,

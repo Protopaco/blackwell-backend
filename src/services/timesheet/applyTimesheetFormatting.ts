@@ -3,7 +3,6 @@ import applyFormattingRequests from '#db/adapter/applyFormattingRequests.js';
 import Holiday from "#models/Holiday.js";
 import TimesheetManifest from "#models/TimesheetManifest.js";
 import { logger } from "#utils/logger.js";
-import formatFreezeRows from "./formatting/formatFreezeRows.js";
 import formatColumnWidths from "./formatting/formatColumnWidths.js";
 import formatHeaderRows from "./formatting/formatHeaderRows.js";
 import formatWeekSection from "./formatting/formatWeekSection.js";
@@ -35,7 +34,6 @@ const applyTimesheetFormatting = async (
   const totalColumnCount = maxDays + 2;
 
   const requests: object[] = [
-    formatFreezeRows(sheetId),
     ...formatColumnWidths(sheetId, totalColumnCount),
     ...formatHeaderRows(sheetId),
     ...manifest.weeks.flatMap((week) =>
