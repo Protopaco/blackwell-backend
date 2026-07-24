@@ -4,7 +4,7 @@ import FundingSource from '#models/FundingSource.js';
 
 // Appends a new funding source row to the FundingSources tab.
 const appendFundingSource = async (
-  payrollConfigFileId: string,
+  workbookId: string,
   fundingSource: FundingSource,
 ): Promise<void> => {
   const row: Record<string, unknown> = {
@@ -13,7 +13,7 @@ const appendFundingSource = async (
     FundingSourceCode: fundingSource.fundingSourceCode ?? '',
   };
 
-  await appendRow(payrollConfigFileId, FUNDING_SOURCES_TAB, FUNDING_SOURCES_HEADERS, row);
+  await appendRow(workbookId, FUNDING_SOURCES_TAB, FUNDING_SOURCES_HEADERS, row);
 };
 
 export default appendFundingSource;

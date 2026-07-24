@@ -4,7 +4,7 @@ import Activity from '#models/Activity.js';
 import flattenActivityFundingSources from '#db/activity/flattenActivityFundingSources.js';
 
 // Appends a new activity row to the Activities tab.
-const appendActivity = async (payrollConfigFileId: string, activity: Activity): Promise<void> => {
+const appendActivity = async (workbookId: string, activity: Activity): Promise<void> => {
   const row: Record<string, unknown> = {
     ActivityId: activity.activityId,
     ActivityName: activity.activityName,
@@ -15,7 +15,7 @@ const appendActivity = async (payrollConfigFileId: string, activity: Activity): 
     FlatRateAmount: activity.flatRateAmount,
   };
 
-  await appendRow(payrollConfigFileId, ACTIVITIES_TAB, ACTIVITIES_HEADERS, row);
+  await appendRow(workbookId, ACTIVITIES_TAB, ACTIVITIES_HEADERS, row);
 };
 
 export default appendActivity;

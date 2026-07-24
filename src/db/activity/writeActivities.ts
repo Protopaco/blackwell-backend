@@ -6,8 +6,8 @@ import Activity from '#models/Activity.js';
 import { NotFoundError } from '#utils/errors.js';
 
 // Overwrites all activity rows, updating the one matching the given activity.
-const writeActivities = async (payrollConfigFileId: string, updatedActivity: Activity): Promise<void> => {
-  const activities = await readActivities(payrollConfigFileId);
+const writeActivities = async (workbookId: string, updatedActivity: Activity): Promise<void> => {
+  const activities = await readActivities(workbookId);
 
   const index = activities.findIndex((activity) => activity.activityId === updatedActivity.activityId);
   if (index === -1) throw new NotFoundError(`Activity not found: ${updatedActivity.activityId}`);
@@ -16,7 +16,7 @@ const writeActivities = async (payrollConfigFileId: string, updatedActivity: Act
 
   const rows = activities.map(mapActivityRow);
 
-  await overwriteTabRows(payrollConfigFileId, ACTIVITIES_TAB, ACTIVITIES_HEADERS, rows);
+  await overwriteTabRows(workbookId, ACTIVITIES_TAB, ACTIVITIES_HEADERS, rows);
 };
 
 export default writeActivities;

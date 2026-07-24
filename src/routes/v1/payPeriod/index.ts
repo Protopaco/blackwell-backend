@@ -6,6 +6,11 @@ import postPayPeriodRouter from './postPayPeriod.js';
 import patchClosePayPeriodRouter from './patchClosePayPeriod.js';
 import postPayPeriodEmployeeRouter from './postPayPeriodEmployee.js';
 import deletePayPeriodEmployeeRouter from './deletePayPeriodEmployee.js';
+import postPayPeriodActivityRouter from './postPayPeriodActivity.js';
+import deletePayPeriodActivityRouter from './deletePayPeriodActivity.js';
+import putPayPeriodActivityRouter from './putPayPeriodActivity.js';
+import postPayPeriodFundingSourceRouter from './postPayPeriodFundingSource.js';
+import deletePayPeriodFundingSourceRouter from './deletePayPeriodFundingSource.js';
 
 const router = Router();
 
@@ -19,5 +24,10 @@ router.use(postPayPeriodRouter);
 router.use(patchClosePayPeriodRouter);
 router.use(postPayPeriodEmployeeRouter);
 router.use(deletePayPeriodEmployeeRouter);
+router.use(postPayPeriodActivityRouter);
+router.use(deletePayPeriodActivityRouter);
+router.use(putPayPeriodActivityRouter);
+router.use(postPayPeriodFundingSourceRouter);
+router.use(deletePayPeriodFundingSourceRouter);
 
 export default router;
