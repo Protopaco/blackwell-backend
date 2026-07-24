@@ -7,10 +7,10 @@ import { NotFoundError } from '#utils/errors.js';
 
 // Overwrites all holiday rows, updating the one matching the given holiday.
 const writeHolidays = async (
-  payrollConfigFileId: string,
+  workbookId: string,
   updatedHoliday: Holiday,
 ): Promise<void> => {
-  const holidays = await readHolidays(payrollConfigFileId);
+  const holidays = await readHolidays(workbookId);
 
   const index = holidays.findIndex((holiday) => holiday.holidayId === updatedHoliday.holidayId);
   if (index === -1) throw new NotFoundError(`Holiday not found: ${updatedHoliday.holidayId}`);
@@ -19,7 +19,7 @@ const writeHolidays = async (
 
   const rows = holidays.map(mapHolidayRow);
 
-  await overwriteTabRows(payrollConfigFileId, HOLIDAYS_TAB, HOLIDAYS_HEADERS, rows);
+  await overwriteTabRows(workbookId, HOLIDAYS_TAB, HOLIDAYS_HEADERS, rows);
 };
 
 export default writeHolidays;

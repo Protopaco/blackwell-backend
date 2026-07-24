@@ -1,10 +1,10 @@
 import getClientAndPayPeriod from '#services/payPeriod/getClientAndPayPeriod.js';
+import assertPayPeriodNotLocked from '#services/payPeriod/assertPayPeriodNotLocked.js';
 import readActivityById from '#db/activity/readActivityById.js';
 import appendActivity from '#db/activity/appendActivity.js';
 import readFundingSources from '#db/fundingSource/readFundingSources.js';
 import validateActivityFundingSources from '#services/activity/validateActivityFundingSources.js';
 import payPeriodConfigSnapshotCache from '#utils/caches/payPeriodConfigSnapshotCache.js';
-import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import Guid from '#models/Guid.js';
 import { logger } from '#utils/logger.js';
 import { NotFoundError, UnprocessableError } from '#utils/errors.js';
@@ -22,11 +22,7 @@ const addActivityToPayPeriod = async (
 
   const { client, payPeriod } = await getClientAndPayPeriod(clientId, payPeriodId);
 
-  if (payPeriod.status !== PayPeriodStatus.Pending) {
-    throw new UnprocessableError(
-      'Cannot add an activity to this pay period — a timesheet has already been generated.',
-    );
-  }
+  assertPayPeriodNotLocked(payPeriod, 'add an activity to this pay period');
 
   const sourceActivity = await readActivityById(client.payrollConfigFileId, activityId);
   if (!sourceActivity) throw new NotFoundError(`Activity not found: ${activityId}`);

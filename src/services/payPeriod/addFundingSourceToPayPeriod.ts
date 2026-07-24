@@ -1,8 +1,8 @@
 import getClientAndPayPeriod from '#services/payPeriod/getClientAndPayPeriod.js';
+import assertPayPeriodNotLocked from '#services/payPeriod/assertPayPeriodNotLocked.js';
 import readFundingSourceById from '#db/fundingSource/readFundingSourceById.js';
 import appendFundingSource from '#db/fundingSource/appendFundingSource.js';
 import payPeriodConfigSnapshotCache from '#utils/caches/payPeriodConfigSnapshotCache.js';
-import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import Guid from '#models/Guid.js';
 import { logger } from '#utils/logger.js';
 import { NotFoundError, UnprocessableError } from '#utils/errors.js';
@@ -20,11 +20,7 @@ const addFundingSourceToPayPeriod = async (
 
   const { client, payPeriod } = await getClientAndPayPeriod(clientId, payPeriodId);
 
-  if (payPeriod.status !== PayPeriodStatus.Pending) {
-    throw new UnprocessableError(
-      'Cannot add a funding source to this pay period — a timesheet has already been generated.',
-    );
-  }
+  assertPayPeriodNotLocked(payPeriod, 'add a funding source to this pay period');
 
   const sourceFundingSource = await readFundingSourceById(client.payrollConfigFileId, fundingSourceId);
   if (!sourceFundingSource) throw new NotFoundError(`Funding source not found: ${fundingSourceId}`);

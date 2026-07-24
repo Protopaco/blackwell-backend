@@ -11,6 +11,7 @@ import deletePayPeriodActivityRouter from './deletePayPeriodActivity.js';
 import putPayPeriodActivityRouter from './putPayPeriodActivity.js';
 import postPayPeriodFundingSourceRouter from './postPayPeriodFundingSource.js';
 import deletePayPeriodFundingSourceRouter from './deletePayPeriodFundingSource.js';
+import postPayPeriodHolidaySyncRouter from './postPayPeriodHolidaySync.js';
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.use(deletePayPeriodActivityRouter);
 router.use(putPayPeriodActivityRouter);
 router.use(postPayPeriodFundingSourceRouter);
 router.use(deletePayPeriodFundingSourceRouter);
+router.use(postPayPeriodHolidaySyncRouter);
 
 export default router;

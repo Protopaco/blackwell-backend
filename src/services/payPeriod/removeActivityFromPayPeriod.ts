@@ -1,11 +1,11 @@
 import getPayPeriodById from '#services/payPeriod/getPayPeriodById.js';
+import assertPayPeriodNotLocked from '#services/payPeriod/assertPayPeriodNotLocked.js';
 import readActivityById from '#db/activity/readActivityById.js';
 import deleteActivityRow from '#db/activity/deleteActivityRow.js';
 import payPeriodConfigSnapshotCache from '#utils/caches/payPeriodConfigSnapshotCache.js';
-import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import Guid from '#models/Guid.js';
 import { logger } from '#utils/logger.js';
-import { NotFoundError, UnprocessableError } from '#utils/errors.js';
+import { NotFoundError } from '#utils/errors.js';
 
 // Removes an activity from a pay period's snapshot (hard delete — Activity has no soft-delete status,
 // unlike Employee). Blocked once the first timesheet has been generated for this pay period (status !==
@@ -19,11 +19,7 @@ const removeActivityFromPayPeriod = async (
 
   const payPeriod = await getPayPeriodById(clientId, payPeriodId);
 
-  if (payPeriod.status !== PayPeriodStatus.Pending) {
-    throw new UnprocessableError(
-      'Cannot remove an activity from this pay period — a timesheet has already been generated.',
-    );
-  }
+  assertPayPeriodNotLocked(payPeriod, 'remove an activity from this pay period');
 
   const snapshotActivity = await readActivityById(payPeriod.payrollReportFileId, activityId);
   if (!snapshotActivity) throw new NotFoundError(`Activity not found on this pay period: ${activityId}`);

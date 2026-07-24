@@ -1,4 +1,5 @@
 import getPayPeriodById from '#services/payPeriod/getPayPeriodById.js';
+import assertPayPeriodNotLocked from '#services/payPeriod/assertPayPeriodNotLocked.js';
 import readActivityById from '#db/activity/readActivityById.js';
 import writeActivities from '#db/activity/writeActivities.js';
 import readFundingSources from '#db/fundingSource/readFundingSources.js';
@@ -41,10 +42,8 @@ const updateActivityOnPayPeriod = async (
     existingActivity.payRate !== updatedActivity.payRate ||
     existingActivity.flatRateAmount !== updatedActivity.flatRateAmount;
 
-  if (structuralFieldsChanged && payPeriod.status !== PayPeriodStatus.Pending) {
-    throw new UnprocessableError(
-      'Cannot change activity name, category, pay rate, or tracking on this pay period — a timesheet has already been generated.',
-    );
+  if (structuralFieldsChanged) {
+    assertPayPeriodNotLocked(payPeriod, 'change activity name, category, pay rate, or tracking on this pay period');
   }
 
   const fundingSourcesChanged =

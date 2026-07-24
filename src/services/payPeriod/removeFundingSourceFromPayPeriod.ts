@@ -1,9 +1,9 @@
 import getPayPeriodById from '#services/payPeriod/getPayPeriodById.js';
+import assertPayPeriodNotLocked from '#services/payPeriod/assertPayPeriodNotLocked.js';
 import readFundingSourceById from '#db/fundingSource/readFundingSourceById.js';
 import deleteFundingSourceRow from '#db/fundingSource/deleteFundingSourceRow.js';
 import readActivities from '#db/activity/readActivities.js';
 import payPeriodConfigSnapshotCache from '#utils/caches/payPeriodConfigSnapshotCache.js';
-import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import Guid from '#models/Guid.js';
 import { logger } from '#utils/logger.js';
 import { NotFoundError, UnprocessableError } from '#utils/errors.js';
@@ -21,11 +21,7 @@ const removeFundingSourceFromPayPeriod = async (
 
   const payPeriod = await getPayPeriodById(clientId, payPeriodId);
 
-  if (payPeriod.status !== PayPeriodStatus.Pending) {
-    throw new UnprocessableError(
-      'Cannot remove a funding source from this pay period — a timesheet has already been generated.',
-    );
-  }
+  assertPayPeriodNotLocked(payPeriod, 'remove a funding source from this pay period');
 
   const snapshotFundingSource = await readFundingSourceById(payPeriod.payrollReportFileId, fundingSourceId);
   if (!snapshotFundingSource) {
