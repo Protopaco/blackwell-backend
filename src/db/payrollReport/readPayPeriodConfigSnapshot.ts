@@ -5,6 +5,7 @@ import mapActivity from '#db/activity/mapActivity.js';
 import mapFundingSource from '#db/fundingSource/mapFundingSource.js';
 import mapHoliday from '#db/holiday/mapHoliday.js';
 import mapSettings from '#db/settings/mapSettings.js';
+import { EmployeeStatus } from '#models/EmployeeStatus.js';
 import {
   EMPLOYEES_TAB,
   ACTIVITIES_TAB,
@@ -25,7 +26,8 @@ const TAB_NAMES = {
 
 // Loads a pay period's config snapshot tabs (employees, activities, fundingSources, holidays, settings) in
 // one batched call and caches the result for 24 hours. Used by generateTimesheets, generatePayrollReport,
-// and getTimesheetStatuses instead of reading client-wide PayrollConfig live.
+// and getTimesheetStatuses instead of reading client-wide PayrollConfig live. Employees are filtered to
+// Active — removeEmployeeFromPayPeriod soft-deletes by flipping status rather than deleting the row.
 const readPayPeriodConfigSnapshot = async (
   reportFileId: string,
 ): Promise<PayPeriodConfigSnapshot> => {
@@ -43,7 +45,7 @@ const readPayPeriodConfigSnapshot = async (
   if (!settings) throw new Error('Settings not found in pay period config snapshot');
 
   const snapshot: PayPeriodConfigSnapshot = {
-    employees: employeeRows.map(mapEmployee),
+    employees: employeeRows.map(mapEmployee).filter((employee) => employee.status === EmployeeStatus.Active),
     activities: activityRows.map(mapActivity),
     fundingSources: fundingSourceRows.map(mapFundingSource),
     holidays: holidayRows.map(mapHoliday),

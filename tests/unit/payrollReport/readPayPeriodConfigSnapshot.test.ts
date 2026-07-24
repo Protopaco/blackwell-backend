@@ -34,6 +34,23 @@ describe('readPayPeriodConfigSnapshot', () => {
     expect(snapshot.settings).toEqual(expect.objectContaining({ timeInputMethod: 'ClockInOut' }));
   });
 
+  it('filters out Inactive employees (soft-removed via removeEmployeeFromPayPeriod)', async () => {
+    vi.mocked(readTabs).mockResolvedValue([
+      [
+        { EmployeeId: 'e1', FirstName: 'Jane', LastName: 'Smith', Status: 'Active', TimesheetFileId: 'file-1' },
+        { EmployeeId: 'e2', FirstName: 'John', LastName: 'Doe', Status: 'Inactive', TimesheetFileId: 'file-2' },
+      ],
+      [],
+      [],
+      [{ TimesheetTemplate: 'ClockInOut', PayPeriodInterval: 'Bi-Weekly', PayPeriodStartDate: '2026-01-05' }],
+      [],
+    ]);
+
+    const snapshot = await readPayPeriodConfigSnapshot('report-1');
+
+    expect(snapshot.employees).toEqual([expect.objectContaining({ employeeId: 'e1' })]);
+  });
+
   it('returns the cached snapshot without calling readTabs when present', async () => {
     const cached = { employees: [], activities: [], fundingSources: [], holidays: [], settings: { timeInputMethod: 'ClockInOut', payPeriodInterval: 'Bi-Weekly', payPeriodStartDate: '2026-01-05' } };
     vi.mocked(payPeriodConfigSnapshotCache.get).mockReturnValue(cached as any);

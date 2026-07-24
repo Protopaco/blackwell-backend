@@ -4,6 +4,8 @@ import getNextPayPeriodRouter from './getNextPayPeriod.js';
 import getPayPeriodByIdRouter from './getPayPeriodById.js';
 import postPayPeriodRouter from './postPayPeriod.js';
 import patchClosePayPeriodRouter from './patchClosePayPeriod.js';
+import postPayPeriodEmployeeRouter from './postPayPeriodEmployee.js';
+import deletePayPeriodEmployeeRouter from './deletePayPeriodEmployee.js';
 
 const router = Router();
 
@@ -15,5 +17,7 @@ router.use(getPayPeriodsRouter);
 router.use(getPayPeriodByIdRouter);
 router.use(postPayPeriodRouter);
 router.use(patchClosePayPeriodRouter);
+router.use(postPayPeriodEmployeeRouter);
+router.use(deletePayPeriodEmployeeRouter);
 
 export default router;
