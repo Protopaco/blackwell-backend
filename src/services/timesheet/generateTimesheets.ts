@@ -8,10 +8,9 @@ import getManifest from "#db/manifest/readManifest.js";
 import getPayPeriods from "#db/payPeriod/readPayPeriods.js";
 import writePayPeriod from "#db/payPeriod/writePayPeriod.js";
 import getClientAndPayPeriod from "#services/payPeriod/getClientAndPayPeriod.js";
-import getPayrollConfig from "#db/payrollConfig/readPayrollConfig.js";
+import readPayPeriodConfigSnapshot from "#db/payrollReport/readPayPeriodConfigSnapshot.js";
 import { UnprocessableError } from "#utils/errors.js";
 import Activity from "#models/Activity.js";
-import { EmployeeStatus } from "#models/EmployeeStatus.js";
 import Guid from "#models/Guid.js";
 import { PayRate, isFlatRate } from "#models/PayRate.js";
 import { PayPeriodStatus } from "#models/PayPeriodStatus.js";
@@ -62,11 +61,9 @@ const generateTimesheets = async (
 ): Promise<void> => {
   const { client, payPeriod } = await getClientAndPayPeriod(clientId, payPeriodId);
 
-  const payrollConfig = await getPayrollConfig(client.payrollConfigFileId);
+  const payrollConfig = await readPayPeriodConfigSnapshot(payPeriod.payrollReportFileId);
 
-  const activeEmployees = payrollConfig.employees.filter(
-    (employee) => employee.status === EmployeeStatus.Active,
-  );
+  const activeEmployees = payrollConfig.employees;
 
   // A missing timesheetFileId at generation time is a data error, not something generation should
   // silently patch over — fix it via Employee update (which requires a timesheetFolderId at creation
