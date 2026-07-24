@@ -1,6 +1,6 @@
 import overwriteTabRows from '#db/adapter/overwriteTabRows.js';
 import readActivities from '#db/activity/readActivities.js';
-import flattenActivityFundingSources from '#db/activity/flattenActivityFundingSources.js';
+import mapActivityRow from '#db/activity/mapActivityRow.js';
 import { ACTIVITIES_TAB, ACTIVITIES_HEADERS } from '#config/constants.js';
 import Activity from '#models/Activity.js';
 import { NotFoundError } from '#utils/errors.js';
@@ -14,15 +14,7 @@ const writeActivities = async (payrollConfigFileId: string, updatedActivity: Act
 
   activities[index] = updatedActivity;
 
-  const rows = activities.map((activity) => ({
-    ActivityId: activity.activityId,
-    ActivityName: activity.activityName,
-    TrackSeparately: activity.trackSeparately,
-    PayrollCategory: activity.payrollCategory,
-    ...flattenActivityFundingSources(activity.fundingSources),
-    PayRate: activity.payRate,
-    FlatRateAmount: activity.flatRateAmount,
-  }));
+  const rows = activities.map(mapActivityRow);
 
   await overwriteTabRows(payrollConfigFileId, ACTIVITIES_TAB, ACTIVITIES_HEADERS, rows);
 };

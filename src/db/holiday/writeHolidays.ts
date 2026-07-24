@@ -1,5 +1,6 @@
 import overwriteTabRows from '#db/adapter/overwriteTabRows.js';
 import readHolidays from '#db/holiday/readHolidays.js';
+import mapHolidayRow from '#db/holiday/mapHolidayRow.js';
 import { HOLIDAYS_TAB, HOLIDAYS_HEADERS } from '#config/constants.js';
 import Holiday from '#models/Holiday.js';
 import { NotFoundError } from '#utils/errors.js';
@@ -16,11 +17,7 @@ const writeHolidays = async (
 
   holidays[index] = updatedHoliday;
 
-  const rows = holidays.map((holiday) => ({
-    HolidayId: holiday.holidayId,
-    HolidayName: holiday.holidayName,
-    HolidayDate: holiday.holidayDate,
-  }));
+  const rows = holidays.map(mapHolidayRow);
 
   await overwriteTabRows(payrollConfigFileId, HOLIDAYS_TAB, HOLIDAYS_HEADERS, rows);
 };

@@ -1,5 +1,6 @@
 import overwriteTabRows from '#db/adapter/overwriteTabRows.js';
 import readFundingSources from '#db/fundingSource/readFundingSources.js';
+import mapFundingSourceRow from '#db/fundingSource/mapFundingSourceRow.js';
 import { FUNDING_SOURCES_TAB, FUNDING_SOURCES_HEADERS } from '#config/constants.js';
 import FundingSource from '#models/FundingSource.js';
 import { NotFoundError } from '#utils/errors.js';
@@ -19,11 +20,7 @@ const writeFundingSources = async (
 
   fundingSources[index] = updatedFundingSource;
 
-  const rows = fundingSources.map((fundingSource) => ({
-    FundingSourceId: fundingSource.fundingSourceId,
-    FundingSourceName: fundingSource.fundingSourceName,
-    FundingSourceCode: fundingSource.fundingSourceCode ?? '',
-  }));
+  const rows = fundingSources.map(mapFundingSourceRow);
 
   await overwriteTabRows(payrollConfigFileId, FUNDING_SOURCES_TAB, FUNDING_SOURCES_HEADERS, rows);
 };

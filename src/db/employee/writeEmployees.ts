@@ -1,5 +1,6 @@
 import overwriteTabRows from '#db/adapter/overwriteTabRows.js';
 import readEmployees from '#db/employee/readEmployees.js';
+import mapEmployeeRow from '#db/employee/mapEmployeeRow.js';
 import { EMPLOYEES_TAB, EMPLOYEES_HEADERS } from '#config/constants.js';
 import Employee from '#models/Employee.js';
 import { NotFoundError } from '#utils/errors.js';
@@ -13,18 +14,7 @@ const writeEmployees = async (payrollConfigFileId: string, updatedEmployee: Empl
 
   employees[index] = updatedEmployee;
 
-  const rows = employees.map((employee) => ({
-    EmployeeId: employee.employeeId,
-    FirstName: employee.firstName,
-    LastName: employee.lastName,
-    Position: employee.position,
-    HourlyPayRate1: employee.hourlyPayRate1,
-    HourlyPayRate2: employee.hourlyPayRate2,
-    HolidayPayRate: employee.holidayPayRate,
-    Email: employee.email,
-    Status: employee.status,
-    TimesheetFileId: employee.timesheetFileId,
-  }));
+  const rows = employees.map(mapEmployeeRow);
 
   await overwriteTabRows(payrollConfigFileId, EMPLOYEES_TAB, EMPLOYEES_HEADERS, rows);
 };
