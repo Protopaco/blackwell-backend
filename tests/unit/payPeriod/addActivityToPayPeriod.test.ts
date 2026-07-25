@@ -4,7 +4,7 @@ import PayPeriod from '#models/PayPeriod.js';
 import Activity from '#models/Activity.js';
 import FundingSource from '#models/FundingSource.js';
 
-const { client, pendingPayPeriod, openPayPeriod, sourceActivity, snapshotFundingSources } = vi.hoisted(() => ({
+const { client, pendingPayPeriod, openPayPeriod, sourceActivity, snapshotFundingSources, clientFundingSources } = vi.hoisted(() => ({
   client: {
     clientId: 'c1',
     clientName: 'Acme Co',
@@ -46,18 +46,27 @@ const { client, pendingPayPeriod, openPayPeriod, sourceActivity, snapshotFunding
   snapshotFundingSources: [
     { fundingSourceId: 'fs1', fundingSourceName: 'Federal Grant' },
   ] as FundingSource[],
+  clientFundingSources: [
+    { fundingSourceId: 'fs1', fundingSourceName: 'Federal Grant' },
+    { fundingSourceId: 'fs2', fundingSourceName: 'State Grant' },
+  ] as FundingSource[],
 }));
 
 vi.mock('#services/payPeriod/getClientAndPayPeriod.js', () => ({ default: vi.fn() }));
 vi.mock('#db/activity/readActivityById.js', () => ({ default: vi.fn() }));
 vi.mock('#db/activity/appendActivity.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
-vi.mock('#db/fundingSource/readFundingSources.js', () => ({ default: vi.fn().mockResolvedValue(snapshotFundingSources) }));
+vi.mock('#db/fundingSource/readFundingSources.js', () => ({
+  default: vi.fn((workbookId: string) => Promise.resolve(workbookId === 'config-1' ? clientFundingSources : snapshotFundingSources)),
+}));
+vi.mock('#db/fundingSource/appendFundingSource.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#utils/caches/payPeriodConfigSnapshotCache.js', () => ({ default: { delete: vi.fn() } }));
 
 import addActivityToPayPeriod from '#services/payPeriod/addActivityToPayPeriod.js';
 import getClientAndPayPeriod from '#services/payPeriod/getClientAndPayPeriod.js';
 import readActivityById from '#db/activity/readActivityById.js';
 import appendActivity from '#db/activity/appendActivity.js';
+import readFundingSources from '#db/fundingSource/readFundingSources.js';
+import appendFundingSource from '#db/fundingSource/appendFundingSource.js';
 import payPeriodConfigSnapshotCache from '#utils/caches/payPeriodConfigSnapshotCache.js';
 
 describe('addActivityToPayPeriod', () => {
@@ -101,7 +110,7 @@ describe('addActivityToPayPeriod', () => {
     await expect(addActivityToPayPeriod('c1', 'p1', 'unknown')).rejects.toThrow('Activity not found: unknown');
   });
 
-  it('throws when a referenced funding source is missing from the snapshot', async () => {
+  it('auto-adds a referenced funding source that is missing from the snapshot, then appends the activity', async () => {
     vi.mocked(readActivityById)
       .mockResolvedValueOnce({
         ...sourceActivity,
@@ -109,7 +118,35 @@ describe('addActivityToPayPeriod', () => {
       })
       .mockResolvedValueOnce(null);
 
-    await expect(addActivityToPayPeriod('c1', 'p1', 'a1')).rejects.toThrow('Activity funding source not found');
+    await addActivityToPayPeriod('c1', 'p1', 'a1');
+
+    expect(readFundingSources).toHaveBeenCalledWith('report-1');
+    expect(readFundingSources).toHaveBeenCalledWith('config-1');
+    expect(appendFundingSource).toHaveBeenCalledWith('report-1', { fundingSourceId: 'fs2', fundingSourceName: 'State Grant' });
+    expect(appendActivity).toHaveBeenCalled();
+  });
+
+  it('does not re-add a funding source already present in the snapshot', async () => {
+    vi.mocked(readActivityById)
+      .mockResolvedValueOnce(sourceActivity) // fundingSources: [{ fundingSourceName: 'Federal Grant' }]
+      .mockResolvedValueOnce(null);
+
+    await addActivityToPayPeriod('c1', 'p1', 'a1');
+
+    expect(appendFundingSource).not.toHaveBeenCalled();
+    expect(appendActivity).toHaveBeenCalled();
+  });
+
+  it('throws when a referenced funding source does not exist in PayrollConfig at all', async () => {
+    vi.mocked(readActivityById)
+      .mockResolvedValueOnce({
+        ...sourceActivity,
+        fundingSources: [{ fundingSourceName: 'Unknown Source', percentage: 100 }],
+      })
+      .mockResolvedValueOnce(null);
+
+    await expect(addActivityToPayPeriod('c1', 'p1', 'a1')).rejects.toThrow('Activity funding source not found: Unknown Source');
+    expect(appendFundingSource).not.toHaveBeenCalled();
     expect(appendActivity).not.toHaveBeenCalled();
   });
 });
