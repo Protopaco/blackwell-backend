@@ -526,6 +526,38 @@
           }
         }
       },
+      "PayPeriodConfigSnapshot": {
+        "type": "object",
+        "properties": {
+          "employees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Employee"
+            }
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            }
+          },
+          "fundingSources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FundingSource"
+            }
+          },
+          "holidays": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Holiday"
+            }
+          },
+          "settings": {
+            "$ref": "#/components/schemas/Settings"
+          }
+        }
+      },
       "Settings": {
         "type": "object",
         "properties": {
@@ -1589,6 +1621,376 @@
         }
       }
     },
+    "/api/v1/payPeriod/{clientId}/{payPeriodId}/activity/{activityId}": {
+      "put": {
+        "operationId": "v1UpdateActivityOnPayPeriod",
+        "summary": "Update an activity on a pay period",
+        "description": "activityId is taken from the path — ignored if present in the request body. activityName, trackSeparately, payrollCategory, payRate, and flatRateAmount are locked once the first timesheet has been generated for this pay period. fundingSources percentages stay editable through Processed status and lock once the allocation report has been generated (Allocated). fundingSources cannot have more than 3 entries, and the last entry's percentage is always overwritten with the remainder needed to make the total exactly 100.\n",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "activityId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Activity"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Activity updated on pay period"
+          },
+          "404": {
+            "description": "Client, pay period, or activity not found on this pay period"
+          },
+          "422": {
+            "description": "More than 3 funding sources were provided, a referenced funding source is missing from the snapshot, or the edit is locked given the pay period's current status"
+          }
+        }
+      },
+      "post": {
+        "operationId": "v1AddActivityToPayPeriod",
+        "summary": "Add an activity to a pay period",
+        "description": "Copies the activity's current row from the client's PayrollConfig into this pay period's report workbook snapshot. Blocked once the first timesheet has been generated for this pay period. The activity's funding sources must already exist on this pay period's snapshot.\n",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "activityId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Activity added to pay period"
+          },
+          "404": {
+            "description": "Client, pay period, or activity not found"
+          },
+          "422": {
+            "description": "A timesheet has already been generated, the activity is already on this pay period, or a referenced funding source is missing from the snapshot"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "v1RemoveActivityFromPayPeriod",
+        "summary": "Remove an activity from a pay period",
+        "description": "Deletes the activity from this pay period's snapshot. Blocked once the first timesheet has been generated for this pay period.\n",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "activityId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity removed from pay period"
+          },
+          "404": {
+            "description": "Client, pay period, or activity not found on this pay period"
+          },
+          "422": {
+            "description": "A timesheet has already been generated for this pay period"
+          }
+        }
+      }
+    },
+    "/api/v1/payPeriod/{clientId}/{payPeriodId}/holiday/sync": {
+      "post": {
+        "operationId": "v1SyncHolidaysOnPayPeriod",
+        "summary": "Sync a pay period's holidays from PayrollConfig",
+        "description": "Recomputes this pay period's snapshot Holidays tab from the client's current PayrollConfig, keeping only holidays whose date falls within this pay period's date range. Fully replaces the snapshot's Holidays list — a holiday deleted or moved out of range in PayrollConfig drops off the snapshot. Blocked once the first timesheet has been generated for this pay period.\n",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Holidays synced on pay period"
+          },
+          "404": {
+            "description": "Client or pay period not found"
+          },
+          "422": {
+            "description": "A timesheet has already been generated for this pay period"
+          }
+        }
+      }
+    },
+    "/api/v1/payPeriod/{clientId}/{payPeriodId}/fundingSource/{fundingSourceId}": {
+      "post": {
+        "operationId": "v1AddFundingSourceToPayPeriod",
+        "summary": "Add a funding source to a pay period",
+        "description": "Copies the funding source's current row from the client's PayrollConfig into this pay period's report workbook snapshot. Blocked once the first timesheet has been generated for this pay period.\n",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "fundingSourceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Funding source added to pay period"
+          },
+          "404": {
+            "description": "Client, pay period, or funding source not found"
+          },
+          "422": {
+            "description": "A timesheet has already been generated, or the funding source is already on this pay period"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "v1RemoveFundingSourceFromPayPeriod",
+        "summary": "Remove a funding source from a pay period",
+        "description": "Deletes the funding source from this pay period's snapshot. Blocked once the first timesheet has been generated for this pay period, or while any snapshot activity still references it.\n",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "fundingSourceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Funding source removed from pay period"
+          },
+          "404": {
+            "description": "Client, pay period, or funding source not found on this pay period"
+          },
+          "422": {
+            "description": "A timesheet has already been generated for this pay period, or the funding source is still referenced by an activity on this pay period"
+          }
+        }
+      }
+    },
+    "/api/v1/payPeriod/{clientId}/{payPeriodId}/employee/{employeeId}": {
+      "post": {
+        "operationId": "v1AddEmployeeToPayPeriod",
+        "summary": "Add an employee to a pay period",
+        "description": "Copies the employee's current row from the client's PayrollConfig into this pay period's report workbook snapshot. The employee must exist and be Active in PayrollConfig. If the employee was previously removed from this pay period, their snapshot row is refreshed and reactivated.\n",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "employeeId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Employee added to pay period"
+          },
+          "404": {
+            "description": "Client, pay period, or employee not found"
+          },
+          "422": {
+            "description": "Employee is not Active in PayrollConfig, or is already on this pay period"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "v1RemoveEmployeeFromPayPeriod",
+        "summary": "Remove an employee from a pay period",
+        "description": "Soft-removes the employee from this pay period's snapshot (flips their snapshot row to Inactive — no hard delete). Blocked once a timesheet has already been generated for that employee this pay period; use the includeInPayroll checkbox on their timesheet instead.\n",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "employeeId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Employee removed from pay period"
+          },
+          "404": {
+            "description": "Client, pay period, or employee not found on this pay period"
+          },
+          "422": {
+            "description": "A timesheet has already been generated for this employee this pay period"
+          }
+        }
+      }
+    },
     "/api/v1/payPeriod/{clientId}": {
       "post": {
         "operationId": "v1CreatePayPeriod",
@@ -1674,6 +2076,49 @@
         "responses": {
           "200": {
             "description": "Pay period closed"
+          }
+        }
+      }
+    },
+    "/api/v1/payPeriod/{clientId}/{payPeriodId}/config": {
+      "get": {
+        "operationId": "v1GetPayPeriodConfig",
+        "summary": "Get a pay period's full config snapshot (employees, activities, funding sources, holidays, settings)",
+        "description": "One batched read across the pay period's snapshot tabs, backing the Employees/Activities/ FundingSources/Holidays tabs on the Pay Period page.\n",
+        "tags": [
+          "PayPeriod"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "payPeriodId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pay period config snapshot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPeriodConfigSnapshot"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client or pay period not found"
           }
         }
       }
