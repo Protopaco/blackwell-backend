@@ -1,9 +1,8 @@
 import getPayPeriodById from '#services/payPeriod/getPayPeriodById.js';
-import getEmployees from '#services/employee/getEmployees.js';
 import readTimesheetDetail from '#services/timesheet/readTimesheetDetail.js';
 import deriveTimesheetStatus from '#services/timesheet/deriveTimesheetStatus.js';
 import readCurrentHoursTab from '#db/payrollReport/readCurrentHoursTab.js';
-import { EmployeeStatus } from '#models/EmployeeStatus.js';
+import readPayPeriodConfigSnapshot from '#db/payrollReport/readPayPeriodConfigSnapshot.js';
 import EmployeeTimesheetStatus from '#models/EmployeeTimesheetStatus.js';
 import { logger } from '#utils/logger.js';
 
@@ -17,8 +16,8 @@ const getTimesheetStatuses = async (
 
   const payPeriod = await getPayPeriodById(clientId, payPeriodId);
 
-  const employees = await getEmployees(clientId);
-  const activeEmployees = employees.filter((employee) => employee.status === EmployeeStatus.Active);
+  const payrollConfig = await readPayPeriodConfigSnapshot(payPeriod.payrollReportFileId);
+  const activeEmployees = payrollConfig.employees;
 
   const currentHoursRows = payPeriod.payrollReportFileId
     ? await readCurrentHoursTab(payPeriod.payrollReportFileId)

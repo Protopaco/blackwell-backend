@@ -4,8 +4,8 @@ import Activity from '#models/Activity.js';
 import mapActivity from '#db/activity/mapActivity.js';
 
 // Reads all activities from the Activities tab of a client's payroll config file.
-const readActivities = async (payrollConfigFileId: string): Promise<Activity[]> => {
-  const rows = await readTab(payrollConfigFileId, ACTIVITIES_TAB);
+const readActivities = async (workbookId: string): Promise<Activity[]> => {
+  const rows = await readTab(workbookId, ACTIVITIES_TAB);
   return rows.map(mapActivity);
 };
 

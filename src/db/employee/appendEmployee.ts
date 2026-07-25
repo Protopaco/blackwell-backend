@@ -2,8 +2,8 @@ import appendRow from '#db/adapter/appendRow.js';
 import { EMPLOYEES_TAB, EMPLOYEES_HEADERS } from '#config/constants.js';
 import Employee from '#models/Employee.js';
 
-// Appends a new employee row to the Employees tab.
-const appendEmployee = async (payrollConfigFileId: string, employee: Employee): Promise<void> => {
+// Appends a new employee row to the Employees tab of the given workbook (PayrollConfig or a pay period's report workbook).
+const appendEmployee = async (workbookId: string, employee: Employee): Promise<void> => {
   const row: Record<string, unknown> = {
     EmployeeId: employee.employeeId,
     FirstName: employee.firstName,
@@ -17,7 +17,7 @@ const appendEmployee = async (payrollConfigFileId: string, employee: Employee): 
     TimesheetFileId: employee.timesheetFileId,
   };
 
-  await appendRow(payrollConfigFileId, EMPLOYEES_TAB, EMPLOYEES_HEADERS, row);
+  await appendRow(workbookId, EMPLOYEES_TAB, EMPLOYEES_HEADERS, row);
 };
 
 export default appendEmployee;

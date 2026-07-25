@@ -6,11 +6,10 @@ import archivePayrollReportTab from '#db/payrollReport/archivePayrollReportTab.j
 import writePayrollReportTab from '#db/payrollReport/writePayrollReportTab.js';
 import writePayPeriod from '#db/payPeriod/writePayPeriod.js';
 import getClientAndPayPeriod from '#services/payPeriod/getClientAndPayPeriod.js';
-import readPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
+import readPayPeriodConfigSnapshot from '#db/payrollReport/readPayPeriodConfigSnapshot.js';
 import currentHoursCache from '#utils/caches/currentHoursCache.js';
 import sortPayrollReportTabs from './sortPayrollReportTabs.js';
 import Activity from '#models/Activity.js';
-import { EmployeeStatus } from '#models/EmployeeStatus.js';
 import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
 import Guid from '#models/Guid.js';
 import readTimesheetDetail from '#services/timesheet/readTimesheetDetail.js';
@@ -39,15 +38,13 @@ const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise
 
   const { client, payPeriod } = await getClientAndPayPeriod(clientId, payPeriodId);
 
-  const payrollConfig = await readPayrollConfig(client.payrollConfigFileId);
+  const payrollConfig = await readPayPeriodConfigSnapshot(payPeriod.payrollReportFileId);
 
   const activityMap = new Map<Guid, Activity>(
     payrollConfig.activities.map((activity) => [activity.activityId, activity]),
   );
 
-  const activeEmployees = payrollConfig.employees.filter(
-    (employee) => employee.status === EmployeeStatus.Active,
-  );
+  const activeEmployees = payrollConfig.employees;
 
   const allEntries = [];
   for (const employee of activeEmployees) {

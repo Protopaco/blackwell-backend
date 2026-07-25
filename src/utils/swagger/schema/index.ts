@@ -13,6 +13,7 @@ import folderInput from './folderInput.js';
 import fundingSource from './fundingSource.js';
 import holiday from './holiday.js';
 import payPeriod from './payPeriod.js';
+import payPeriodConfigSnapshot from './payPeriodConfigSnapshot.js';
 import settings from './settings.js';
 import supervisor from './supervisor.js';
 import timesheetFolder from './timesheetFolder.js';
@@ -37,6 +38,7 @@ const schemas = {
   ...fundingSource,
   ...holiday,
   ...payPeriod,
+  ...payPeriodConfigSnapshot,
   ...settings,
   ...supervisor,
   ...timesheetFolder,
