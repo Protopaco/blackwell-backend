@@ -2,7 +2,6 @@ import request from 'supertest';
 import app from '#app.js';
 import Activity from '#models/Activity.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
-import { PayRate } from '#models/PayRate.js';
 import createTestFundingSource from './createTestFundingSource.js';
 import getUniqueCode from '../helpers/getUniqueCode.js';
 
@@ -23,8 +22,6 @@ const createTestActivity = async (
       fundingSourceName,
       percentage: Math.floor(100 / names.length),
     })),
-    payRate: PayRate.HourlyPayRate1,
-    flatRateAmount: 0,
     ...overrides,
   };
 

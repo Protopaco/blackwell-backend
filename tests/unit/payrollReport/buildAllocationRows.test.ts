@@ -5,7 +5,6 @@ import Activity, { ActivityFundingSource } from '#models/Activity.js';
 import EmployeeExpense from '#models/EmployeeExpense.js';
 import AdditionalExpense from '#models/AdditionalExpense.js';
 import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
-import { PayRate } from '#models/PayRate.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
 
@@ -33,9 +32,7 @@ const makeActivity = (
   activityName,
   trackSeparately: false,
   payrollCategory: PayrollCategory.Regular,
-  payRate: PayRate.HourlyPayRate1,
   fundingSources,
-  flatRateAmount: 0,
   ...overrides,
 });
 
@@ -354,8 +351,8 @@ describe.skip('buildAllocationRows', () => {
       // Two activities: one HourlyPayRate1 ($10), one HourlyPayRate2 ($30)
       // Same hours → different weighted costs → different proportions
       const employee = makeEmployee({});
-      const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }], { payRate: PayRate.HourlyPayRate1 });
-      const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }], { payRate: PayRate.HourlyPayRate2 });
+      const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
       // 4 hrs × $10 = $40 (Grant A), 4 hrs × $30 = $120 (Grant B) → 25% / 75%
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Activity A', 4),
@@ -378,9 +375,9 @@ describe.skip('buildAllocationRows', () => {
 
     it('resolves FlatPayRate1 activities using activity.flatRateAmount, not $0', () => {
       const employee = makeEmployee({});
-      const activityA = makeActivity('Hourly Activity', [{ fundingSourceName: 'Grant A', percentage: 100 }], { payRate: PayRate.HourlyPayRate1 });
+      const activityA = makeActivity('Hourly Activity', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       // 2 flat-rate shifts (row.Hours holds the quantity, not a duration) at $150/shift = $300
-      const activityB = makeActivity('Flat Activity', [{ fundingSourceName: 'Grant B', percentage: 100 }], { payRate: PayRate.FlatPayRate1, flatRateAmount: 150 });
+      const activityB = makeActivity('Flat Activity', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Hourly Activity', 4),
         makeHoursRow(employee.employeeId, 'Flat Activity', 2),
@@ -403,7 +400,7 @@ describe.skip('buildAllocationRows', () => {
 
     it('resolves FlatPayRate2 activities using activity.flatRateAmount', () => {
       const employee = makeEmployee();
-      const activity = makeActivity('Flat Activity', [{ fundingSourceName: 'Grant A', percentage: 100 }], { payRate: PayRate.FlatPayRate2, flatRateAmount: 150 });
+      const activity = makeActivity('Flat Activity', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const hoursRows = [makeHoursRow(employee.employeeId, 'Flat Activity', 2)];
       const expenses = [makeExpense(employee.employeeId, 300)];
       const activityMap = new Map([[activity.activityName, activity]]);

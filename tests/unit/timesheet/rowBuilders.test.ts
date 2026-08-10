@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import Activity from '#models/Activity.js';
-import { PayRate } from '#models/PayRate.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
 import Holiday from '#models/Holiday.js';
 import {
@@ -25,8 +24,6 @@ const makeActivity = (activityName: string): Activity => ({
   trackSeparately: false,
   payrollCategory: PayrollCategory.Regular,
   fundingSources: [],
-  payRate: PayRate.HourlyPayRate1,
-  flatRateAmount: 0,
 });
 
 const makeHoliday = (date: string, name: string): Holiday => ({

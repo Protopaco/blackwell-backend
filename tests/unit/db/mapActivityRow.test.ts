@@ -8,8 +8,6 @@ const activity: Activity = {
   trackSeparately: false,
   payrollCategory: 'Regular',
   fundingSources: [{ fundingSourceName: 'Federal Grant', percentage: 100 }],
-  payRate: 'HourlyPayRate1',
-  flatRateAmount: 0,
 };
 
 describe('mapActivityRow', () => {
@@ -25,8 +23,6 @@ describe('mapActivityRow', () => {
       FundingSource2Percentage: '',
       FundingSource3Name: '',
       FundingSource3Percentage: '',
-      PayRate: 'HourlyPayRate1',
-      FlatRateAmount: 0,
     });
   });
 });

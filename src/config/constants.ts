@@ -16,7 +16,7 @@ export const HOURS_HEADERS: (keyof PayrollReportHoursRow)[] = [
 ];
 export const SUMMARY_HEADERS: (keyof PayrollReportSummaryRow)[] = [
   'GeneratedAt', 'EmployeeId', 'EmployeeName',
-  'PayrollCategory', 'PayRate', 'IsHoliday', 'TotalHours',
+  'PayrollCategory', 'IsHoliday', 'TotalHours',
 ];
 export const EMPLOYEE_EXPENSES_TAB = 'EmployeeExpenses';
 export const EMPLOYEE_EXPENSES_HEADERS: (keyof EmployeeExpense)[] = ['employeeId', 'employeeName', 'totalExpense'];
@@ -49,7 +49,6 @@ export const ACTIVITIES_HEADERS = [
   'FundingSource1Name', 'FundingSource1Percentage',
   'FundingSource2Name', 'FundingSource2Percentage',
   'FundingSource3Name', 'FundingSource3Percentage',
-  'PayRate', 'FlatRateAmount',
 ];
 export const EMPLOYEE_ACTIVITY_RATES_TAB = 'EmployeeActivityRates';
 export const EMPLOYEE_ACTIVITY_RATES_HEADERS = [

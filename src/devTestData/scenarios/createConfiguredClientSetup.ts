@@ -2,7 +2,6 @@ import createFolder from '#db/adapter/createFolder.js';
 import readPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
 import Client from '#models/Client.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
-import { PayRate } from '#models/PayRate.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
 import createActivity from '#services/activity/createActivity.js';
 import createEmployee from '#services/employee/createEmployee.js';
@@ -47,24 +46,18 @@ const createConfiguredClientSetup = async (client: Client): Promise<void> => {
     trackSeparately: true,
     payrollCategory: PayrollCategory.Regular,
     fundingSources: [{ fundingSourceName: 'Program Grant', percentage: 100 }],
-    payRate: PayRate.HourlyPayRate1,
-    flatRateAmount: 0,
   });
   await createActivity(client.clientId, {
     activityName: 'Administration',
     trackSeparately: true,
     payrollCategory: PayrollCategory.Regular,
     fundingSources: [{ fundingSourceName: 'General Operating', percentage: 100 }],
-    payRate: PayRate.HourlyPayRate2,
-    flatRateAmount: 0,
   });
   await createActivity(client.clientId, {
     activityName: 'PTO',
     trackSeparately: false,
     payrollCategory: PayrollCategory.PTO,
     fundingSources: [{ fundingSourceName: 'General Operating', percentage: 100 }],
-    payRate: PayRate.HourlyPayRate1,
-    flatRateAmount: 0,
   });
 
   await createHoliday(client.clientId, {

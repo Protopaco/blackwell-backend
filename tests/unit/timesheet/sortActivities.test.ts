@@ -1,12 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import sortActivities from '#services/timesheet/sortActivities.js';
 import Activity from '#models/Activity.js';
-import { PayRate, isFlatRate } from '#models/PayRate.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
 
 const makeActivity = (
   activityName: string,
-  payRate: string,
   payrollCategory: string,
 ): Activity => ({
   activityId: crypto.randomUUID(),
@@ -14,41 +12,38 @@ const makeActivity = (
   trackSeparately: false,
   payrollCategory: payrollCategory as any,
   fundingSources: [],
-  payRate: payRate as any,
-  flatRateAmount: 0,
 });
 
 const mockActivities: Activity[] = [
-  makeActivity('Programs', PayRate.HourlyPayRate1, PayrollCategory.Regular),
-  makeActivity('Admin', PayRate.HourlyPayRate1, PayrollCategory.Regular),
-  makeActivity('Management', PayRate.HourlyPayRate2, PayrollCategory.Regular),
-  makeActivity('PTO', PayRate.HourlyPayRate1, PayrollCategory.PTO),
-  makeActivity('ETO', PayRate.HourlyPayRate1, PayrollCategory.ETO),
-  makeActivity('STO', PayRate.HourlyPayRate1, PayrollCategory.STO),
-  makeActivity('On-Call', PayRate.FlatPayRate1, PayrollCategory.Regular),
-  makeActivity('Weekend Coverage', PayRate.FlatPayRate2, PayrollCategory.Regular),
+  makeActivity('Programs', PayrollCategory.Regular),
+  makeActivity('Admin', PayrollCategory.Regular),
+  makeActivity('Management', PayrollCategory.Regular),
+  makeActivity('PTO', PayrollCategory.PTO),
+  makeActivity('ETO', PayrollCategory.ETO),
+  makeActivity('STO', PayrollCategory.STO),
+  makeActivity('On-Call', PayrollCategory.Regular),
+  makeActivity('Weekend Coverage', PayrollCategory.Regular),
 ];
 
 describe('sortActivities', () => {
-  it('separates work, time off, and flat rate activities', () => {
+  // NOTE — flat-rate detection is a shim (always empty) as of [052]; flatRateActivities can no longer be
+  // populated here since flat-rate is now a per-(employee, activity) bridge-row concept. Revisit once
+  // [055] rewires this. Every non-time-off activity currently lands in workActivities.
+  it('separates work and time off activities', () => {
     const { workActivities, timeOffActivities, flatRateActivities } = sortActivities(mockActivities);
 
-    expect(workActivities).toHaveLength(3);
+    expect(workActivities).toHaveLength(5);
     expect(timeOffActivities).toHaveLength(3);
-    expect(flatRateActivities).toHaveLength(2);
+    expect(flatRateActivities).toHaveLength(0);
   });
 
   it('sorts each group alphabetically', () => {
-    const { workActivities, timeOffActivities, flatRateActivities } = sortActivities(mockActivities);
+    const { workActivities, timeOffActivities } = sortActivities(mockActivities);
 
-    expect(workActivities.map((a) => a.activityName)).toEqual(['Admin', 'Management', 'Programs']);
+    expect(workActivities.map((a) => a.activityName)).toEqual([
+      'Admin', 'Management', 'On-Call', 'Programs', 'Weekend Coverage',
+    ]);
     expect(timeOffActivities.map((a) => a.activityName)).toEqual(['ETO', 'PTO', 'STO']);
-    expect(flatRateActivities.map((a) => a.activityName)).toEqual(['On-Call', 'Weekend Coverage']);
-  });
-
-  it('puts flat rate activities in flat rate group regardless of payroll category', () => {
-    const { flatRateActivities } = sortActivities(mockActivities);
-    expect(flatRateActivities.every((a) => isFlatRate(a.payRate))).toBe(true);
   });
 
   it('puts ETO PTO STO in time off group', () => {

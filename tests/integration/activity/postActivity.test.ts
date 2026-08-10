@@ -2,14 +2,13 @@ import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import app from '#app.js';
 import Activity from '#models/Activity.js';
-import { PayRate } from '#models/PayRate.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
 import createTestClient from '../builders/createTestClient.js';
 import createTestFundingSource from '../builders/createTestFundingSource.js';
 import getUniqueCode from '../helpers/getUniqueCode.js';
 
 describe('POST /api/v1/activity/:clientId', () => {
-  it('201 - Creates hourly activity', async () => {
+  it('201 - Creates activity', async () => {
     const client = await createTestClient();
     const fundingSource = await createTestFundingSource(client.clientId);
     const uniqueCode = getUniqueCode('ACT');
@@ -23,8 +22,6 @@ describe('POST /api/v1/activity/:clientId', () => {
           percentage: 100,
         },
       ],
-      payRate: PayRate.HourlyPayRate1,
-      flatRateAmount: 0,
     };
 
     const res = await request(app)
@@ -46,7 +43,9 @@ describe('POST /api/v1/activity/:clientId', () => {
     expect(activity.activityId).toBeDefined();
   });
 
-  it('201 - Creates flat-rate activity', async () => {
+  // DISABLED — "flat-rate activity" was an Activity.payRate concept, removed in [052]. Flat-rate is now a
+  // per-(employee, activity) EmployeeActivityRates concern; revisit once [055] rewires that behavior.
+  it.skip('201 - Creates flat-rate activity', async () => {
     const client = await createTestClient();
     const fundingSource = await createTestFundingSource(client.clientId);
     const uniqueCode = getUniqueCode('FLATACT');
@@ -60,8 +59,6 @@ describe('POST /api/v1/activity/:clientId', () => {
           percentage: 100,
         },
       ],
-      payRate: PayRate.FlatPayRate1,
-      flatRateAmount: 45,
     };
 
     const res = await request(app)
@@ -98,8 +95,6 @@ describe('POST /api/v1/activity/:clientId', () => {
           fundingSourceName: fundingSource.fundingSourceName,
           percentage: 25,
         })),
-        payRate: PayRate.HourlyPayRate1,
-        flatRateAmount: 0,
       });
 
     expect(res.status).toBe(422);
@@ -122,8 +117,6 @@ describe('POST /api/v1/activity/:clientId', () => {
             percentage: 100,
           },
         ],
-        payRate: PayRate.HourlyPayRate1,
-        flatRateAmount: 0,
       });
 
     expect(res.status).toBe(422);
@@ -143,8 +136,6 @@ describe('POST /api/v1/activity/:clientId', () => {
           percentage: 100,
         },
       ],
-      payRate: PayRate.HourlyPayRate1,
-      flatRateAmount: 0,
     });
 
     expect(res.status).toBe(404);

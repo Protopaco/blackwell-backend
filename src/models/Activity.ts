@@ -1,6 +1,5 @@
 import Guid from '#models/Guid.js';
 import { PayrollCategoryType } from './PayrollCategory.js';
-import { PayRateType } from './PayRate.js';
 
 interface ActivityFundingSource {
   fundingSourceName: string;
@@ -13,8 +12,6 @@ interface Activity {
   trackSeparately: boolean;
   payrollCategory: PayrollCategoryType;
   fundingSources: ActivityFundingSource[];  // max 3 — limit accepted for now
-  payRate: PayRateType;
-  flatRateAmount: number;
 }
 
 export type { ActivityFundingSource };

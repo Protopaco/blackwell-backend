@@ -11,8 +11,6 @@ const appendActivity = async (workbookId: string, activity: Activity): Promise<v
     TrackSeparately: activity.trackSeparately,
     PayrollCategory: activity.payrollCategory,
     ...flattenActivityFundingSources(activity.fundingSources),
-    PayRate: activity.payRate,
-    FlatRateAmount: activity.flatRateAmount,
   };
 
   await appendRow(workbookId, ACTIVITIES_TAB, ACTIVITIES_HEADERS, row);

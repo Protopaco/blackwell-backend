@@ -13,30 +13,33 @@ describe('buildPayrollReportResponse', () => {
     expect(response.e2.employeeName).toBe('John Doe');
   });
 
-  it('routes hourly pay rates into the hourly bucket', () => {
+  // DISABLED — hourly/flatRate routing was driven by row.PayRate, removed in [052]; buildPayrollReportResponse
+  // is now a shim that treats every row as hourly (see buildPayrollReportResponse.ts). Real replacement
+  // (routing by the bridge row's payRateType) is [055]'s scope — revisit then.
+  it.skip('routes hourly pay rates into the hourly bucket', () => {
     const response = buildPayrollReportResponse([
-      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
     ]);
 
     expect(response.e1.hourly).toEqual([
-      { payrollCategory: 'Regular', payRate: 'HourlyPayRate1', isHoliday: false, totalHours: 8 },
+      { payrollCategory: 'Regular', payRate: '', isHoliday: false, totalHours: 8 },
     ]);
     expect(response.e1.flatRate).toEqual([]);
   });
 
-  it('routes flat pay rates into the flatRate bucket', () => {
+  it.skip('routes flat pay rates into the flatRate bucket', () => {
     const response = buildPayrollReportResponse([
-      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'FlatPayRate1', TotalHours: '3' },
+      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', TotalHours: '3' },
     ]);
 
-    expect(response.e1.flatRate).toEqual([{ payRate: 'FlatPayRate1', quantity: 3 }]);
+    expect(response.e1.flatRate).toEqual([{ payRate: '', quantity: 3 }]);
     expect(response.e1.hourly).toEqual([]);
   });
 
-  it('accumulates multiple rows for the same employee into their existing buckets', () => {
+  it.skip('accumulates multiple rows for the same employee into their existing buckets', () => {
     const response = buildPayrollReportResponse([
-      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
-      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'FlatPayRate1', TotalHours: '3' },
+      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', TotalHours: '3' },
     ]);
 
     expect(response.e1.hourly).toHaveLength(1);
@@ -53,10 +56,11 @@ describe('buildPayrollReportResponse', () => {
       expect(response.e1.totalHours).toBe(10.5);
     });
 
-    it('sums totalFlatRate across multiple flat rate rows for the same employee', () => {
+    // DISABLED — see shim note above; every row is now hourly, so totalFlatRate never accumulates.
+    it.skip('sums totalFlatRate across multiple flat rate rows for the same employee', () => {
       const response = buildPayrollReportResponse([
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'FlatPayRate1', TotalHours: '3' },
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'FlatPayRate2', TotalHours: '1' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', TotalHours: '3' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', TotalHours: '1' },
       ]);
 
       expect(response.e1.totalFlatRate).toBe(4);
@@ -71,11 +75,12 @@ describe('buildPayrollReportResponse', () => {
       expect(response.e1.totalFlatRate).toBe(0);
     });
 
-    it('keeps totals for different employees independent', () => {
+    // DISABLED — see shim note above; e2's second row no longer routes to totalFlatRate.
+    it.skip('keeps totals for different employees independent', () => {
       const response = buildPayrollReportResponse([
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
-        { EmployeeId: 'e2', EmployeeName: 'John Doe', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '5' },
-        { EmployeeId: 'e2', EmployeeName: 'John Doe', PayRate: 'FlatPayRate1', TotalHours: '2' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+        { EmployeeId: 'e2', EmployeeName: 'John Doe', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '5' },
+        { EmployeeId: 'e2', EmployeeName: 'John Doe', TotalHours: '2' },
       ]);
 
       expect(response.e1.totalHours).toBe(8);

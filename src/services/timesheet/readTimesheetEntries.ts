@@ -45,7 +45,6 @@ const readTimesheetEntries = async (
           activityId: activity.activityId,
           activityName: activity.activityName,
           payrollCategory: activity.payrollCategory,
-          payRate: activity.payRate,
           date: dateEntry.date,
           isHoliday,
           hours,

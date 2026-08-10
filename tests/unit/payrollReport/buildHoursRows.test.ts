@@ -8,7 +8,6 @@ const baseEntry: TimesheetEntry = {
   activityId: 'a1',
   activityName: 'Job Coaching',
   payrollCategory: 'Regular',
-  payRate: 'HourlyPayRate1',
   date: '2026-06-01',
   isHoliday: false,
   hours: 8,

@@ -12,7 +12,6 @@ import readPayPeriodConfigSnapshot from "#db/payrollReport/readPayPeriodConfigSn
 import { UnprocessableError } from "#utils/errors.js";
 import Activity from "#models/Activity.js";
 import Guid from "#models/Guid.js";
-import { PayRate, isFlatRate } from "#models/PayRate.js";
 import { PayPeriodStatus } from "#models/PayPeriodStatus.js";
 import { PayrollCategory } from "#models/PayrollCategory.js";
 import TimesheetManifest, { WeekManifest } from "#models/TimesheetManifest.js";
@@ -184,14 +183,11 @@ const generateTimesheets = async (
       }
     }
 
+    // SHIM — every activity is treated as hourly (see sortActivities.ts) until [055], so this no longer
+    // needs to filter out flat-rate rows; every activityRow qualifies.
     const holidayHoursCells: string[] = [];
     for (const weekManifest of weekManifests) {
-      const weekHourlyRowNumbers = weekManifest.activityRows
-        .filter((activityRow) => {
-          const activity = activityMap.get(activityRow.activityId);
-          return activity && !isFlatRate(activity.payRate);
-        })
-        .map((activityRow) => activityRow.row);
+      const weekHourlyRowNumbers = weekManifest.activityRows.map((activityRow) => activityRow.row);
 
       for (const dateEntry of weekManifest.dates) {
         if (
