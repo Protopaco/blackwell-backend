@@ -2,6 +2,8 @@ import readTabs from '#db/adapter/readTabs.js';
 import PayPeriodConfigSnapshot from '#models/PayPeriodConfigSnapshot.js';
 import mapEmployee from '#db/employee/mapEmployee.js';
 import mapActivity from '#db/activity/mapActivity.js';
+import mapEmployeeActivityRate from '#db/employeeActivityRate/mapEmployeeActivityRate.js';
+import joinEmployeeActivityRates from '#db/employee/joinEmployeeActivityRates.js';
 import mapFundingSource from '#db/fundingSource/mapFundingSource.js';
 import mapHoliday from '#db/holiday/mapHoliday.js';
 import mapSettings from '#db/settings/mapSettings.js';
@@ -9,6 +11,7 @@ import { EmployeeStatus } from '#models/EmployeeStatus.js';
 import {
   EMPLOYEES_TAB,
   ACTIVITIES_TAB,
+  EMPLOYEE_ACTIVITY_RATES_TAB,
   FUNDING_SOURCES_TAB,
   HOLIDAYS_TAB,
   SETTINGS_TAB,
@@ -20,14 +23,16 @@ const TAB_NAMES = {
   employees: EMPLOYEES_TAB,
   fundingSources: FUNDING_SOURCES_TAB,
   activities: ACTIVITIES_TAB,
+  employeeActivityRates: EMPLOYEE_ACTIVITY_RATES_TAB,
   settings: SETTINGS_TAB,
   holidays: HOLIDAYS_TAB,
 };
 
-// Loads a pay period's config snapshot tabs (employees, activities, fundingSources, holidays, settings) in
-// one batched call and caches the result for 24 hours. Used by generateTimesheets, generatePayrollReport,
-// and getTimesheetStatuses instead of reading client-wide PayrollConfig live. Employees are filtered to
-// Active — removeEmployeeFromPayPeriod soft-deletes by flipping status rather than deleting the row.
+// Loads a pay period's config snapshot tabs (employees, activities, employeeActivityRates, fundingSources,
+// holidays, settings) in one batched call and caches the result for 24 hours. Used by generateTimesheets,
+// generatePayrollReport, and getTimesheetStatuses instead of reading client-wide PayrollConfig live.
+// Employees are filtered to Active — removeEmployeeFromPayPeriod soft-deletes by flipping status rather
+// than deleting the row.
 const readPayPeriodConfigSnapshot = async (
   reportFileId: string,
 ): Promise<PayPeriodConfigSnapshot> => {
@@ -36,17 +41,19 @@ const readPayPeriodConfigSnapshot = async (
   const cached = payPeriodConfigSnapshotCache.get(reportFileId);
   if (cached) return cached;
 
-  const [employeeRows, fundingSourceRows, activityRows, settingsRows, holidayRows] = await readTabs(
-    reportFileId,
-    Object.values(TAB_NAMES),
-  );
+  const [employeeRows, fundingSourceRows, activityRows, employeeActivityRateRows, settingsRows, holidayRows] =
+    await readTabs(reportFileId, Object.values(TAB_NAMES));
 
   const settings = settingsRows.length > 0 ? mapSettings(settingsRows[0]) : null;
   if (!settings) throw new Error('Settings not found in pay period config snapshot');
 
+  const activeEmployees = employeeRows.map(mapEmployee).filter((employee) => employee.status === EmployeeStatus.Active);
+  const employeeActivityRates = employeeActivityRateRows.map(mapEmployeeActivityRate);
+
   const snapshot: PayPeriodConfigSnapshot = {
-    employees: employeeRows.map(mapEmployee).filter((employee) => employee.status === EmployeeStatus.Active),
+    employees: joinEmployeeActivityRates(activeEmployees, employeeActivityRates),
     activities: activityRows.map(mapActivity),
+    employeeActivityRates,
     fundingSources: fundingSourceRows.map(mapFundingSource),
     holidays: holidayRows.map(mapHoliday),
     settings,
