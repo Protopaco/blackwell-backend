@@ -482,19 +482,101 @@ describe('buildAllocationRows', () => {
       expect(grantB.wagesAllocation).toBe(0);
     });
 
-    it('excludes Salary bridge rows from wagesAllocation — deferred to [057]', () => {
+    it('distributes salaryAmount across a single salary-type activity by effective hourly rate', () => {
+      // salaryAmount $2000 ÷ 40 hrs = $50/hr effective rate → 40 hrs × $50 = $2000 weighted cost,
+      // all to Grant A, so wagesAllocation matches totalExpense exactly.
       const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const employee = makeEmployee({
-        activityRates: [
-          makeActivityRate(activity.activityId, { payRateType: EmployeeActivityPayRateType.Salary, payRate: 50 }),
-        ],
+        salaryAmount: 2000,
+        activityRates: [makeActivityRate(activity.activityId, { payRateType: EmployeeActivityPayRateType.Salary })],
       });
-      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
-      const expenses = [makeExpense(employee.employeeId, 1000)];
+      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 40)];
+      const expenses = [makeExpense(employee.employeeId, 2000)];
       const activityMap = new Map([[activity.activityName, activity]]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
       const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].fundingSourceName).toBe('Grant A');
+      expect(rows[0].wagesAllocation).toBe(2000);
+    });
+
+    it('splits salaryAmount across two salary-type activities by their hours proportion', () => {
+      // salaryAmount $3000 ÷ 30 total salary hours = $100/hr effective rate
+      // Activity A: 20 hrs × $100 = $2000. Activity B: 10 hrs × $100 = $1000. → 2/3 vs 1/3
+      const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const employee = makeEmployee({
+        salaryAmount: 3000,
+        activityRates: [
+          makeActivityRate(activityA.activityId, { payRateType: EmployeeActivityPayRateType.Salary }),
+          makeActivityRate(activityB.activityId, { payRateType: EmployeeActivityPayRateType.Salary }),
+        ],
+      });
+      const hoursRows = [
+        makeHoursRow(employee.employeeId, 'Activity A', 20),
+        makeHoursRow(employee.employeeId, 'Activity B', 10),
+      ];
+      const expenses = [makeExpense(employee.employeeId, 3000)];
+      const activityMap = new Map([
+        [activityA.activityName, activityA],
+        [activityB.activityName, activityB],
+      ]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
+      const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
+      expect(grantA.wagesAllocation).toBe(2000);
+      expect(grantB.wagesAllocation).toBe(1000);
+    });
+
+    it('calculates a salaried employee\'s hourly activity independently, additive on top of the salary split', () => {
+      // Salary: $1000 ÷ 20 hrs = $50/hr effective rate → 20 hrs × $50 = $1000 weighted cost on Grant A.
+      // Separately, an hourly on-call activity: 5 hrs × $30/hr = $150 weighted cost on Grant B.
+      // Total weighted cost = $1150 → Grant A gets 1000/1150, Grant B gets 150/1150 of the $1150 expense.
+      const salaryActivity = makeActivity('Salaried Work', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const onCallActivity = makeActivity('On-Call', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const employee = makeEmployee({
+        salaryAmount: 1000,
+        activityRates: [
+          makeActivityRate(salaryActivity.activityId, { payRateType: EmployeeActivityPayRateType.Salary }),
+          makeActivityRate(onCallActivity.activityId, { payRate: 30 }),
+        ],
+      });
+      const hoursRows = [
+        makeHoursRow(employee.employeeId, 'Salaried Work', 20),
+        makeHoursRow(employee.employeeId, 'On-Call', 5),
+      ];
+      const expenses = [makeExpense(employee.employeeId, 1150)];
+      const activityMap = new Map([
+        [salaryActivity.activityName, salaryActivity],
+        [onCallActivity.activityName, onCallActivity],
+      ]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
+      const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
+      expect(grantA.wagesAllocation).toBe(1000);
+      expect(grantB.wagesAllocation).toBe(150);
+    });
+
+    it('resolves to a $0 effective rate when the employee has no hours logged against their salary-type activities', () => {
+      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({
+        salaryAmount: 2000,
+        activityRates: [makeActivityRate(activity.activityId, { payRateType: EmployeeActivityPayRateType.Salary })],
+      });
+      const expenses = [makeExpense(employee.employeeId, 2000)];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      // No hours rows at all → salaryHours is 0 → totalWeightedCost is 0 → employee excluded
+      const rows = buildAllocationRows([], expenses, [], activityMap, employeeMap);
 
       expect(rows).toHaveLength(0);
     });
