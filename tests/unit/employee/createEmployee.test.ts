@@ -7,7 +7,7 @@ const { testClient, baseEmployee, activeFolder, inactiveFolder } = vi.hoisted(()
     lastName: 'Smith',
     position: 'Coordinator',
     salaryAmount: 0,
-    activityRates: [],
+    activityRates: [{ activityId: 'a1', payRateType: 'Hourly', payRate: 20, holidayPayRate: 25 }],
     email: 'jane@example.com',
     status: 'Active',
   },
@@ -27,10 +27,14 @@ const { testClient, baseEmployee, activeFolder, inactiveFolder } = vi.hoisted(()
 
 vi.mock('#services/client/getClientById.js', () => ({ default: vi.fn().mockResolvedValue(testClient) }));
 vi.mock('#db/employee/appendEmployee.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('#db/employeeActivityRate/appendEmployeeActivityRate.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#db/adapter/createOAuthWorkbook.js', () => ({ default: vi.fn().mockResolvedValue('new-file-id') }));
 vi.mock('#db/adapter/workbookExists.js', () => ({ default: vi.fn().mockResolvedValue(true) }));
 vi.mock('#db/payrollConfig/readPayrollConfig.js', () => ({
-  default: vi.fn().mockResolvedValue({ timesheetFolders: [activeFolder, inactiveFolder], activities: [] }),
+  default: vi.fn().mockResolvedValue({
+    timesheetFolders: [activeFolder, inactiveFolder],
+    activities: [{ activityId: 'a1', activityName: 'Direct Services' }],
+  }),
 }));
 
 import createEmployee from '#services/employee/createEmployee.js';
@@ -116,6 +120,30 @@ describe('createEmployee', () => {
     await expect(
       createEmployee('client-1', { ...baseEmployee, timesheetFolderId: 'folder-record-2' } as any),
     ).rejects.toThrow('Active timesheet folder not found: folder-record-2');
+  });
+
+  it('throws UnprocessableError when an Active employee has no activityRates', async () => {
+    await expect(
+      createEmployee('client-1', {
+        ...baseEmployee,
+        activityRates: [],
+        timesheetFileLink: 'https://docs.google.com/spreadsheets/d/existing-file-id/edit',
+      } as any),
+    ).rejects.toThrow('Active employee must have at least one activity: Jane Smith');
+  });
+
+  it('does not require activityRates for an Inactive employee', async () => {
+    await createEmployee('client-1', {
+      ...baseEmployee,
+      status: 'Inactive',
+      activityRates: [],
+      timesheetFileLink: 'https://docs.google.com/spreadsheets/d/existing-file-id/edit',
+    } as any);
+
+    expect(appendEmployee).toHaveBeenCalledWith(
+      'config-1',
+      expect.objectContaining({ status: 'Inactive' }),
+    );
   });
 
   it('throws NotFoundError when the client does not exist', async () => {

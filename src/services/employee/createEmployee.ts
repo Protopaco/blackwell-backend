@@ -7,6 +7,7 @@ import workbookExists from '#db/adapter/workbookExists.js';
 import payrollConfigCache from '#utils/caches/payrollConfigCache.js';
 import Employee from '#models/Employee.js';
 import EmployeeCreateRequest from '#models/EmployeeCreateRequest.js';
+import { EmployeeStatus } from '#models/EmployeeStatus.js';
 import { TimesheetFolderStatus } from '#models/TimesheetFolderStatus.js';
 import parseDriveLink from '#utils/parseDriveLink.js';
 import { logger } from '#utils/logger.js';
@@ -30,6 +31,12 @@ const createEmployee = async (
   }
   if (!request.timesheetFileLink && !request.timesheetFolderId) {
     throw new UnprocessableError('Either timesheetFileLink or timesheetFolderId is required');
+  }
+
+  if (request.status === EmployeeStatus.Active && request.activityRates.length === 0) {
+    throw new UnprocessableError(
+      `Active employee must have at least one activity: ${request.firstName} ${request.lastName}`,
+    );
   }
 
   const payrollConfig = await readPayrollConfig(client.payrollConfigFileId);
