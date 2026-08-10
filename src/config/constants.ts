@@ -16,7 +16,7 @@ export const HOURS_HEADERS: (keyof PayrollReportHoursRow)[] = [
 ];
 export const SUMMARY_HEADERS: (keyof PayrollReportSummaryRow)[] = [
   'GeneratedAt', 'EmployeeId', 'EmployeeName',
-  'PayrollCategory', 'IsHoliday', 'TotalHours',
+  'PayrollCategory', 'PayRateType', 'IsHoliday', 'TotalHours',
 ];
 export const EMPLOYEE_EXPENSES_TAB = 'EmployeeExpenses';
 export const EMPLOYEE_EXPENSES_HEADERS: (keyof EmployeeExpense)[] = ['employeeId', 'employeeName', 'totalExpense'];

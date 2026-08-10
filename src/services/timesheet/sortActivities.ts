@@ -1,4 +1,6 @@
 import Activity from '#models/Activity.js';
+import EmployeeActivityRateInput from '#models/EmployeeActivityRateInput.js';
+import { EmployeeActivityPayRateType } from '#models/EmployeeActivityPayRateType.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
 
 const TIME_OFF_CATEGORIES = [
@@ -13,20 +15,24 @@ interface SortedActivities {
   flatRateActivities: Activity[];
 }
 
-// SHIM — flat-rate detection (previously isFlatRate(activity.payRate)) was removed in [052]; flat-rate is
-// now a per-(employee, activity) bridge-row concept, not a per-Activity one, so it can no longer be
-// determined here. The real rewire is [055]'s scope — flatRateActivities is always empty until then, so
-// every non-time-off activity lands in workActivities.
-//
-// Splits a flat activity list into work, time-off, and flat-rate buckets, each sorted alphabetically.
-// Used by generateTimesheets to determine row order on the timesheet.
-const sortActivities = (activities: Activity[]): SortedActivities => {
+// Splits a flat activity list into work, time off, and flat-rate buckets, each sorted alphabetically —
+// flat-rate is determined per employeeActivityRates' payRateType (FlatRate), since that's a per-employee
+// bridge-row concern, not a property of Activity itself. Hourly and Salary activities (both hour-tracked
+// on the timesheet) land in workActivities unless they're a time-off category. Used by generateTimesheets
+// to determine row order on one employee's timesheet.
+const sortActivities = (activities: Activity[], employeeActivityRates: EmployeeActivityRateInput[]): SortedActivities => {
+  const payRateTypeByActivityId = new Map(
+    employeeActivityRates.map((activityRate) => [activityRate.activityId, activityRate.payRateType]),
+  );
+
   const workActivities: Activity[] = [];
   const timeOffActivities: Activity[] = [];
   const flatRateActivities: Activity[] = [];
 
   activities.forEach((activity) => {
-    if (TIME_OFF_CATEGORIES.includes(activity.payrollCategory as any)) {
+    if (payRateTypeByActivityId.get(activity.activityId) === EmployeeActivityPayRateType.FlatRate) {
+      flatRateActivities.push(activity);
+    } else if (TIME_OFF_CATEGORIES.includes(activity.payrollCategory as any)) {
       timeOffActivities.push(activity);
     } else {
       workActivities.push(activity);

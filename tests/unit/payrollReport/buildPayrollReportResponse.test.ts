@@ -4,8 +4,8 @@ import buildPayrollReportResponse from '#services/payrollReport/buildPayrollRepo
 describe('buildPayrollReportResponse', () => {
   it('groups rows by employeeId and sets the employee name from the first row seen', () => {
     const response = buildPayrollReportResponse([
-      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
-      { EmployeeId: 'e2', EmployeeName: 'John Doe', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '5' },
+      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+      { EmployeeId: 'e2', EmployeeName: 'John Doe', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '5' },
     ]);
 
     expect(Object.keys(response)).toEqual(['e1', 'e2']);
@@ -13,33 +13,41 @@ describe('buildPayrollReportResponse', () => {
     expect(response.e2.employeeName).toBe('John Doe');
   });
 
-  // DISABLED — hourly/flatRate routing was driven by row.PayRate, removed in [052]; buildPayrollReportResponse
-  // is now a shim that treats every row as hourly (see buildPayrollReportResponse.ts). Real replacement
-  // (routing by the bridge row's payRateType) is [055]'s scope — revisit then.
-  it.skip('routes hourly pay rates into the hourly bucket', () => {
+  it('routes Hourly rows into the hourly bucket', () => {
     const response = buildPayrollReportResponse([
-      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
     ]);
 
     expect(response.e1.hourly).toEqual([
-      { payrollCategory: 'Regular', payRate: '', isHoliday: false, totalHours: 8 },
+      { payrollCategory: 'Regular', payRate: 'Hourly', isHoliday: false, totalHours: 8 },
     ]);
     expect(response.e1.flatRate).toEqual([]);
   });
 
-  it.skip('routes flat pay rates into the flatRate bucket', () => {
+  it('routes Salary rows into the hourly bucket alongside Hourly', () => {
     const response = buildPayrollReportResponse([
-      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', TotalHours: '3' },
+      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Salary', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
     ]);
 
-    expect(response.e1.flatRate).toEqual([{ payRate: '', quantity: 3 }]);
+    expect(response.e1.hourly).toEqual([
+      { payrollCategory: 'Regular', payRate: 'Salary', isHoliday: false, totalHours: 8 },
+    ]);
+    expect(response.e1.flatRate).toEqual([]);
+  });
+
+  it('routes FlatRate rows into the flatRate bucket', () => {
+    const response = buildPayrollReportResponse([
+      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'FlatRate', TotalHours: '3' },
+    ]);
+
+    expect(response.e1.flatRate).toEqual([{ payRate: 'FlatRate', quantity: 3 }]);
     expect(response.e1.hourly).toEqual([]);
   });
 
-  it.skip('accumulates multiple rows for the same employee into their existing buckets', () => {
+  it('accumulates multiple rows for the same employee into their existing buckets', () => {
     const response = buildPayrollReportResponse([
-      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
-      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', TotalHours: '3' },
+      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+      { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'FlatRate', TotalHours: '3' },
     ]);
 
     expect(response.e1.hourly).toHaveLength(1);
@@ -49,18 +57,17 @@ describe('buildPayrollReportResponse', () => {
   describe('totalHours and totalFlatRate', () => {
     it('sums totalHours across multiple hourly rows for the same employee', () => {
       const response = buildPayrollReportResponse([
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate2', PayrollCategory: 'ETO', IsHoliday: 'FALSE', TotalHours: '2.5' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'ETO', IsHoliday: 'FALSE', TotalHours: '2.5' },
       ]);
 
       expect(response.e1.totalHours).toBe(10.5);
     });
 
-    // DISABLED — see shim note above; every row is now hourly, so totalFlatRate never accumulates.
-    it.skip('sums totalFlatRate across multiple flat rate rows for the same employee', () => {
+    it('sums totalFlatRate across multiple flat rate rows for the same employee', () => {
       const response = buildPayrollReportResponse([
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', TotalHours: '3' },
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', TotalHours: '1' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'FlatRate', TotalHours: '3' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'FlatRate', TotalHours: '1' },
       ]);
 
       expect(response.e1.totalFlatRate).toBe(4);
@@ -68,19 +75,18 @@ describe('buildPayrollReportResponse', () => {
 
     it('keeps totalHours and totalFlatRate at 0 when an employee has no rows in that bucket', () => {
       const response = buildPayrollReportResponse([
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
       ]);
 
       expect(response.e1.totalHours).toBe(8);
       expect(response.e1.totalFlatRate).toBe(0);
     });
 
-    // DISABLED — see shim note above; e2's second row no longer routes to totalFlatRate.
-    it.skip('keeps totals for different employees independent', () => {
+    it('keeps totals for different employees independent', () => {
       const response = buildPayrollReportResponse([
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
-        { EmployeeId: 'e2', EmployeeName: 'John Doe', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '5' },
-        { EmployeeId: 'e2', EmployeeName: 'John Doe', TotalHours: '2' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+        { EmployeeId: 'e2', EmployeeName: 'John Doe', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '5' },
+        { EmployeeId: 'e2', EmployeeName: 'John Doe', PayRateType: 'FlatRate', TotalHours: '2' },
       ]);
 
       expect(response.e1.totalHours).toBe(8);
@@ -93,7 +99,7 @@ describe('buildPayrollReportResponse', () => {
   describe('totalExpense', () => {
     it('joins totalExpense from employeeExpenses by employeeId', () => {
       const response = buildPayrollReportResponse(
-        [{ EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' }],
+        [{ EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' }],
         [{ employeeId: 'e1', employeeName: 'Jane Smith', totalExpense: 42.5 }],
       );
 
@@ -102,7 +108,7 @@ describe('buildPayrollReportResponse', () => {
 
     it('defaults totalExpense to null when no matching expense entry exists', () => {
       const response = buildPayrollReportResponse(
-        [{ EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' }],
+        [{ EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' }],
         [],
       );
 
@@ -111,7 +117,7 @@ describe('buildPayrollReportResponse', () => {
 
     it('defaults totalExpense to null when employeeExpenses is null', () => {
       const response = buildPayrollReportResponse(
-        [{ EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' }],
+        [{ EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' }],
         null,
       );
 
@@ -120,7 +126,7 @@ describe('buildPayrollReportResponse', () => {
 
     it('defaults totalExpense to null when employeeExpenses is omitted', () => {
       const response = buildPayrollReportResponse([
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
       ]);
 
       expect(response.e1.totalExpense).toBeNull();
@@ -130,21 +136,21 @@ describe('buildPayrollReportResponse', () => {
   describe('isHoliday coercion', () => {
     it('treats the string "TRUE" as true', () => {
       const response = buildPayrollReportResponse([
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'TRUE', TotalHours: '8' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'TRUE', TotalHours: '8' },
       ]);
       expect(response.e1.hourly[0].isHoliday).toBe(true);
     });
 
     it('treats a boolean true as true', () => {
       const response = buildPayrollReportResponse([
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: true, TotalHours: '8' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: true, TotalHours: '8' },
       ]);
       expect(response.e1.hourly[0].isHoliday).toBe(true);
     });
 
     it('treats the string "FALSE" as false', () => {
       const response = buildPayrollReportResponse([
-        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRate: 'HourlyPayRate1', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
+        { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
       ]);
       expect(response.e1.hourly[0].isHoliday).toBe(false);
     });

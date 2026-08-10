@@ -25,12 +25,17 @@ const readTimesheetEntries = async (
   const tabValues = await readTabValues(employee.timesheetFileId, tabName);
   const entries: TimesheetEntry[] = [];
 
+  const payRateTypeByActivityId = new Map(
+    employee.activityRates.map((activityRate) => [activityRate.activityId, activityRate.payRateType]),
+  );
+
   for (const weekManifest of manifest.weeks) {
     const allActivityRows = [...weekManifest.activityRows, ...weekManifest.flatRateRows];
 
     for (const activityRow of allActivityRows) {
       const activity = activityMap.get(activityRow.activityId);
-      if (!activity) continue;
+      const payRateType = payRateTypeByActivityId.get(activityRow.activityId);
+      if (!activity || !payRateType) continue;
 
       for (const dateEntry of weekManifest.dates) {
         const cellValue = tabValues[activityRow.row - 1]?.[dateEntry.column - 1];
@@ -45,6 +50,7 @@ const readTimesheetEntries = async (
           activityId: activity.activityId,
           activityName: activity.activityName,
           payrollCategory: activity.payrollCategory,
+          payRateType,
           date: dateEntry.date,
           isHoliday,
           hours,
