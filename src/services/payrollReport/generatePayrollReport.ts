@@ -10,7 +10,9 @@ import readPayPeriodConfigSnapshot from '#db/payrollReport/readPayPeriodConfigSn
 import currentHoursCache from '#utils/caches/currentHoursCache.js';
 import sortPayrollReportTabs from './sortPayrollReportTabs.js';
 import Activity from '#models/Activity.js';
+import Employee from '#models/Employee.js';
 import { PayPeriodStatus } from '#models/PayPeriodStatus.js';
+import { EmployeeActivityPayRateType } from '#models/EmployeeActivityPayRateType.js';
 import Guid from '#models/Guid.js';
 import readTimesheetDetail from '#services/timesheet/readTimesheetDetail.js';
 import readTimesheetEntries from '#services/timesheet/readTimesheetEntries.js';
@@ -47,6 +49,7 @@ const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise
   const activeEmployees = payrollConfig.employees;
 
   const allEntries = [];
+  const processedEmployees: Employee[] = [];
   for (const employee of activeEmployees) {
     const detail = await readTimesheetDetail(employee.timesheetFileId, payPeriod.payPeriodName);
     if (!detail.employeeSigned || !detail.supervisorSigned) {
@@ -65,6 +68,23 @@ const generatePayrollReport = async (clientId: Guid, payPeriodId: Guid): Promise
     }
     const entries = await readTimesheetEntries(employee, payPeriod.payPeriodName, activityMap, payrollConfig.holidays);
     allEntries.push(...entries);
+    processedEmployees.push(employee);
+  }
+
+  for (const employee of processedEmployees) {
+    const hasSalaryActivity = employee.activityRates.some(
+      (activityRate) => activityRate.payRateType === EmployeeActivityPayRateType.Salary,
+    );
+    if (!hasSalaryActivity) continue;
+
+    const hasSalaryHours = allEntries.some(
+      (entry) => entry.employeeId === employee.employeeId && entry.payRateType === EmployeeActivityPayRateType.Salary,
+    );
+    if (!hasSalaryHours) {
+      throw new UnprocessableError(
+        `${employee.firstName} ${employee.lastName} is salaried but has zero hours logged against salary-type activities this pay period — resolve on their timesheet before generating a payroll report.`,
+      );
+    }
   }
 
   if (allEntries.length === 0) {
