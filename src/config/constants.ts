@@ -52,6 +52,11 @@ export const ACTIVITIES_HEADERS = [
   'FundingSource3Name', 'FundingSource3Percentage',
   'PayRate', 'FlatRateAmount',
 ];
+export const EMPLOYEE_ACTIVITY_RATES_TAB = 'EmployeeActivityRates';
+export const EMPLOYEE_ACTIVITY_RATES_HEADERS = [
+  'Id', 'EmployeeId', 'EmployeeName', 'ActivityId', 'ActivityName',
+  'PayRateType', 'PayRate', 'HolidayPayRate',
+];
 export const FUNDING_SOURCES_TAB = 'FundingSources';
 export const FUNDING_SOURCES_HEADERS = ['FundingSourceId', 'FundingSourceName', 'FundingSourceCode'];
 export const HOLIDAYS_TAB = 'Holidays';

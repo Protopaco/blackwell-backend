@@ -65,7 +65,7 @@ describe('createClient', () => {
 
     expect(createOAuthWorkbook).toHaveBeenNthCalledWith(1, 'ACME Payroll Config', 'payroll-config-1');
     expect(createOAuthWorkbook).toHaveBeenNthCalledWith(2, 'ACME Pay Period Registry', 'payroll-config-1');
-    expect(createTabIfNotExists).toHaveBeenCalledTimes(8);
+    expect(createTabIfNotExists).toHaveBeenCalledTimes(9);
     expect(createTabIfNotExists).toHaveBeenCalledWith('pay-period-registry-1', String(new Date().getFullYear()));
     expect(writeHeaderRow).toHaveBeenCalledWith(
       'pay-period-registry-1',

@@ -3,6 +3,7 @@ import PayrollConfig from '#models/PayrollConfig.js';
 import mapEmployee from '#db/employee/mapEmployee.js';
 import mapSupervisor from '#db/supervisor/mapSupervisor.js';
 import mapActivity from '#db/activity/mapActivity.js';
+import mapEmployeeActivityRate from '#db/employeeActivityRate/mapEmployeeActivityRate.js';
 import mapFundingSource from '#db/fundingSource/mapFundingSource.js';
 import mapHoliday from '#db/holiday/mapHoliday.js';
 import mapSettings from '#db/settings/mapSettings.js';
@@ -10,6 +11,7 @@ import mapTimesheetFolder from '#db/timesheetFolder/mapTimesheetFolder.js';
 import {
   EMPLOYEES_TAB,
   ACTIVITIES_TAB,
+  EMPLOYEE_ACTIVITY_RATES_TAB,
   FUNDING_SOURCES_TAB,
   HOLIDAYS_TAB,
   SUPERVISORS_TAB,
@@ -24,6 +26,7 @@ const TAB_NAMES = {
   supervisors: SUPERVISORS_TAB,
   fundingSources: FUNDING_SOURCES_TAB,
   activities: ACTIVITIES_TAB,
+  employeeActivityRates: EMPLOYEE_ACTIVITY_RATES_TAB,
   settings: SETTINGS_TAB,
   holidays: HOLIDAYS_TAB,
   timesheetFolders: TIMESHEET_FOLDERS_TAB,
@@ -42,6 +45,7 @@ const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollCo
     supervisorRows,
     fundingSourceRows,
     activityRows,
+    employeeActivityRateRows,
     settingsRows,
     holidayRows,
     timesheetFolderRows,
@@ -54,6 +58,7 @@ const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollCo
     employees: employeeRows.map(mapEmployee),
     supervisors: supervisorRows.map(mapSupervisor),
     activities: activityRows.map(mapActivity),
+    employeeActivityRates: employeeActivityRateRows.map(mapEmployeeActivityRate),
     fundingSources: fundingSourceRows.map(mapFundingSource),
     holidays: holidayRows.map(mapHoliday),
     settings,
