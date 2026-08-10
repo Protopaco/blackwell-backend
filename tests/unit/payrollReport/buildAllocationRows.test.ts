@@ -2,11 +2,13 @@ import { describe, it, expect } from 'vitest';
 import buildAllocationRows from '#services/payrollReport/buildAllocationRows.js';
 import Employee from '#models/Employee.js';
 import Activity, { ActivityFundingSource } from '#models/Activity.js';
+import EmployeeActivityRateInput from '#models/EmployeeActivityRateInput.js';
 import EmployeeExpense from '#models/EmployeeExpense.js';
 import AdditionalExpense from '#models/AdditionalExpense.js';
 import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
+import { EmployeeActivityPayRateType } from '#models/EmployeeActivityPayRateType.js';
 
 // ─── Factories ────────────────────────────────────────────────────────────────
 
@@ -36,10 +38,24 @@ const makeActivity = (
   ...overrides,
 });
 
+// Default payRate of 1 keeps dollar cost equal to hours, so tests that only care about
+// hours-based proportions don't need to reason about an arbitrary rate.
+const makeActivityRate = (
+  activityId: string,
+  overrides: Partial<EmployeeActivityRateInput> = {},
+): EmployeeActivityRateInput => ({
+  activityId,
+  payRateType: EmployeeActivityPayRateType.Hourly,
+  payRate: 1,
+  holidayPayRate: 1,
+  ...overrides,
+});
+
 const makeHoursRow = (
   employeeId: string,
   activityName: string,
   hours: number,
+  overrides: Partial<PayrollReportHoursRow> = {},
 ): PayrollReportHoursRow => ({
   GeneratedAt: '2026-01-01T00:00:00Z',
   EmployeeId: employeeId,
@@ -49,6 +65,7 @@ const makeHoursRow = (
   Date: '2026-01-02',
   IsHoliday: 'FALSE',
   Hours: hours,
+  ...overrides,
 });
 
 const makeExpense = (employeeId: string, totalExpense: number | null): EmployeeExpense => ({
@@ -64,14 +81,11 @@ const makeAdditional = (expenseName: string, amount: number): AdditionalExpense 
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-// DISABLED — resolveDollarRate is a 0-returning shim until [056] rewires it to use EmployeeActivityRates
-// bridge rows (see buildAllocationRows.ts). These assertions check real dollar amounts and will all fail
-// against the shim; re-enable and rewrite fixtures once [056] lands.
-describe.skip('buildAllocationRows', () => {
+describe('buildAllocationRows', () => {
   describe('basic allocation', () => {
     it('returns one row for a single funding source', () => {
-      const employee = makeEmployee({});
       const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
       const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
       const expenses = [makeExpense(employee.employeeId, 2400)];
       const activityMap = new Map([[activity.activityName, activity]]);
@@ -87,11 +101,13 @@ describe.skip('buildAllocationRows', () => {
     });
 
     it('splits a single employee across two funding sources by hours proportion', () => {
-      const employee = makeEmployee({});
       // Activity A: 100% Grant A. Activity B: 100% Grant B.
       // 6 hrs on A, 4 hrs on B → Grant A = 60%, Grant B = 40%
       const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [makeActivityRate(activityA.activityId), makeActivityRate(activityB.activityId)],
+      });
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Activity A', 6),
         makeHoursRow(employee.employeeId, 'Activity B', 4),
@@ -113,12 +129,12 @@ describe.skip('buildAllocationRows', () => {
     });
 
     it('splits a single activity across two funding sources by percentage', () => {
-      const employee = makeEmployee({});
       // One activity split 60% Grant A / 40% Grant B
       const activity = makeActivity('Programs', [
         { fundingSourceName: 'Grant A', percentage: 60 },
         { fundingSourceName: 'Grant B', percentage: 40 },
       ]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
       const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 10)];
       const expenses = [makeExpense(employee.employeeId, 1000)];
       const activityMap = new Map([[activity.activityName, activity]]);
@@ -136,9 +152,9 @@ describe.skip('buildAllocationRows', () => {
 
   describe('multiple employees', () => {
     it('sums allocations across employees for the same funding source', () => {
-      const emp1 = makeEmployee({});
-      const emp2 = makeEmployee({});
       const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const emp1 = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
+      const emp2 = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
       const hoursRows = [
         makeHoursRow(emp1.employeeId, 'Programs', 8),
         makeHoursRow(emp2.employeeId, 'Programs', 8),
@@ -162,10 +178,12 @@ describe.skip('buildAllocationRows', () => {
     it('uses each employee\'s individual hours to compute their proportion when they work different activities', () => {
       // emp1: 10 hrs on Grant A activity → 100% Grant A → $1000 to Grant A
       // emp2: 5 hrs on Grant A, 5 hrs on Grant B → 50/50 → $500 Grant A, $500 Grant B
-      const emp1 = makeEmployee({});
-      const emp2 = makeEmployee({});
       const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const emp1 = makeEmployee({ activityRates: [makeActivityRate(activityA.activityId)] });
+      const emp2 = makeEmployee({
+        activityRates: [makeActivityRate(activityA.activityId), makeActivityRate(activityB.activityId)],
+      });
       const hoursRows = [
         makeHoursRow(emp1.employeeId, 'Activity A', 10),
         makeHoursRow(emp2.employeeId, 'Activity A', 5),
@@ -195,9 +213,9 @@ describe.skip('buildAllocationRows', () => {
     it('pay rates do not affect proportions when all activities use the same rate type', () => {
       // emp1 has rate $10, emp2 has rate $40 — but same activity proportions
       // Grant A gets 100% of both employees' expenses
-      const emp1 = makeEmployee({});
-      const emp2 = makeEmployee({});
       const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const emp1 = makeEmployee({ activityRates: [makeActivityRate(activity.activityId, { payRate: 10 })] });
+      const emp2 = makeEmployee({ activityRates: [makeActivityRate(activity.activityId, { payRate: 40 })] });
       const hoursRows = [
         makeHoursRow(emp1.employeeId, 'Programs', 8),
         makeHoursRow(emp2.employeeId, 'Programs', 8),
@@ -221,10 +239,20 @@ describe.skip('buildAllocationRows', () => {
     it('uses each employee\'s own pay rate to weight proportions across activities', () => {
       // emp1: rate $10. 4 hrs on Grant A ($40), 4 hrs on Grant B ($40) → 50% each
       // emp2: rate $20. 8 hrs on Grant A ($160), 2 hrs on Grant B ($40) → 80% / 20%
-      const emp1 = makeEmployee({});
-      const emp2 = makeEmployee({});
       const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const emp1 = makeEmployee({
+        activityRates: [
+          makeActivityRate(activityA.activityId, { payRate: 10 }),
+          makeActivityRate(activityB.activityId, { payRate: 10 }),
+        ],
+      });
+      const emp2 = makeEmployee({
+        activityRates: [
+          makeActivityRate(activityA.activityId, { payRate: 20 }),
+          makeActivityRate(activityB.activityId, { payRate: 20 }),
+        ],
+      });
       const hoursRows = [
         makeHoursRow(emp1.employeeId, 'Activity A', 4),
         makeHoursRow(emp1.employeeId, 'Activity B', 4),
@@ -257,8 +285,8 @@ describe.skip('buildAllocationRows', () => {
 
   describe('filtering active employees', () => {
     it('excludes employees where totalExpense is null', () => {
-      const employee = makeEmployee();
       const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
       const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
       const expenses = [makeExpense(employee.employeeId, null)];
       const activityMap = new Map([[activity.activityName, activity]]);
@@ -270,8 +298,8 @@ describe.skip('buildAllocationRows', () => {
     });
 
     it('excludes employees who have no hours in current_hours (totalWeightedCost = 0)', () => {
-      const employee = makeEmployee();
       const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
       const expenses = [makeExpense(employee.employeeId, 1000)];
       const activityMap = new Map([[activity.activityName, activity]]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
@@ -285,9 +313,11 @@ describe.skip('buildAllocationRows', () => {
 
   describe('additional expenses', () => {
     it('distributes additional expenses by funding source wage share', () => {
-      const employee = makeEmployee({});
       const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [makeActivityRate(activityA.activityId), makeActivityRate(activityB.activityId)],
+      });
       // 75% hours on A, 25% on B → wages: $750 / $250
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Activity A', 6),
@@ -313,8 +343,8 @@ describe.skip('buildAllocationRows', () => {
     });
 
     it('distributes multiple additional expense items combined', () => {
-      const employee = makeEmployee({});
       const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
       const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
       const expenses = [makeExpense(employee.employeeId, 1000)];
       const additionalExpenses = [
@@ -332,8 +362,8 @@ describe.skip('buildAllocationRows', () => {
     });
 
     it('sets additionalExpenses to 0 when additional expenses list is empty', () => {
-      const employee = makeEmployee();
       const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
       const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
       const expenses = [makeExpense(employee.employeeId, 1000)];
       const activityMap = new Map([[activity.activityName, activity]]);
@@ -347,13 +377,17 @@ describe.skip('buildAllocationRows', () => {
   });
 
   describe('pay rate types', () => {
-    it('uses hourlyPayRate2 when activity payRate is HourlyPayRate2', () => {
-      // Two activities: one HourlyPayRate1 ($10), one HourlyPayRate2 ($30)
-      // Same hours → different weighted costs → different proportions
-      const employee = makeEmployee({});
+    it('uses the bridge row\'s payRate per activity to weight proportions', () => {
+      // Activity A bridge row: $10/hr. Activity B bridge row: $30/hr.
+      // 4 hrs × $10 = $40 (Grant A), 4 hrs × $30 = $120 (Grant B) → 25% / 75%
       const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
-      // 4 hrs × $10 = $40 (Grant A), 4 hrs × $30 = $120 (Grant B) → 25% / 75%
+      const employee = makeEmployee({
+        activityRates: [
+          makeActivityRate(activityA.activityId, { payRate: 10 }),
+          makeActivityRate(activityB.activityId, { payRate: 30 }),
+        ],
+      });
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Activity A', 4),
         makeHoursRow(employee.employeeId, 'Activity B', 4),
@@ -373,11 +407,19 @@ describe.skip('buildAllocationRows', () => {
       expect(grantB.wagesAllocation).toBe(750);
     });
 
-    it('resolves FlatPayRate1 activities using activity.flatRateAmount, not $0', () => {
-      const employee = makeEmployee({});
+    it('resolves FlatRate bridge rows using their payRate, not $0', () => {
       const activityA = makeActivity('Hourly Activity', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       // 2 flat-rate shifts (row.Hours holds the quantity, not a duration) at $150/shift = $300
       const activityB = makeActivity('Flat Activity', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [
+          makeActivityRate(activityA.activityId, { payRate: 20 }),
+          makeActivityRate(activityB.activityId, {
+            payRateType: EmployeeActivityPayRateType.FlatRate,
+            payRate: 150,
+          }),
+        ],
+      });
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Hourly Activity', 4),
         makeHoursRow(employee.employeeId, 'Flat Activity', 2),
@@ -398,18 +440,63 @@ describe.skip('buildAllocationRows', () => {
       expect(grantB.wagesAllocation).toBe(3000);
     });
 
-    it('resolves FlatPayRate2 activities using activity.flatRateAmount', () => {
-      const employee = makeEmployee();
-      const activity = makeActivity('Flat Activity', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
-      const hoursRows = [makeHoursRow(employee.employeeId, 'Flat Activity', 2)];
-      const expenses = [makeExpense(employee.employeeId, 300)];
+    it('uses the bridge row\'s holidayPayRate instead of payRate when the hours row is flagged as a holiday', () => {
+      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [makeActivityRate(activity.activityId, { payRate: 20, holidayPayRate: 30 })],
+      });
+      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8, { IsHoliday: 'TRUE' })];
+      // 8 hrs × $30 holiday rate = $240
+      const expenses = [makeExpense(employee.employeeId, 240)];
       const activityMap = new Map([[activity.activityName, activity]]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
       const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
 
       expect(rows).toHaveLength(1);
-      expect(rows[0].wagesAllocation).toBe(300);
+      expect(rows[0].wagesAllocation).toBe(240);
+    });
+
+    it('excludes an activity\'s contribution when the employee has no bridge row for it', () => {
+      const activityA = makeActivity('Known Activity', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const activityB = makeActivity('Unassigned Activity', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      // Employee only has a bridge row for Known Activity — Unassigned Activity resolves to $0 and
+      // contributes nothing to the weighted cost, so all of the expense lands on Grant A.
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activityA.activityId, { payRate: 10 })] });
+      const hoursRows = [
+        makeHoursRow(employee.employeeId, 'Known Activity', 8),
+        makeHoursRow(employee.employeeId, 'Unassigned Activity', 8),
+      ];
+      const expenses = [makeExpense(employee.employeeId, 1000)];
+      const activityMap = new Map([
+        [activityA.activityName, activityA],
+        [activityB.activityName, activityB],
+      ]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
+      const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
+      expect(grantA.wagesAllocation).toBe(1000);
+      expect(grantB.wagesAllocation).toBe(0);
+    });
+
+    it('excludes Salary bridge rows from wagesAllocation — deferred to [057]', () => {
+      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [
+          makeActivityRate(activity.activityId, { payRateType: EmployeeActivityPayRateType.Salary, payRate: 50 }),
+        ],
+      });
+      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
+      const expenses = [makeExpense(employee.employeeId, 1000)];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      expect(rows).toHaveLength(0);
     });
   });
 
@@ -420,8 +507,8 @@ describe.skip('buildAllocationRows', () => {
     });
 
     it('skips unknown activities gracefully', () => {
-      const employee = makeEmployee();
       const activity = makeActivity('Known Activity', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Known Activity', 8),
         makeHoursRow(employee.employeeId, 'Unknown Activity', 4),
@@ -438,8 +525,8 @@ describe.skip('buildAllocationRows', () => {
     });
 
     it('skips employees not in the payroll config employeeMap', () => {
-      const employee = makeEmployee();
       const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
       const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
       const expenses = [makeExpense(employee.employeeId, 1000)];
       const activityMap = new Map([[activity.activityName, activity]]);
@@ -452,9 +539,11 @@ describe.skip('buildAllocationRows', () => {
 
     it('rounds output values to 2 decimal places', () => {
       // 1 employee, 2 activities, 1/3 + 2/3 split → produces repeating decimals
-      const employee = makeEmployee({});
       const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [makeActivityRate(activityA.activityId), makeActivityRate(activityB.activityId)],
+      });
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Activity A', 1),
         makeHoursRow(employee.employeeId, 'Activity B', 2),
@@ -478,10 +567,16 @@ describe.skip('buildAllocationRows', () => {
 
     it('last row absorbs remainder so wagesAllocation always sums to total employee expenses (3-way equal split)', () => {
       // $100 split 1/3 each → naive rounding gives $99.99; remainder fix gives $100.00
-      const employee = makeEmployee({});
       const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
       const activityC = makeActivity('Activity C', [{ fundingSourceName: 'Grant C', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [
+          makeActivityRate(activityA.activityId),
+          makeActivityRate(activityB.activityId),
+          makeActivityRate(activityC.activityId),
+        ],
+      });
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Activity A', 1),
         makeHoursRow(employee.employeeId, 'Activity B', 1),
@@ -502,10 +597,16 @@ describe.skip('buildAllocationRows', () => {
     });
 
     it('last row absorbs remainder so additionalExpenses always sums to total additional (3-way equal split)', () => {
-      const employee = makeEmployee({});
       const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
       const activityC = makeActivity('Activity C', [{ fundingSourceName: 'Grant C', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [
+          makeActivityRate(activityA.activityId),
+          makeActivityRate(activityB.activityId),
+          makeActivityRate(activityC.activityId),
+        ],
+      });
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Activity A', 1),
         makeHoursRow(employee.employeeId, 'Activity B', 1),
@@ -527,9 +628,11 @@ describe.skip('buildAllocationRows', () => {
     });
 
     it('total equals wagesAllocation + additionalExpenses for each row', () => {
-      const employee = makeEmployee({});
       const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [makeActivityRate(activityA.activityId), makeActivityRate(activityB.activityId)],
+      });
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Activity A', 6),
         makeHoursRow(employee.employeeId, 'Activity B', 4),
@@ -552,10 +655,16 @@ describe.skip('buildAllocationRows', () => {
     });
 
     it('sorts rows by wagesAllocation descending', () => {
-      const employee = makeEmployee({});
       const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
       const activityC = makeActivity('Activity C', [{ fundingSourceName: 'Grant C', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [
+          makeActivityRate(activityA.activityId),
+          makeActivityRate(activityB.activityId),
+          makeActivityRate(activityC.activityId),
+        ],
+      });
       const hoursRows = [
         makeHoursRow(employee.employeeId, 'Activity A', 2),
         makeHoursRow(employee.employeeId, 'Activity B', 7),

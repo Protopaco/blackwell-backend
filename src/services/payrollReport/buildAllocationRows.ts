@@ -4,13 +4,19 @@ import AllocationReportRow from '#models/AllocationReportRow.js';
 import AdditionalExpense from '#models/AdditionalExpense.js';
 import EmployeeExpense from '#models/EmployeeExpense.js';
 import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
+import { EmployeeActivityPayRateType } from '#models/EmployeeActivityPayRateType.js';
 import { logger } from '#utils/logger.js';
 
-// SHIM — Employee.hourlyPayRate1/2 and Activity.payRate/flatRateAmount were removed in [049]/[051]/[052];
-// the real replacement (looking up the employee's EmployeeActivityRates bridge row for this activity,
-// including salary-type handling) is [056]'s scope. Always returns 0 until then — allocation reports are
-// not expected to produce correct dollar figures for this part of the epic.
-const resolveDollarRate = (_employee: Employee, _activity: Activity): number => 0;
+// Looks up the employee's EmployeeActivityRates bridge row for this activity and returns the dollar rate
+// to apply — the bridge row's holidayPayRate when isHoliday is true, otherwise its payRate. Returns 0 when
+// the employee has no bridge row for the activity. Salary-type rows are left for [057] to handle and
+// return 0 here.
+const resolveDollarRate = (employee: Employee, activity: Activity, isHoliday: boolean): number => {
+  const activityRate = employee.activityRates.find((rate) => rate.activityId === activity.activityId);
+  if (!activityRate) return 0;
+  if (activityRate.payRateType === EmployeeActivityPayRateType.Salary) return 0;
+  return isHoliday ? activityRate.holidayPayRate : activityRate.payRate;
+};
 
 // Runs the full allocation calculation.
 // Returns one AllocationReportRow per funding source, sorted by wagesAllocation descending.
@@ -46,7 +52,7 @@ const buildAllocationRows = (
         continue;
       }
 
-      const dollarRate = resolveDollarRate(employee, activity);
+      const dollarRate = resolveDollarRate(employee, activity, row.IsHoliday === 'TRUE');
       const rowCost = row.Hours * dollarRate;
 
       for (const fundingSource of activity.fundingSources) {
