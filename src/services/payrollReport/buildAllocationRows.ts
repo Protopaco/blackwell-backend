@@ -4,21 +4,13 @@ import AllocationReportRow from '#models/AllocationReportRow.js';
 import AdditionalExpense from '#models/AdditionalExpense.js';
 import EmployeeExpense from '#models/EmployeeExpense.js';
 import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
-import { PayRate } from '#models/PayRate.js';
 import { logger } from '#utils/logger.js';
 
-// For flat-rate activities, row.Hours holds the quantity of flat-rate units entered (e.g. "2 shifts"),
-// not a duration — same shape as hourly's hours * rate, just quantity * activity.flatRateAmount instead.
-const resolveDollarRate = (employee: Employee, activity: Activity): number => {
-  switch (activity.payRate) {
-    case PayRate.HourlyPayRate1: return employee.hourlyPayRate1;
-    case PayRate.HourlyPayRate2: return employee.hourlyPayRate2;
-    case PayRate.FlatPayRate1:
-    case PayRate.FlatPayRate2:
-      return activity.flatRateAmount;
-    default: return 0;
-  }
-};
+// SHIM — Employee.hourlyPayRate1/2 and Activity.payRate/flatRateAmount were removed in [049]/[051]/[052];
+// the real replacement (looking up the employee's EmployeeActivityRates bridge row for this activity,
+// including salary-type handling) is [056]'s scope. Always returns 0 until then — allocation reports are
+// not expected to produce correct dollar figures for this part of the epic.
+const resolveDollarRate = (_employee: Employee, _activity: Activity): number => 0;
 
 // Runs the full allocation calculation.
 // Returns one AllocationReportRow per funding source, sorted by wagesAllocation descending.

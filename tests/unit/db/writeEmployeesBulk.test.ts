@@ -11,9 +11,8 @@ const employee: Employee = {
   firstName: 'Jane',
   lastName: 'Smith',
   position: 'Coordinator',
-  hourlyPayRate1: 20,
-  hourlyPayRate2: 25,
-  holidayPayRate: 30,
+  salaryAmount: 2000,
+  activityRates: [],
   email: 'jane@example.com',
   status: 'Active',
   timesheetFileId: 'file-1',
@@ -25,11 +24,10 @@ describe('writeEmployeesBulk', () => {
 
     expect(writeValues).toHaveBeenCalledWith('report-1', 'Employees', [
       [
-        'EmployeeId', 'FirstName', 'LastName', 'Position',
-        'HourlyPayRate1', 'HourlyPayRate2', 'HolidayPayRate',
+        'EmployeeId', 'FirstName', 'LastName', 'Position', 'SalaryAmount',
         'Email', 'Status', 'TimesheetFileId',
       ],
-      ['e1', 'Jane', 'Smith', 'Coordinator', 20, 25, 30, 'jane@example.com', 'Active', 'file-1'],
+      ['e1', 'Jane', 'Smith', 'Coordinator', 2000, 'jane@example.com', 'Active', 'file-1'],
     ]);
   });
 
@@ -38,8 +36,7 @@ describe('writeEmployeesBulk', () => {
 
     expect(writeValues).toHaveBeenCalledWith('report-1', 'Employees', [
       [
-        'EmployeeId', 'FirstName', 'LastName', 'Position',
-        'HourlyPayRate1', 'HourlyPayRate2', 'HolidayPayRate',
+        'EmployeeId', 'FirstName', 'LastName', 'Position', 'SalaryAmount',
         'Email', 'Status', 'TimesheetFileId',
       ],
     ]);

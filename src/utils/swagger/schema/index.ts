@@ -7,6 +7,7 @@ import clientUpdateRequest from './clientUpdateRequest.js';
 import clientSummary from './clientSummary.js';
 import employee from './employee.js';
 import employeeCreateRequest from './employeeCreateRequest.js';
+import employeeActivityRate from './employeeActivityRate.js';
 import employeeExpense from './employeeExpense.js';
 import employeeExpenseUpdate from './employeeExpenseUpdate.js';
 import folderInput from './folderInput.js';
@@ -32,6 +33,7 @@ const schemas = {
   ...clientSummary,
   ...employee,
   ...employeeCreateRequest,
+  ...employeeActivityRate,
   ...employeeExpense,
   ...employeeExpenseUpdate,
   ...folderInput,

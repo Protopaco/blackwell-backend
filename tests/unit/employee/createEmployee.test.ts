@@ -6,9 +6,8 @@ const { testClient, baseEmployee, activeFolder, inactiveFolder } = vi.hoisted(()
     firstName: 'Jane',
     lastName: 'Smith',
     position: 'Coordinator',
-    hourlyPayRate1: 20,
-    hourlyPayRate2: 25,
-    holidayPayRate: 30,
+    salaryAmount: 0,
+    activityRates: [],
     email: 'jane@example.com',
     status: 'Active',
   },
@@ -31,7 +30,7 @@ vi.mock('#db/employee/appendEmployee.js', () => ({ default: vi.fn().mockResolved
 vi.mock('#db/adapter/createOAuthWorkbook.js', () => ({ default: vi.fn().mockResolvedValue('new-file-id') }));
 vi.mock('#db/adapter/workbookExists.js', () => ({ default: vi.fn().mockResolvedValue(true) }));
 vi.mock('#db/payrollConfig/readPayrollConfig.js', () => ({
-  default: vi.fn().mockResolvedValue({ timesheetFolders: [activeFolder, inactiveFolder] }),
+  default: vi.fn().mockResolvedValue({ timesheetFolders: [activeFolder, inactiveFolder], activities: [] }),
 }));
 
 import createEmployee from '#services/employee/createEmployee.js';

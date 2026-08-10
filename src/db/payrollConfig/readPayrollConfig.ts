@@ -4,6 +4,7 @@ import mapEmployee from '#db/employee/mapEmployee.js';
 import mapSupervisor from '#db/supervisor/mapSupervisor.js';
 import mapActivity from '#db/activity/mapActivity.js';
 import mapEmployeeActivityRate from '#db/employeeActivityRate/mapEmployeeActivityRate.js';
+import joinEmployeeActivityRates from '#db/employee/joinEmployeeActivityRates.js';
 import mapFundingSource from '#db/fundingSource/mapFundingSource.js';
 import mapHoliday from '#db/holiday/mapHoliday.js';
 import mapSettings from '#db/settings/mapSettings.js';
@@ -54,11 +55,13 @@ const readPayrollConfig = async (payrollConfigFileId: string): Promise<PayrollCo
   const settings = settingsRows.length > 0 ? mapSettings(settingsRows[0]) : null;
   if (!settings) throw new Error('Settings not found in Payroll Config');
 
+  const employeeActivityRates = employeeActivityRateRows.map(mapEmployeeActivityRate);
+
   const config: PayrollConfig = {
-    employees: employeeRows.map(mapEmployee),
+    employees: joinEmployeeActivityRates(employeeRows.map(mapEmployee), employeeActivityRates),
     supervisors: supervisorRows.map(mapSupervisor),
     activities: activityRows.map(mapActivity),
-    employeeActivityRates: employeeActivityRateRows.map(mapEmployeeActivityRate),
+    employeeActivityRates,
     fundingSources: fundingSourceRows.map(mapFundingSource),
     holidays: holidayRows.map(mapHoliday),
     settings,

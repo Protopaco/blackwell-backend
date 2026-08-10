@@ -40,8 +40,7 @@ export const PAY_PERIOD_HEADERS = [
 
 export const EMPLOYEES_TAB = 'Employees';
 export const EMPLOYEES_HEADERS = [
-  'EmployeeId', 'FirstName', 'LastName', 'Position',
-  'HourlyPayRate1', 'HourlyPayRate2', 'HolidayPayRate',
+  'EmployeeId', 'FirstName', 'LastName', 'Position', 'SalaryAmount',
   'Email', 'Status', 'TimesheetFileId',
 ];
 export const ACTIVITIES_TAB = 'Activities';

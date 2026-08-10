@@ -2,14 +2,13 @@ const employeeCreateRequest = {
   EmployeeCreateRequest: {
     type: 'object',
     description: 'Exactly one of timesheetFileLink or timesheetFolderId must be provided.',
-    required: ['firstName', 'lastName', 'position', 'hourlyPayRate1', 'hourlyPayRate2', 'holidayPayRate', 'email', 'status'],
+    required: ['firstName', 'lastName', 'position', 'salaryAmount', 'activityRates', 'email', 'status'],
     properties: {
       firstName: { type: 'string', example: 'Jane' },
       lastName: { type: 'string', example: 'Smith' },
       position: { type: 'string', example: 'Program Director' },
-      hourlyPayRate1: { type: 'number', example: 25.96 },
-      hourlyPayRate2: { type: 'number', example: 36.00 },
-      holidayPayRate: { type: 'number', example: 38.94 },
+      salaryAmount: { type: 'number', example: 0, description: 'Absence or 0 means not salaried.' },
+      activityRates: { type: 'array', items: { $ref: '#/components/schemas/EmployeeActivityRate' } },
       email: { type: 'string', format: 'email', example: 'jane.smith@example.org' },
       status: { type: 'string', enum: ['Active', 'Inactive'] },
       timesheetFileLink: {

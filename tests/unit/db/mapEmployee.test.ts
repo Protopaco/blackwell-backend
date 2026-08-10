@@ -8,9 +8,7 @@ describe('mapEmployee', () => {
       FirstName: 'Jane',
       LastName: 'Smith',
       Position: 'Program Director',
-      HourlyPayRate1: '25.96',
-      HourlyPayRate2: '36',
-      HolidayPayRate: '38.94',
+      SalaryAmount: '2000',
       Email: 'jane.smith@example.org',
       Status: 'Active',
       TimesheetFileId: '1',
@@ -21,42 +19,29 @@ describe('mapEmployee', () => {
       firstName: 'Jane',
       lastName: 'Smith',
       position: 'Program Director',
-      hourlyPayRate1: 25.96,
-      hourlyPayRate2: 36,
-      holidayPayRate: 38.94,
+      salaryAmount: 2000,
+      activityRates: [],
       email: 'jane.smith@example.org',
       status: 'Active',
       timesheetFileId: '1',
     });
   });
 
-  describe('pay rate fallback', () => {
+  describe('salaryAmount fallback', () => {
     it('falls back to 0 for an empty string', () => {
-      expect(mapEmployee({ HourlyPayRate1: '' }).hourlyPayRate1).toBe(0);
+      expect(mapEmployee({ SalaryAmount: '' }).salaryAmount).toBe(0);
     });
 
     it('falls back to 0 for a missing value', () => {
-      expect(mapEmployee({}).hourlyPayRate1).toBe(0);
+      expect(mapEmployee({}).salaryAmount).toBe(0);
     });
 
     it('falls back to 0 for a non-numeric string', () => {
-      expect(mapEmployee({ HourlyPayRate1: 'n/a' }).hourlyPayRate1).toBe(0);
+      expect(mapEmployee({ SalaryAmount: 'n/a' }).salaryAmount).toBe(0);
     });
 
-    it('preserves 0 as an explicit rate', () => {
-      expect(mapEmployee({ HourlyPayRate1: '0' }).hourlyPayRate1).toBe(0);
-    });
-
-    it('applies the same fallback independently to all three pay rate fields', () => {
-      const employee = mapEmployee({
-        HourlyPayRate1: '10',
-        HourlyPayRate2: '',
-        HolidayPayRate: undefined,
-      });
-
-      expect(employee.hourlyPayRate1).toBe(10);
-      expect(employee.hourlyPayRate2).toBe(0);
-      expect(employee.holidayPayRate).toBe(0);
+    it('preserves 0 as an explicit amount', () => {
+      expect(mapEmployee({ SalaryAmount: '0' }).salaryAmount).toBe(0);
     });
   });
 });
