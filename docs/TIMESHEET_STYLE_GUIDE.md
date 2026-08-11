@@ -1,0 +1,138 @@
+# Timesheet Style Guide
+
+Defines the structure and visual styling of the generated per-employee timesheet Google Sheet
+(`applyTimesheetFormatting.ts` and `src/services/timesheet/formatting/*`). This is a working draft —
+sections marked **Proposed** describe the redesign discussed to fix unlabeled/ambiguous sections
+(flat-rate rows blending into hourly rows, no week labels, no flat-rate Daily Total); everything else
+describes what's actually implemented today.
+
+## Status legend
+
+- **Existing** — implemented today, unchanged by the redesign
+- **Proposed** — not yet implemented; part of the redesign
+- **Existing (changing)** — implemented today, but the redesign alters it
+
+## Color palette
+
+Source of truth: `src/utils/timesheetTheme.ts`. Do not hardcode hex values anywhere else.
+
+| Name | Hex | Used for |
+|---|---|---|
+| `PRIMARY` | `#D9EAF7` | Day/date headers, activity label column, daily total rows |
+| `PRIMARY_DARK` | `#A4C2F4` | Dividers, prominent section headers |
+| `SECONDARY` | `#E4DDF2` | Pay period / employee name header rows |
+| `ACCENT` | `#FFF2CC` | Holiday name cells |
+| `MUTED_ACCENT` | `#FCE5CD` | Holiday columns, special-rate cells |
+| `MUTED_ACCENT_DARK` | `#F4CCCC` | Stronger exceptions / special-rate indicators |
+| `MUTED` | `#F1F3F4` | Weekend cells, summary values |
+| `MUTED_DARK` | `#D9D9D9` | Borders, inactive cells, alternating rows |
+| `TEXT` | `#3C4043` | Standard body text |
+| `HEADER_TEXT` | `#243447` | Header text |
+| `WHITE` / `BLACK` | — | Text/border utility colors |
+
+## Block borders
+
+Each block gets a medium-width border around its full bounding range (all rows/columns the block
+spans), colored to match the block's dominant section color:
+
+| Block | Border color |
+|---|---|
+| Summary | `SECONDARY` (`#E4DDF2`) |
+| Week | `PRIMARY_DARK` (`#A4C2F4`, sampled as `#a3c2f4`) |
+| Approval | `MUTED` (`#F1F3F4`, sampled as `#f0f3f4`) |
+| Totals | `MUTED` (`#F1F3F4`, sampled as `#f0f3f4`) |
+
+## Column layout
+
+All 0-based. `maxDays` is the widest week across the timesheet (usually 7).
+
+| Column(s) | Index | Purpose |
+|---|---|---|
+| A | 0 | Label column |
+| B…(N+1) | 1…N | One column per day (N = `maxDays`) |
+| Last | N+1 | Weekly/section total column |
+
+---
+
+## Block: Summary (identity header)
+
+Rows 1-4 at the top of the sheet. Fixed, not repeated. **Border: `SECONDARY`, medium width, around the
+full 4-row block (Proposed — today each row is bordered individually, not the block as a whole).**
+
+| Row type | Status | Content | Style |
+|---|---|---|---|
+| `identityRow` | Existing | Employee name / position / "Pay Period:" label / pay period date range — one value per row, column A only | `SECONDARY` fill, `HEADER_TEXT`, bold, left-aligned, full border |
+
+---
+
+## Block: Week (repeated once per week in the pay period)
+
+**Border: `PRIMARY_DARK`, medium width, around each week's full bounding range (Proposed — new).**
+
+### Row order
+
+1. `weekLabelRow` **(Existing, changing)** — this *is* the existing Holiday Name Row; only its label
+   cell (column A) changes. When the week has a holiday, that row already displays the holiday name in
+   the holiday's own column — unaffected. The change is adding the week's date-range label to column A,
+   which today is unused/blank on this row.
+2. `dayOfWeekRow` (Existing)
+3. `dateRow` (Existing)
+4. Hourly section — **omitted entirely (no `sectionLabelRow`, no `activityRow`s, no `dailyTotalRow`) if the employee has zero hourly activities that week**:
+   - `sectionLabelRow` **(Proposed)** — "Hourly"
+   - `activityRow` × N (Existing)
+   - `dailyTotalRow` (Existing)
+5. `spacerRow` — this *is* the existing `formatDividerRows.ts` divider row (same concept, not a new style).
+   **Only appears when both sections are present that week** — if a week has only Flat Rate activities (no
+   Hourly), the Flat Rate `sectionLabelRow` follows `dateRow` directly, no spacer in between
+6. Flat Rate section — **omitted entirely (same rule) if the employee has zero flat-rate activities that week**:
+   - `sectionLabelRow` **(Proposed)** — "Flat Rate"
+   - `activityRow` × N (Existing)
+   - `dailyTotalRow` **(Existing, changing)** — currently only built for the Hourly section; the redesign adds one for Flat Rate too
+
+### Row types
+
+| Row type | Status | Content | Style |
+|---|---|---|---|
+| `weekLabelRow` | Existing (changing) | Existing Holiday Name Row; label cell (column A) now also carries e.g. "Week 1/19 - 1/25" | Unchanged from today's `formatHolidayNameRow.ts` — full row `PRIMARY_DARK`/`HEADER_TEXT`, holiday columns overridden to `ACCENT`. Label cell: `SECONDARY` (`#E4DDF2`, matching the Summary block's `identityRow` — confirmed against mockup's sampled `#e3ddf1`) |
+| `dayOfWeekRow` | Existing | Mon/Tue/.../Sun | `PRIMARY_DARK`, `HEADER_TEXT`, bold, centered. Holiday columns → `ACCENT` |
+| `dateRow` | Existing | Day numbers (1/19, 1/20, ...) | Same as `dayOfWeekRow` |
+| `sectionLabelRow` | Proposed | "Hourly" / "Flat Rate" in column A; "Total" in the total column | Same styling as `dayOfWeekRow` (`PRIMARY_DARK`/`HEADER_TEXT`, bold, centered, holiday columns → `ACCENT`) |
+| `activityRow` | Existing | One row per activity, day-of-week values | Label column: `PRIMARY`/`HEADER_TEXT`. Day cells: alternating `WHITE`/`MUTED` by row index within the section. Weekend/holiday columns always overridden to `MUTED`/`ACCENT` regardless of alternation — **same alternating behavior for both Hourly and Flat Rate sections, no special-casing.** Hourly rows get 2-decimal hour validation; flat-rate rows get whole-number validation |
+| `dailyTotalRow` | Existing (changing — now applies per-section, not just once per week) | Sum formula per day column | `PRIMARY_DARK`/`HEADER_TEXT`, bold, centered; label cell left-aligned |
+| `spacerRow` | Existing (reused, not new) | Blank visual gap between sections | Same as today's `formatDividerRows.ts` — `PRIMARY` fill, `HEADER_TEXT` |
+
+### Resolved: holiday-column coloring for flat-rate rows
+
+`formatActivityRows.ts`'s holiday-column coloring comment claims flat-rate rows should use different
+even/odd holiday colors than regular rows, but the code doesn't actually branch on `isFlatRateSection`.
+**Decision: keep current behavior as-is (consistent coloring across both sections) and fix the stale
+comment** — do not implement a flat-rate-specific holiday color.
+
+---
+
+## Block: Approval
+
+Fixed, appears once after the last week block. **Border: `MUTED`, medium width, around the full block
+(Proposed — new).**
+
+| Row type | Status | Content | Style |
+|---|---|---|---|
+| `signatureRow` | Existing | "Employee Signature:" / "Supervisor Signature:" label + value (merged B:D) | Label: `PRIMARY`/`HEADER_TEXT` left-aligned. Value: `MUTED`/`TEXT` left-aligned, bordered, merged |
+| `includeInPayrollRow` | Existing | "Include in Payroll" label + real checkbox | Label: `PRIMARY`/`HEADER_TEXT` left-aligned. Value cell: boolean data validation (checkbox) |
+
+---
+
+## Block: Totals
+
+Fixed, appears after the Approval block. **Border: `MUTED`, medium width, around the full block
+(Proposed — new).**
+
+| Row type | Status | Content | Style |
+|---|---|---|---|
+| `summaryRow` | Existing | e.g. "Total Hours Worked" / "Holiday Hours" / "Flat Rate Shifts" — label + computed value | Label: `PRIMARY`/`HEADER_TEXT` left-aligned. Value: `MUTED`/`TEXT` centered |
+
+---
+
+## Open questions
+
+None outstanding — all resolved above.
