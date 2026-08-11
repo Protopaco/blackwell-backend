@@ -9,6 +9,7 @@ import appendClient from '#db/client/appendClient.js';
 import readClients from '#db/client/readClients.js';
 import clientsCache from '#utils/caches/clientsCache.js';
 import validateClientCodeIsUnique from '#services/client/validateClientCodeIsUnique.js';
+import validateClientNameIsUnique from '#services/client/validateClientNameIsUnique.js';
 import Client from '#models/Client.js';
 import ClientCreateRequest from '#models/ClientCreateRequest.js';
 import { ClientStatus } from '#models/ClientStatus.js';
@@ -63,6 +64,13 @@ const createClient = async (request: ClientCreateRequest): Promise<Client> => {
 
   const existingClients = await readClients();
   validateClientCodeIsUnique(existingClients, request.clientCode);
+  validateClientNameIsUnique(existingClients, request.clientName);
+
+  if (!request.settings.timeInputMethod || !request.settings.payPeriodInterval || !request.settings.payPeriodStartDate) {
+    throw new UnprocessableError(
+      'settings.timeInputMethod, settings.payPeriodInterval, and settings.payPeriodStartDate are all required',
+    );
+  }
 
   let employeePayrollParentId = '';
   if (request.employeePayrollFolder.createNew) {

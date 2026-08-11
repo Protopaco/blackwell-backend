@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Client from '#models/Client.js';
 
 const { existingClient } = vi.hoisted(() => ({
@@ -17,13 +17,21 @@ const { existingClient } = vi.hoisted(() => ({
 
 vi.mock('#services/client/getClientById.js', () => ({ default: vi.fn().mockResolvedValue(existingClient) }));
 vi.mock('#db/client/writeClients.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('#db/client/readClients.js', () => ({ default: vi.fn().mockResolvedValue([existingClient]) }));
 
 import updateClient from '#services/client/updateClient.js';
 import getClientById from '#services/client/getClientById.js';
 import writeClients from '#db/client/writeClients.js';
+import readClients from '#db/client/readClients.js';
 import clientsCache from '#utils/caches/clientsCache.js';
 
 describe('updateClient', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getClientById).mockResolvedValue(existingClient);
+    vi.mocked(readClients).mockResolvedValue([existingClient]);
+  });
+
   it('merges only status/clientName/clientCode into the existing client', async () => {
     process.env.CLIENT_CONFIG_FILE_ID = 'client-config-1';
     clientsCache.set('client-config-1', [existingClient]);
@@ -58,5 +66,33 @@ describe('updateClient', () => {
     await expect(
       updateClient('unknown-client', { status: 'Active', clientName: 'X', clientCode: 'X' }),
     ).rejects.toThrow('Client not found: unknown-client');
+  });
+
+  it('allows updating a client to keep its own unchanged clientName/clientCode', async () => {
+    await expect(updateClient('c1', { status: 'Inactive' })).resolves.not.toThrow();
+
+    expect(writeClients).toHaveBeenCalled();
+  });
+
+  it('throws UnprocessableError when the new clientCode collides with a different client', async () => {
+    vi.mocked(readClients).mockResolvedValueOnce([
+      existingClient,
+      { clientId: 'c2', clientName: 'Blackwell Co', clientCode: 'BLACKWELL' } as Client,
+    ]);
+
+    await expect(updateClient('c1', { clientCode: 'BLACKWELL' })).rejects.toThrow('Client code already exists: BLACKWELL');
+
+    expect(writeClients).not.toHaveBeenCalled();
+  });
+
+  it('throws UnprocessableError when the new clientName collides with a different client', async () => {
+    vi.mocked(readClients).mockResolvedValueOnce([
+      existingClient,
+      { clientId: 'c2', clientName: 'Blackwell Co', clientCode: 'BLACKWELL' } as Client,
+    ]);
+
+    await expect(updateClient('c1', { clientName: 'Blackwell Co' })).rejects.toThrow('Client name already exists: Blackwell Co');
+
+    expect(writeClients).not.toHaveBeenCalled();
   });
 });

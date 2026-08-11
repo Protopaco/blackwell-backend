@@ -83,6 +83,15 @@ describe('createClient', () => {
     expect(clientsCache.get('client-config-1')).toBeNull();
   });
 
+  it('throws UnprocessableError when settings is missing timeInputMethod, payPeriodInterval, or payPeriodStartDate', async () => {
+    await expect(
+      createClient({ ...baseRequest, settings: { ...baseRequest.settings, timeInputMethod: undefined } }),
+    ).rejects.toThrow('settings.timeInputMethod, settings.payPeriodInterval, and settings.payPeriodStartDate are all required');
+
+    expect(readClients).toHaveBeenCalled();
+    expect(resolveFolder).not.toHaveBeenCalled();
+  });
+
   it('throws UnprocessableError when creating a new Employee Payroll folder without a root link', async () => {
     await expect(
       createClient({ ...baseRequest, employeePayrollFolder: { createNew: true } }),
@@ -97,6 +106,18 @@ describe('createClient', () => {
     ]);
 
     await expect(createClient(baseRequest)).rejects.toThrow('Client code already exists: ACME');
+
+    expect(resolveFolder).not.toHaveBeenCalled();
+    expect(createOAuthWorkbook).not.toHaveBeenCalled();
+    expect(appendClient).not.toHaveBeenCalled();
+  });
+
+  it('throws UnprocessableError when clientName already exists, without provisioning anything', async () => {
+    vi.mocked(readClients).mockResolvedValueOnce([
+      { clientId: 'existing-client', clientName: 'Acme Co' } as any,
+    ]);
+
+    await expect(createClient(baseRequest)).rejects.toThrow('Client name already exists: Acme Co');
 
     expect(resolveFolder).not.toHaveBeenCalled();
     expect(createOAuthWorkbook).not.toHaveBeenCalled();
