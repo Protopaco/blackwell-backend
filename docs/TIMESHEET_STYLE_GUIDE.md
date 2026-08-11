@@ -21,9 +21,9 @@ Source of truth: `src/utils/timesheetTheme.ts`. Do not hardcode hex values anywh
 | `PRIMARY` | `#D9EAF7` | Day/date headers, activity label column, daily total rows |
 | `PRIMARY_DARK` | `#A4C2F4` | Dividers, prominent section headers |
 | `SECONDARY` | `#E4DDF2` | Pay period / employee name header rows |
-| `ACCENT` | `#FFF2CC` | Holiday name cells |
-| `MUTED_ACCENT` | `#FCE5CD` | Holiday columns, special-rate cells |
-| `MUTED_ACCENT_DARK` | `#F4CCCC` | Stronger exceptions / special-rate indicators |
+| `ACCENT` | `#FCA5A5` | Holiday name cells and holiday-column header rows |
+| `MUTED_ACCENT` | `#FEE2E2` | Holiday columns on even-indexed activity rows |
+| `MUTED_ACCENT_DARK` | `#FECACA` | Holiday columns on odd-indexed activity rows |
 | `MUTED` | `#F1F3F4` | Weekend cells, summary values |
 | `MUTED_DARK` | `#D9D9D9` | Borders, inactive cells, alternating rows |
 | `TEXT` | `#3C4043` | Standard body text |
@@ -93,13 +93,13 @@ full 4-row block (Proposed — today each row is bordered individually, not the 
 
 | Row type | Status | Content | Style |
 |---|---|---|---|
-| `weekLabelRow` | Existing (changing) | Existing Holiday Name Row; label cell (column A) now also carries e.g. "Week 1/19 - 1/25" | Unchanged from today's `formatHolidayNameRow.ts` — full row `PRIMARY_DARK`/`HEADER_TEXT`, holiday columns overridden to `ACCENT`. Label cell: `SECONDARY` (`#E4DDF2`, matching the Summary block's `identityRow` — confirmed against mockup's sampled `#e3ddf1`) |
-| `dayOfWeekRow` | Existing | Mon/Tue/.../Sun | `PRIMARY_DARK`, `HEADER_TEXT`, bold, centered. Holiday columns → `ACCENT` |
-| `dateRow` | Existing | Day numbers (1/19, 1/20, ...) | Same as `dayOfWeekRow` |
-| `sectionLabelRow` | Proposed | "Hourly" / "Flat Rate" in column A; "Total" in the total column | Same styling as `dayOfWeekRow` (`PRIMARY_DARK`/`HEADER_TEXT`, bold, centered, holiday columns → `ACCENT`) |
-| `activityRow` | Existing | One row per activity, day-of-week values | Label column: `PRIMARY`/`HEADER_TEXT`. Day cells: alternating `WHITE`/`MUTED` by row index within the section. Weekend/holiday columns always overridden to `MUTED`/`ACCENT` regardless of alternation — **same alternating behavior for both Hourly and Flat Rate sections, no special-casing.** Hourly rows get 2-decimal hour validation; flat-rate rows get whole-number validation |
-| `dailyTotalRow` | Existing (changing — now applies per-section, not just once per week) | Sum formula per day column | `PRIMARY_DARK`/`HEADER_TEXT`, bold, centered; label cell left-aligned |
-| `spacerRow` | Existing (reused, not new) | Blank visual gap between sections | Same as today's `formatDividerRows.ts` — `PRIMARY` fill, `HEADER_TEXT` |
+| `weekLabelRow` | Implemented | Existing Holiday Name Row; label cell (column A) also carries e.g. "Week 1/19 - 1/25" | Whole row `SECONDARY`/`HEADER_TEXT`, unless a holiday column overrides it to `ACCENT`. Label cell additionally bold/left-aligned |
+| `dayOfWeekRow` | Implemented | Mon/Tue/.../Sun | `PRIMARY_DARK`, `HEADER_TEXT`, bold, centered. Holiday columns → `ACCENT` |
+| `dateRow` | Implemented | Day numbers (1/19, 1/20, ...) | Same as `dayOfWeekRow`. Total column left blank — `sectionLabelRow` carries "Total" now |
+| `sectionLabelRow` | Implemented | "Hourly" / "Flat Rate" in column A; "Total" in the total column | Same styling as `dayOfWeekRow` (`PRIMARY_DARK`/`HEADER_TEXT`, bold, centered, holiday columns → `ACCENT`) |
+| `activityRow` | Existing | One row per activity, day-of-week values | Label column: `PRIMARY`/`HEADER_TEXT`. Day cells: alternating `WHITE`/`MUTED` by row index within the section. Weekend/holiday columns always overridden to `MUTED_ACCENT`/`MUTED_ACCENT_DARK` regardless of alternation — **same alternating behavior for both Hourly and Flat Rate sections, no special-casing.** Hourly rows get 2-decimal hour validation; flat-rate rows get whole-number validation |
+| `dailyTotalRow` | Implemented (now applies per-section, not just once per week) | Sum formula per day column | `PRIMARY_DARK`/`HEADER_TEXT`, bold, centered; label cell left-aligned |
+| `spacerRow` | Implemented | Blank visual gap between sections | Same as today's `formatDividerRows.ts` — `WHITE` fill, `HEADER_TEXT`. Row height is halved (`SPACER_ROW_HEIGHT`, ~10px) for a cleaner break |
 
 ### Resolved: holiday-column coloring for flat-rate rows
 

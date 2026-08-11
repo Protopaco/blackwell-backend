@@ -116,9 +116,9 @@ const formatActivityRows = (
       );
     }
 
-    // Step 4: override holiday columns.
-    // Regular rows: even → white, odd → muted accent.
-    // Flat rate rows: even → muted accent, odd → muted accent dark.
+    // Step 4: override holiday columns — even rows get MUTED_ACCENT, odd rows get MUTED_ACCENT_DARK.
+    // Same alternation for both the Hourly and Flat Rate sections; isFlatRateSection only affects the
+    // data validation applied in Step 3, not holiday-column coloring.
     const evenHolidayColor = MUTED_ACCENT;
     const oddHolidayColor = MUTED_ACCENT_DARK;
     for (const specialColumnIndex of holidayColumnIndexes) {

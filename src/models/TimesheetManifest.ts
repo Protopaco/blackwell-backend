@@ -13,11 +13,24 @@ interface ActivityRowManifest {
 
 interface WeekManifest {
   weekIndex: number;
+  // firstRow/lastRow bound the week's full block (weekLabelRow through the last row of whichever
+  // section — Hourly or Flat Rate — ends the week), used to draw the week's block-level border.
+  firstRow: number;
+  lastRow: number;
+  weekLabelRow: number;
+  dayOfWeekRow: number;
   dateRow: number;
-  dailyTotalRow: number;
   dates: DateColumnManifest[];
+  // Hourly and Flat Rate sections are each fully omitted (all fields below undefined, activityRows/
+  // flatRateRows empty) when the employee has zero activities of that type.
+  hourlySectionLabelRow?: number;
   activityRows: ActivityRowManifest[];
+  hourlyDailyTotalRow?: number;
+  // Only set when both the Hourly and Flat Rate sections are present that week.
+  spacerRow?: number;
+  flatRateSectionLabelRow?: number;
   flatRateRows: ActivityRowManifest[];
+  flatRateDailyTotalRow?: number;
 }
 
 interface SignatureCell {

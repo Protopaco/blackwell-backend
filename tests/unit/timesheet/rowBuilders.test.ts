@@ -12,6 +12,7 @@ import {
   buildHolidayRow,
   buildDayRow,
   buildDateRow,
+  buildSectionLabelRow,
   buildActivityRow,
   buildDailyTotalRow,
   buildSummaryRow,
@@ -81,12 +82,17 @@ describe('buildDividerRow', () => {
 });
 
 describe('buildHolidayRow', () => {
-  it('places holiday name in the correct date column', () => {
+  it('leaves the label column empty when no weekLabel is passed', () => {
     const holidays = [makeHoliday('2026-06-04', 'Independence Day')];
     const row = buildHolidayRow(WEEK_DATES, holidays);
 
     expect(row[0]).toBe(''); // label column empty
     expect(row[4]).toBe('Independence Day'); // 2026-06-04 is index 3 in dates → col index 4
+  });
+
+  it('places the week label in the label column when passed', () => {
+    const row = buildHolidayRow(WEEK_DATES, [], 'Week 6/1 - 6/7');
+    expect(row[0]).toBe('Week 6/1 - 6/7');
   });
 
   it('leaves non-holiday columns empty', () => {
@@ -138,6 +144,24 @@ describe('buildDateRow', () => {
     const row = buildDateRow(WEEK_DATES, 7);
     expect(row[1]).toBe('6/1');
     expect(row[7]).toBe('6/7');
+  });
+
+  it('leaves the weekly total column blank — sectionLabelRow carries "Total" now, not this row', () => {
+    const row = buildDateRow(WEEK_DATES, 7);
+    expect(row[row.length - 1]).toBe('');
+  });
+});
+
+describe('buildSectionLabelRow', () => {
+  it('puts the section label in column A and Total in the last column', () => {
+    const row = buildSectionLabelRow('Hourly', 7);
+    expect(row).toEqual(['Hourly', '', '', '', '', '', '', '', 'Total']);
+  });
+
+  it('supports the Flat Rate label too', () => {
+    const row = buildSectionLabelRow('Flat Rate', 7);
+    expect(row[0]).toBe('Flat Rate');
+    expect(row[row.length - 1]).toBe('Total');
   });
 });
 

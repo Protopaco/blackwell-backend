@@ -17,14 +17,14 @@ const PRIMARY_DARK: Color = { red: 0.643, green: 0.761, blue: 0.957 };
 // #E4DDF2 — light lavender for pay period and employee name header rows.
 const SECONDARY: Color = { red: 0.894, green: 0.867, blue: 0.949 };
 
-// #FFF2CC — pale yellow for holiday name cells.
-const ACCENT: Color = { red: 1, green: 0.949, blue: 0.8 };
+// #FCA5A5 — red for holiday name cells and holiday-column header rows.
+const ACCENT: Color = { red: 0.988, green: 0.647, blue: 0.647 };
 
-// #FCE5CD — pale peach for holiday columns and special-rate cells.
-const MUTED_ACCENT: Color = { red: 0.988, green: 0.898, blue: 0.804 };
+// #FEE2E2 — light red for holiday columns on even-indexed activity rows.
+const MUTED_ACCENT: Color = { red: 0.996, green: 0.886, blue: 0.886 };
 
-// #F4CCCC — pale red for stronger exceptions or special-rate indicators.
-const MUTED_ACCENT_DARK: Color = { red: 0.957, green: 0.8, blue: 0.8 };
+// #FECACA — mid-light red for holiday columns on odd-indexed activity rows.
+const MUTED_ACCENT_DARK: Color = { red: 0.996, green: 0.792, blue: 0.792 };
 
 // #F1F3F4 — very light gray for weekend cells and summary values.
 const MUTED: Color = { red: 0.945, green: 0.953, blue: 0.957 };
@@ -53,6 +53,10 @@ const HEADER_VALUE_COLUMN_WIDTH = 105;
 // Width in pixels for each day column and the weekly total column.
 const DAY_COLUMN_WIDTH = 100;
 
+// Height in pixels for the spacerRow between a week's Hourly and Flat Rate sections — about half
+// Google Sheets' default row height (~21px), for a cleaner, thinner break between sections.
+const SPACER_ROW_HEIGHT = 10;
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 
 export type { Color };
@@ -72,4 +76,5 @@ export {
   LABEL_COLUMN_WIDTH,
   HEADER_VALUE_COLUMN_WIDTH,
   DAY_COLUMN_WIDTH,
+  SPACER_ROW_HEIGHT,
 };

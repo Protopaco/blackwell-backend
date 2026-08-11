@@ -1,57 +1,16 @@
-import { PRIMARY_DARK, ACCENT, HEADER_TEXT, MUTED } from "#utils/timesheetTheme.js";
-import fillRow from "./fillRow.js";
-import outlineBorder from "./outlineBorder.js";
+import applyRowStyle from "./applyRowStyle.js";
+import { weekLabelRow } from "./rowStyles.js";
 
-// Builds fill requests for the holiday name row: full row in PRIMARY_DARK, individual holiday cells overridden to ACCENT.
+// Builds fill requests for the Week block's weekLabelRow: PRIMARY_DARK across the row (holiday name
+// cells overridden to ACCENT), with the label cell (column A, carrying the week's date-range label, e.g.
+// "Week 6/1 - 6/7") styled SECONDARY to match the Summary block's identityRow. Called by formatWeekSection.
 const formatHolidayNameRow = (
   sheetId: number,
   holidayNameRowNumber: number,
   labelColumnIndex: number,
   totalColumnCount: number,
   holidayColumnIndexes: number[],
-): object[] => {
-  const requests: object[] = [
-    fillRow(
-      sheetId,
-      holidayNameRowNumber,
-      labelColumnIndex,
-      totalColumnCount,
-      PRIMARY_DARK,
-      HEADER_TEXT,
-      false,
-      "CENTER",
-    ),
-  ];
-
-  for (const holidayColumnIndex of holidayColumnIndexes) {
-    requests.push(
-      fillRow(
-        sheetId,
-        holidayNameRowNumber,
-        holidayColumnIndex,
-        holidayColumnIndex + 1,
-        ACCENT,
-        HEADER_TEXT,
-        true,
-        "CENTER",
-      ),
-      outlineBorder(
-        sheetId,
-        holidayNameRowNumber,
-        labelColumnIndex,
-        totalColumnCount,
-        MUTED,
-        false,
-        false,
-        false,
-        true,
-        false,
-        true,
-      ),
-    );
-  }
-
-  return requests;
-};
+): object[] =>
+  applyRowStyle(sheetId, weekLabelRow, holidayNameRowNumber, labelColumnIndex, totalColumnCount, holidayColumnIndexes);
 
 export default formatHolidayNameRow;
