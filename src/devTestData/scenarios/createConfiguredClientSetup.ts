@@ -1,8 +1,8 @@
 import createFolder from '#db/adapter/createFolder.js';
 import readPayrollConfig from '#db/payrollConfig/readPayrollConfig.js';
 import Client from '#models/Client.js';
+import { EmployeeActivityPayRateType } from '#models/EmployeeActivityPayRateType.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
-import { PayRate } from '#models/PayRate.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
 import createActivity from '#services/activity/createActivity.js';
 import createEmployee from '#services/employee/createEmployee.js';
@@ -47,24 +47,18 @@ const createConfiguredClientSetup = async (client: Client): Promise<void> => {
     trackSeparately: true,
     payrollCategory: PayrollCategory.Regular,
     fundingSources: [{ fundingSourceName: 'Program Grant', percentage: 100 }],
-    payRate: PayRate.HourlyPayRate1,
-    flatRateAmount: 0,
   });
   await createActivity(client.clientId, {
     activityName: 'Administration',
     trackSeparately: true,
     payrollCategory: PayrollCategory.Regular,
     fundingSources: [{ fundingSourceName: 'General Operating', percentage: 100 }],
-    payRate: PayRate.HourlyPayRate2,
-    flatRateAmount: 0,
   });
   await createActivity(client.clientId, {
     activityName: 'PTO',
     trackSeparately: false,
     payrollCategory: PayrollCategory.PTO,
     fundingSources: [{ fundingSourceName: 'General Operating', percentage: 100 }],
-    payRate: PayRate.HourlyPayRate1,
-    flatRateAmount: 0,
   });
 
   await createHoliday(client.clientId, {
@@ -82,13 +76,35 @@ const createConfiguredClientSetup = async (client: Client): Promise<void> => {
   );
   if (!timesheetFolder) throw new Error('Configured Client timesheet folder was not created');
 
+  const findActivityId = (activityName: string): string => {
+    const activity = payrollConfig.activities.find((candidate) => candidate.activityName === activityName);
+    if (!activity) throw new Error(`Configured Client activity was not created: ${activityName}`);
+    return activity.activityId;
+  };
+  const directServicesActivityId = findActivityId('Direct Services');
+  const administrationActivityId = findActivityId('Administration');
+
+  // Seeds at least one of each EmployeeActivityRates payRateType so downstream tickets have data to
+  // exercise: Jamie covers hourly + flat-rate, Riley covers salary.
   await createEmployee(client.clientId, {
     firstName: 'Jamie',
     lastName: 'Carter',
     position: 'Program Specialist',
-    hourlyPayRate1: 28,
-    hourlyPayRate2: 35,
-    holidayPayRate: 42,
+    salaryAmount: 0,
+    activityRates: [
+      {
+        activityId: directServicesActivityId,
+        payRateType: EmployeeActivityPayRateType.Hourly,
+        payRate: 22,
+        holidayPayRate: 28,
+      },
+      {
+        activityId: administrationActivityId,
+        payRateType: EmployeeActivityPayRateType.FlatRate,
+        payRate: 50,
+        holidayPayRate: 0,
+      },
+    ],
     email: 'jamie.carter@example.test',
     status: EmployeeStatus.Active,
     timesheetFolderId: timesheetFolder.timesheetFolderId,
@@ -97,9 +113,15 @@ const createConfiguredClientSetup = async (client: Client): Promise<void> => {
     firstName: 'Riley',
     lastName: 'Stone',
     position: 'Case Manager',
-    hourlyPayRate1: 31,
-    hourlyPayRate2: 38,
-    holidayPayRate: 46.5,
+    salaryAmount: 2000,
+    activityRates: [
+      {
+        activityId: directServicesActivityId,
+        payRateType: EmployeeActivityPayRateType.Salary,
+        payRate: 0,
+        holidayPayRate: 0,
+      },
+    ],
     email: 'riley.stone@example.test',
     status: EmployeeStatus.Active,
     timesheetFolderId: timesheetFolder.timesheetFolderId,
@@ -108,9 +130,15 @@ const createConfiguredClientSetup = async (client: Client): Promise<void> => {
     firstName: 'Taylor',
     lastName: 'Brooks',
     position: 'Operations Assistant',
-    hourlyPayRate1: 24,
-    hourlyPayRate2: 30,
-    holidayPayRate: 36,
+    salaryAmount: 0,
+    activityRates: [
+      {
+        activityId: directServicesActivityId,
+        payRateType: EmployeeActivityPayRateType.Hourly,
+        payRate: 18,
+        holidayPayRate: 22,
+      },
+    ],
     email: 'taylor.brooks@example.test',
     status: EmployeeStatus.Inactive,
     timesheetFolderId: timesheetFolder.timesheetFolderId,

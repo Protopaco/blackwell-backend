@@ -8,8 +8,6 @@ const mapActivityRow = (activity: Activity): Record<string, unknown> => ({
   TrackSeparately: activity.trackSeparately,
   PayrollCategory: activity.payrollCategory,
   ...flattenActivityFundingSources(activity.fundingSources),
-  PayRate: activity.payRate,
-  FlatRateAmount: activity.flatRateAmount,
 });
 
 export default mapActivityRow;

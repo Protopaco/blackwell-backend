@@ -19,4 +19,27 @@ describe('validateClientCodeIsUnique', () => {
       ),
     ).toThrow('Client code already exists: ACME');
   });
+
+  it('allows a client to keep its own unchanged code when excluded', () => {
+    expect(() =>
+      validateClientCodeIsUnique(
+        [{ clientId: 'client-1', clientCode: 'ACME' } as any],
+        'ACME',
+        'client-1',
+      ),
+    ).not.toThrow();
+  });
+
+  it('still throws when the code belongs to a different client than the excluded one', () => {
+    expect(() =>
+      validateClientCodeIsUnique(
+        [
+          { clientId: 'client-1', clientCode: 'ACME' } as any,
+          { clientId: 'client-2', clientCode: 'BLACKWELL' } as any,
+        ],
+        'BLACKWELL',
+        'client-1',
+      ),
+    ).toThrow('Client code already exists: BLACKWELL');
+  });
 });

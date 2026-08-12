@@ -8,8 +8,6 @@ const { existingActivity } = vi.hoisted(() => ({
     trackSeparately: false,
     payrollCategory: 'Regular',
     fundingSources: [{ fundingSourceName: 'Federal Grant', percentage: 100 }],
-    payRate: 'HourlyPayRate1',
-    flatRateAmount: 0,
   } as Activity,
 }));
 
@@ -31,7 +29,6 @@ describe('writeActivities', () => {
         'FundingSource1Name', 'FundingSource1Percentage',
         'FundingSource2Name', 'FundingSource2Percentage',
         'FundingSource3Name', 'FundingSource3Percentage',
-        'PayRate', 'FlatRateAmount',
       ],
       [
         {
@@ -45,8 +42,6 @@ describe('writeActivities', () => {
           FundingSource2Percentage: '',
           FundingSource3Name: '',
           FundingSource3Percentage: '',
-          PayRate: 'HourlyPayRate1',
-          FlatRateAmount: 0,
         },
       ],
     );

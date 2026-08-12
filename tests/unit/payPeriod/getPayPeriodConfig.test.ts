@@ -15,6 +15,7 @@ const { payPeriod, snapshot } = vi.hoisted(() => ({
   snapshot: {
     employees: [],
     activities: [],
+    employeeActivityRates: [],
     fundingSources: [],
     holidays: [],
     settings: { timeInputMethod: 'TotalHours', payPeriodInterval: 'Bi-Weekly', payPeriodStartDate: '2026-06-01' },

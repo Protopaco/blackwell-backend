@@ -4,20 +4,25 @@ import AllocationReportRow from '#models/AllocationReportRow.js';
 import AdditionalExpense from '#models/AdditionalExpense.js';
 import EmployeeExpense from '#models/EmployeeExpense.js';
 import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
-import { PayRate } from '#models/PayRate.js';
+import { EmployeeActivityPayRateType } from '#models/EmployeeActivityPayRateType.js';
+import calculateEffectiveHourlyRate from './calculateEffectiveHourlyRate.js';
 import { logger } from '#utils/logger.js';
 
-// For flat-rate activities, row.Hours holds the quantity of flat-rate units entered (e.g. "2 shifts"),
-// not a duration — same shape as hourly's hours * rate, just quantity * activity.flatRateAmount instead.
-const resolveDollarRate = (employee: Employee, activity: Activity): number => {
-  switch (activity.payRate) {
-    case PayRate.HourlyPayRate1: return employee.hourlyPayRate1;
-    case PayRate.HourlyPayRate2: return employee.hourlyPayRate2;
-    case PayRate.FlatPayRate1:
-    case PayRate.FlatPayRate2:
-      return activity.flatRateAmount;
-    default: return 0;
-  }
+// Looks up the employee's EmployeeActivityRates bridge row for this activity and returns the dollar rate
+// to apply. Salary-type rows use the pay-period's effectiveHourlyRate (salaryAmount divided across the
+// employee's salary-type hours — see calculateEffectiveHourlyRate) instead of a per-activity payRate.
+// Hourly/FlatRate rows use the bridge row's holidayPayRate when isHoliday is true, otherwise its payRate.
+// Returns 0 when the employee has no bridge row for the activity.
+const resolveDollarRate = (
+  employee: Employee,
+  activity: Activity,
+  isHoliday: boolean,
+  effectiveHourlyRate: number,
+): number => {
+  const activityRate = employee.activityRates.find((rate) => rate.activityId === activity.activityId);
+  if (!activityRate) return 0;
+  if (activityRate.payRateType === EmployeeActivityPayRateType.Salary) return effectiveHourlyRate;
+  return isHoliday ? activityRate.holidayPayRate : activityRate.payRate;
 };
 
 // Runs the full allocation calculation.
@@ -42,6 +47,7 @@ const buildAllocationRows = (
     }
 
     const employeeHoursRows = hoursRows.filter((row) => row.EmployeeId === expense.employeeId);
+    const effectiveHourlyRate = calculateEffectiveHourlyRate(employee, employeeHoursRows, activityMap);
 
     // Compute weighted cost per funding source for this employee
     const weightedCostByFundingSource = new Map<string, number>();
@@ -54,7 +60,7 @@ const buildAllocationRows = (
         continue;
       }
 
-      const dollarRate = resolveDollarRate(employee, activity);
+      const dollarRate = resolveDollarRate(employee, activity, row.IsHoliday === 'TRUE', effectiveHourlyRate);
       const rowCost = row.Hours * dollarRate;
 
       for (const fundingSource of activity.fundingSources) {

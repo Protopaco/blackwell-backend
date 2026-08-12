@@ -30,9 +30,15 @@ const buildPositionRow = (position: string): unknown[] => [position];
 // Returns an empty row used as a visual separator between sections.
 const buildDividerRow = (): unknown[] => [];
 
-// Builds a row showing holiday names above each date column where a holiday falls.
-const buildHolidayRow = (dates: Date[], holidays: Holiday[]): unknown[] => {
-  const row: unknown[] = [''];
+// Builds the sectionLabelRow that introduces a week's Hourly or Flat Rate section — the section label
+// in column A and "Total" in the weekly total column (the only row in the Week block that carries it).
+const buildSectionLabelRow = (sectionLabel: string, maxDays: number): unknown[] =>
+  [sectionLabel, ...Array(maxDays).fill(''), 'Total'];
+
+// Builds the weekLabelRow: the week's date-range label in column A (e.g. "Week 6/1 - 6/7"), plus the
+// holiday name above each date column where a holiday falls.
+const buildHolidayRow = (dates: Date[], holidays: Holiday[], weekLabel = ''): unknown[] => {
+  const row: unknown[] = [weekLabel];
   for (const date of dates) {
     row.push(getHolidayName(date, holidays) ?? '');
   }
@@ -43,9 +49,10 @@ const buildHolidayRow = (dates: Date[], holidays: Holiday[]): unknown[] => {
 const buildDayRow = (dates: Date[]): unknown[] =>
   ['', ...dates.map(getDayOfWeek)];
 
-// Builds the row of M/D formatted dates for a week, with "Total" in the weekly total column.
+// Builds the row of M/D formatted dates for a week. The weekly total column is left blank here —
+// each section's own sectionLabelRow carries the "Total" header now, so this would otherwise duplicate it.
 const buildDateRow = (dates: Date[], maxDays: number): unknown[] =>
-  ['', ...dates.map(formatDateHeader), ...Array(maxDays - dates.length).fill(''), 'Total'];
+  ['', ...dates.map(formatDateHeader), ...Array(maxDays - dates.length).fill(''), ''];
 
 // Builds a blank data-entry row for a single activity with one empty cell per day, plus a SUM formula
 // in the weekly total column covering that row's day cells. rowNumber is this row's own 1-based sheet row.
@@ -97,6 +104,7 @@ export {
   buildHolidayRow,
   buildDayRow,
   buildDateRow,
+  buildSectionLabelRow,
   buildActivityRow,
   buildDailyTotalRow,
   buildSummaryRow,

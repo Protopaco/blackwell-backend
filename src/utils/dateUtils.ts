@@ -43,6 +43,13 @@ const getDayOfWeek = (date: Date): string => {
   return DAY_NAMES[date.getUTCDay()];
 };
 
+// Formats a week's date range as "M/D - M/D" for the weekLabelRow's label cell (e.g., "6/1 - 6/7").
+const formatWeekRangeLabel = (dates: Date[]): string => {
+  const firstDate = dates[0];
+  const lastDate = dates[dates.length - 1];
+  return `Week ${formatDateHeader(firstDate)} - ${formatDateHeader(lastDate)}`;
+};
+
 // Returns the holiday name for a date if it matches one of the client's configured holidays, or null.
 const getHolidayName = (date: Date, holidays: Holiday[]): string | null => {
   const dateStr = date.toISOString().split('T')[0];
@@ -54,6 +61,7 @@ export {
   getDatesBetween,
   chunkDatesByWeek,
   formatDateHeader,
+  formatWeekRangeLabel,
   getDayOfWeek,
   getHolidayName,
 };

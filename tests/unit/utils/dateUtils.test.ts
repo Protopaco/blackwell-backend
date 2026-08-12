@@ -3,6 +3,7 @@ import {
   getDatesBetween,
   chunkDatesByWeek,
   formatDateHeader,
+  formatWeekRangeLabel,
   getDayOfWeek,
   getHolidayName,
 } from '#utils/dateUtils.js';
@@ -51,6 +52,18 @@ describe('formatDateHeader', () => {
   it('formats date without leading zeros', () => {
     const date = new Date('2026-12-25T12:00:00Z');
     expect(formatDateHeader(date)).toBe('12/25');
+  });
+});
+
+describe('formatWeekRangeLabel', () => {
+  it('formats a full week as "Week M/D - M/D"', () => {
+    const dates = getDatesBetween('2026-06-01', '2026-06-07');
+    expect(formatWeekRangeLabel(dates)).toBe('Week 6/1 - 6/7');
+  });
+
+  it('handles a partial week (first/last week of a pay period)', () => {
+    const dates = getDatesBetween('2026-06-03', '2026-06-05');
+    expect(formatWeekRangeLabel(dates)).toBe('Week 6/3 - 6/5');
   });
 });
 

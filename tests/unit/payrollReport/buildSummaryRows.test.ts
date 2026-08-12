@@ -8,7 +8,7 @@ const baseEntry: TimesheetEntry = {
   activityId: 'a1',
   activityName: 'Job Coaching',
   payrollCategory: 'Regular',
-  payRate: 'HourlyPayRate1',
+  payRateType: 'Hourly',
   date: '2026-06-01',
   isHoliday: false,
   hours: 8,
@@ -23,7 +23,7 @@ describe('buildSummaryRows', () => {
         EmployeeId: 'e1',
         EmployeeName: 'Jane Smith',
         PayrollCategory: 'Regular',
-        PayRate: 'HourlyPayRate1',
+        PayRateType: 'Hourly',
         IsHoliday: false,
         TotalHours: 8,
       },
@@ -39,9 +39,9 @@ describe('buildSummaryRows', () => {
     expect(rows[0].TotalHours).toBe(12);
   });
 
-  it('keeps entries separate when the pay rate differs', () => {
+  it('keeps entries separate when the pay rate type differs', () => {
     const rows = buildSummaryRows(
-      [baseEntry, { ...baseEntry, payRate: 'HourlyPayRate2', hours: 4 }],
+      [baseEntry, { ...baseEntry, payRateType: 'FlatRate', hours: 4 }],
       '2026-06-15T00:00:00Z',
     );
     expect(rows).toHaveLength(2);

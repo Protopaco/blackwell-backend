@@ -3,7 +3,7 @@ interface PayrollReportSummaryRow {
   EmployeeId: string;
   EmployeeName: string;
   PayrollCategory: string;
-  PayRate: string;
+  PayRateType: string;
   IsHoliday: boolean;
   TotalHours: number;
 }

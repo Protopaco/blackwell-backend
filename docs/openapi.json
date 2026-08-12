@@ -125,19 +125,6 @@
                 }
               }
             }
-          },
-          "payRate": {
-            "type": "string",
-            "enum": [
-              "HourlyPayRate1",
-              "HourlyPayRate2",
-              "FlatPayRate1",
-              "FlatPayRate2"
-            ]
-          },
-          "flatRateAmount": {
-            "type": "number",
-            "example": 25
           }
         }
       },
@@ -319,17 +306,16 @@
             "type": "string",
             "example": "Program Director"
           },
-          "hourlyPayRate1": {
+          "salaryAmount": {
             "type": "number",
-            "example": 25.96
+            "example": 0,
+            "description": "Absence or 0 means not salaried."
           },
-          "hourlyPayRate2": {
-            "type": "number",
-            "example": 36
-          },
-          "holidayPayRate": {
-            "type": "number",
-            "example": 38.94
+          "activityRates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmployeeActivityRate"
+            }
           },
           "email": {
             "type": "string",
@@ -356,9 +342,8 @@
           "firstName",
           "lastName",
           "position",
-          "hourlyPayRate1",
-          "hourlyPayRate2",
-          "holidayPayRate",
+          "salaryAmount",
+          "activityRates",
           "email",
           "status"
         ],
@@ -375,17 +360,16 @@
             "type": "string",
             "example": "Program Director"
           },
-          "hourlyPayRate1": {
+          "salaryAmount": {
             "type": "number",
-            "example": 25.96
+            "example": 0,
+            "description": "Absence or 0 means not salaried."
           },
-          "hourlyPayRate2": {
-            "type": "number",
-            "example": 36
-          },
-          "holidayPayRate": {
-            "type": "number",
-            "example": 38.94
+          "activityRates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmployeeActivityRate"
+            }
           },
           "email": {
             "type": "string",
@@ -406,6 +390,42 @@
           "timesheetFolderId": {
             "type": "string",
             "format": "uuid"
+          }
+        }
+      },
+      "EmployeeActivityRate": {
+        "type": "object",
+        "description": "id is omitted for a newly-added row that hasn't been saved yet.",
+        "required": [
+          "activityId",
+          "payRateType",
+          "payRate",
+          "holidayPayRate"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "activityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "payRateType": {
+            "type": "string",
+            "enum": [
+              "Hourly",
+              "FlatRate",
+              "Salary"
+            ]
+          },
+          "payRate": {
+            "type": "number",
+            "example": 25.96
+          },
+          "holidayPayRate": {
+            "type": "number",
+            "example": 38.94
           }
         }
       },

@@ -1,6 +1,5 @@
 import Activity, { ActivityFundingSource } from '#models/Activity.js';
 import { PayrollCategoryType } from '#models/PayrollCategory.js';
-import { PayRateType } from '#models/PayRate.js';
 
 // Extracts up to three funding source allocations from a row's FundingSource1-3 columns.
 const mapFundingSources = (row: Record<string, unknown>): ActivityFundingSource[] => {
@@ -20,8 +19,6 @@ const mapActivity = (row: Record<string, unknown>): Activity => ({
   trackSeparately: row['TrackSeparately'] === true || row['TrackSeparately'] === 'TRUE',
   payrollCategory: row['PayrollCategory'] as PayrollCategoryType,
   fundingSources: mapFundingSources(row),
-  payRate: row['PayRate'] as PayRateType,
-  flatRateAmount: Number(row['FlatRateAmount']) || 0,
 });
 
 export default mapActivity;

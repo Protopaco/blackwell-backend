@@ -12,7 +12,6 @@ import readPayPeriodConfigSnapshot from "#db/payrollReport/readPayPeriodConfigSn
 import { UnprocessableError } from "#utils/errors.js";
 import Activity from "#models/Activity.js";
 import Guid from "#models/Guid.js";
-import { PayRate, isFlatRate } from "#models/PayRate.js";
 import { PayPeriodStatus } from "#models/PayPeriodStatus.js";
 import { PayrollCategory } from "#models/PayrollCategory.js";
 import TimesheetManifest, { WeekManifest } from "#models/TimesheetManifest.js";
@@ -76,21 +75,24 @@ const generateTimesheets = async (
     );
   }
 
+  // An employee with no EmployeeActivityRates bridge rows has nothing to build a timesheet for — this is
+  // a data error to fix via Employee update, not something generation should silently skip.
+  const employeesMissingActivityRates = activeEmployees.filter((employee) => employee.activityRates.length === 0);
+  if (employeesMissingActivityRates.length > 0) {
+    const names = employeesMissingActivityRates.map((employee) => `${employee.firstName} ${employee.lastName}`);
+    throw new UnprocessableError(
+      `Active employees have no activities assigned — fix via Employee update before generating: ${names.join(', ')}`,
+    );
+  }
+
   logger.info(`Generating timesheets for ${activeEmployees.length} employees`);
 
   const dates = getDatesBetween(payPeriod.startDate, payPeriod.endDate);
   const weeks = chunkDatesByWeek(dates);
-  const sortedActivities = sortActivities(payrollConfig.activities);
-  const { timeOffActivities, flatRateActivities } = sortedActivities;
-  const hasFlatRate = flatRateActivities.length > 0;
   const maxDays = Math.max(...weeks.map((week) => week.length));
 
   const activityMap = new Map<Guid, Activity>(
     payrollConfig.activities.map((activity) => [activity.activityId, activity]),
-  );
-
-  const presentTimeOffCategories = TIME_OFF_CATEGORIES.filter((category) =>
-    timeOffActivities.some((activity) => activity.payrollCategory === category),
   );
 
   const payPeriods = await getPayPeriods(client.payPeriodRegistryFileId);
@@ -119,6 +121,17 @@ const generateTimesheets = async (
 
     logger.info(
       `Generating timesheet for ${employee.firstName} ${employee.lastName}`,
+    );
+
+    // Each employee only sees the activities they have a bridge row for — no more "every employee gets
+    // every activity" (see [048] epic background).
+    const employeeActivityIds = new Set(employee.activityRates.map((activityRate) => activityRate.activityId));
+    const employeeActivities = payrollConfig.activities.filter((activity) => employeeActivityIds.has(activity.activityId));
+    const sortedActivities = sortActivities(employeeActivities, employee.activityRates);
+    const { timeOffActivities, flatRateActivities } = sortedActivities;
+    const hasFlatRate = flatRateActivities.length > 0;
+    const presentTimeOffCategories = TIME_OFF_CATEGORIES.filter((category) =>
+      timeOffActivities.some((activity) => activity.payrollCategory === category),
     );
 
     const allRows: unknown[][] = [];
@@ -184,14 +197,11 @@ const generateTimesheets = async (
       }
     }
 
+    // weekManifest.activityRows already excludes flat-rate rows (those live in flatRateRows), so every
+    // row here is hourly/salary and counts toward holiday hours.
     const holidayHoursCells: string[] = [];
     for (const weekManifest of weekManifests) {
-      const weekHourlyRowNumbers = weekManifest.activityRows
-        .filter((activityRow) => {
-          const activity = activityMap.get(activityRow.activityId);
-          return activity && !isFlatRate(activity.payRate);
-        })
-        .map((activityRow) => activityRow.row);
+      const weekHourlyRowNumbers = weekManifest.activityRows.map((activityRow) => activityRow.row);
 
       for (const dateEntry of weekManifest.dates) {
         if (

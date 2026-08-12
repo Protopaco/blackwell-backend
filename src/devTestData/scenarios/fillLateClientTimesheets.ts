@@ -24,14 +24,19 @@ const fillLateClientTimesheets = async (
 
   const workDate = payPeriod.startDate;
   for (const employee of activeEmployees) {
+    const employeeActivityIds = new Set(
+      employee.activityRates.map((activityRate) => activityRate.activityId),
+    );
+    const entries = [
+      { activityId: directServices.activityId, date: workDate, value: 6 },
+      { activityId: administration.activityId, date: workDate, value: 2 },
+    ].filter((entry) => employeeActivityIds.has(entry.activityId));
+
     await fillGeneratedTimesheet({
       timesheetFileId: employee.timesheetFileId,
       payPeriodId: payPeriod.payPeriodId,
       tabName: payPeriod.payPeriodName,
-      entries: [
-        { activityId: directServices.activityId, date: workDate, value: 6 },
-        { activityId: administration.activityId, date: workDate, value: 2 },
-      ],
+      entries,
       employeeSigned: true,
       supervisorSigned: true,
     });

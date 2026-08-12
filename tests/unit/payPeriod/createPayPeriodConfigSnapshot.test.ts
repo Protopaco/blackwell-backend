@@ -11,6 +11,10 @@ const { payrollConfig } = vi.hoisted(() => ({
     ],
     supervisors: [],
     activities: [{ activityId: 'a1' }],
+    employeeActivityRates: [
+      { id: 'ear1', employeeId: 'e1', activityId: 'a1' },
+      { id: 'ear2', employeeId: 'e2', activityId: 'a1' },
+    ],
     fundingSources: [{ fundingSourceId: 'fs1' }],
     holidays: [{ holidayId: 'h1' }],
     settings: { timeInputMethod: 'ClockInOut', payPeriodInterval: 'Bi-Weekly', payPeriodStartDate: '2026-01-05' },
@@ -23,6 +27,7 @@ vi.mock('#db/adapter/createTabsIfNotExists.js', () => ({ default: vi.fn().mockRe
 vi.mock('#db/payrollConfig/readPayrollConfig.js', () => ({ default: vi.fn().mockResolvedValue(payrollConfig) }));
 vi.mock('#db/employee/writeEmployeesBulk.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#db/activity/writeActivitiesBulk.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('#db/employeeActivityRate/writeEmployeeActivityRatesBulk.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#db/fundingSource/writeFundingSourcesBulk.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#db/holiday/writeHolidaysBulk.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('#db/settings/writeSettings.js', () => ({ default: vi.fn().mockResolvedValue(undefined) }));
@@ -32,6 +37,7 @@ import createOAuthWorkbook from '#db/adapter/createOAuthWorkbook.js';
 import createTabsIfNotExists from '#db/adapter/createTabsIfNotExists.js';
 import writeEmployeesBulk from '#db/employee/writeEmployeesBulk.js';
 import writeActivitiesBulk from '#db/activity/writeActivitiesBulk.js';
+import writeEmployeeActivityRatesBulk from '#db/employeeActivityRate/writeEmployeeActivityRatesBulk.js';
 import writeFundingSourcesBulk from '#db/fundingSource/writeFundingSourcesBulk.js';
 import writeHolidaysBulk from '#db/holiday/writeHolidaysBulk.js';
 import writeSettings from '#db/settings/writeSettings.js';
@@ -69,11 +75,11 @@ describe('createPayPeriodConfigSnapshot', () => {
     expect(createOAuthWorkbook).toHaveBeenCalledWith('06/01 - 06/14', 'prf-1');
   });
 
-  it('provisions all five snapshot tabs on the new workbook', async () => {
+  it('provisions all six snapshot tabs on the new workbook', async () => {
     await createPayPeriodConfigSnapshot(client, payPeriod);
 
     expect(createTabsIfNotExists).toHaveBeenCalledWith('report-1', [
-      'Employees', 'Activities', 'FundingSources', 'Holidays', 'Settings',
+      'Employees', 'Activities', 'EmployeeActivityRates', 'FundingSources', 'Holidays', 'Settings',
     ]);
   });
 
@@ -81,6 +87,14 @@ describe('createPayPeriodConfigSnapshot', () => {
     await createPayPeriodConfigSnapshot(client, payPeriod);
 
     expect(writeEmployeesBulk).toHaveBeenCalledWith('report-1', [{ employeeId: 'e1', status: 'Active' }]);
+  });
+
+  it('writes only bridge rows belonging to Active employees to the EmployeeActivityRates tab', async () => {
+    await createPayPeriodConfigSnapshot(client, payPeriod);
+
+    expect(writeEmployeeActivityRatesBulk).toHaveBeenCalledWith('report-1', [
+      { id: 'ear1', employeeId: 'e1', activityId: 'a1' },
+    ]);
   });
 
   it('writes activities, funding sources, holidays, and settings unfiltered', async () => {

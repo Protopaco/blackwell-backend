@@ -9,6 +9,7 @@ import appendClient from '#db/client/appendClient.js';
 import readClients from '#db/client/readClients.js';
 import clientsCache from '#utils/caches/clientsCache.js';
 import validateClientCodeIsUnique from '#services/client/validateClientCodeIsUnique.js';
+import validateClientNameIsUnique from '#services/client/validateClientNameIsUnique.js';
 import Client from '#models/Client.js';
 import ClientCreateRequest from '#models/ClientCreateRequest.js';
 import { ClientStatus } from '#models/ClientStatus.js';
@@ -27,6 +28,8 @@ import {
   FUNDING_SOURCES_HEADERS,
   ACTIVITIES_TAB,
   ACTIVITIES_HEADERS,
+  EMPLOYEE_ACTIVITY_RATES_TAB,
+  EMPLOYEE_ACTIVITY_RATES_HEADERS,
   SETTINGS_TAB,
   SETTINGS_HEADERS,
   HOLIDAYS_TAB,
@@ -42,12 +45,13 @@ const PAYROLL_CONFIG_TABS = [
   { tabName: SUPERVISORS_TAB, headers: SUPERVISORS_HEADERS },
   { tabName: FUNDING_SOURCES_TAB, headers: FUNDING_SOURCES_HEADERS },
   { tabName: ACTIVITIES_TAB, headers: ACTIVITIES_HEADERS },
+  { tabName: EMPLOYEE_ACTIVITY_RATES_TAB, headers: EMPLOYEE_ACTIVITY_RATES_HEADERS },
   { tabName: HOLIDAYS_TAB, headers: HOLIDAYS_HEADERS },
   { tabName: TIMESHEET_FOLDERS_TAB, headers: TIMESHEET_FOLDERS_HEADERS },
   { tabName: SETTINGS_TAB, headers: SETTINGS_HEADERS },
 ];
 
-// Provisions a brand-new client end to end: Drive folder tree, PayrollConfig workbook (all 6 tabs,
+// Provisions a brand-new client end to end: Drive folder tree, PayrollConfig workbook (all 7 tabs,
 // Settings seeded from the request), PayPeriodRegistry workbook, then appends the Clients row. No step
 // here rolls back anything already created if a later step fails — see docs/TODO.md's Client CRUD
 // section for why (Sheets/Drive isn't a real DB; automatic cleanup risks deleting something a human
@@ -60,6 +64,13 @@ const createClient = async (request: ClientCreateRequest): Promise<Client> => {
 
   const existingClients = await readClients();
   validateClientCodeIsUnique(existingClients, request.clientCode);
+  validateClientNameIsUnique(existingClients, request.clientName);
+
+  if (!request.settings.timeInputMethod || !request.settings.payPeriodInterval || !request.settings.payPeriodStartDate) {
+    throw new UnprocessableError(
+      'settings.timeInputMethod, settings.payPeriodInterval, and settings.payPeriodStartDate are all required',
+    );
+  }
 
   let employeePayrollParentId = '';
   if (request.employeePayrollFolder.createNew) {

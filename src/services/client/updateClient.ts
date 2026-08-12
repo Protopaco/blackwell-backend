@@ -1,5 +1,8 @@
 import writeClients from '#db/client/writeClients.js';
 import getClientById from '#services/client/getClientById.js';
+import readClients from '#db/client/readClients.js';
+import validateClientCodeIsUnique from '#services/client/validateClientCodeIsUnique.js';
+import validateClientNameIsUnique from '#services/client/validateClientNameIsUnique.js';
 import clientsCache from '#utils/caches/clientsCache.js';
 import Client from '#models/Client.js';
 import ClientUpdateRequest from '#models/ClientUpdateRequest.js';
@@ -20,6 +23,10 @@ const updateClient = async (clientId: string, update: ClientUpdateRequest): Prom
     clientName: update.clientName ?? client.clientName,
     clientCode: update.clientCode ?? client.clientCode,
   };
+
+  const otherClients = await readClients();
+  validateClientCodeIsUnique(otherClients, updatedClient.clientCode, clientId);
+  validateClientNameIsUnique(otherClients, updatedClient.clientName, clientId);
 
   await writeClients(updatedClient);
 

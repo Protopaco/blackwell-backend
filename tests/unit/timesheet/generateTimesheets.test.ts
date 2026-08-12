@@ -27,6 +27,7 @@ const { client, payPeriod, emptySnapshot } = vi.hoisted(() => ({
   emptySnapshot: {
     employees: [],
     activities: [],
+    employeeActivityRates: [],
     fundingSources: [],
     holidays: [],
     settings: { timeInputMethod: 'ClockInOut', payPeriodInterval: 'Bi-Weekly', payPeriodStartDate: '2026-01-05' },
@@ -51,5 +52,28 @@ describe('generateTimesheets', () => {
     await generateTimesheets('c1', 'p1');
 
     expect(readPayPeriodConfigSnapshot).toHaveBeenCalledWith('report-1');
+  });
+
+  it('throws naming any Active employee with no EmployeeActivityRates bridge rows', async () => {
+    vi.mocked(readPayPeriodConfigSnapshot).mockResolvedValueOnce({
+      ...emptySnapshot,
+      employees: [
+        {
+          employeeId: 'e1',
+          firstName: 'Jamie',
+          lastName: 'Carter',
+          position: 'Coordinator',
+          salaryAmount: 0,
+          activityRates: [],
+          email: 'jamie@example.com',
+          status: 'Active',
+          timesheetFileId: 'file-1',
+        },
+      ],
+    } as PayPeriodConfigSnapshot);
+
+    await expect(generateTimesheets('c1', 'p1')).rejects.toThrow(
+      'Active employees have no activities assigned — fix via Employee update before generating: Jamie Carter',
+    );
   });
 });

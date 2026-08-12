@@ -3,12 +3,14 @@ import applyFormattingRequests from '#db/adapter/applyFormattingRequests.js';
 import Holiday from "#models/Holiday.js";
 import TimesheetManifest from "#models/TimesheetManifest.js";
 import { logger } from "#utils/logger.js";
+import { MUTED, SECONDARY } from "#utils/timesheetTheme.js";
 import formatColumnWidths from "./formatting/formatColumnWidths.js";
-import formatHeaderRows from "./formatting/formatHeaderRows.js";
+import formatHeaderRows, { HEADER_ROW_COUNT } from "./formatting/formatHeaderRows.js";
 import formatWeekSection from "./formatting/formatWeekSection.js";
 import formatSignatureRows from "./formatting/formatSignatureRows.js";
 import formatIncludeInPayrollRow from "./formatting/formatIncludeInPayrollRow.js";
 import formatSummaryRows from "./formatting/formatSummaryRows.js";
+import outlineBlockBorder from "./formatting/outlineBlockBorder.js";
 
 // Applies all visual formatting to a timesheet tab in a single batchUpdate call.
 // Called immediately after writeValues in generateTimesheets so the sheet looks styled on first open.
@@ -33,9 +35,12 @@ const applyTimesheetFormatting = async (
   const firstDayColumnIndex = 1;
   const totalColumnCount = maxDays + 2;
 
+  const lastSummaryRow = manifest.summaryRows[manifest.summaryRows.length - 1];
+
   const requests: object[] = [
     ...formatColumnWidths(sheetId, totalColumnCount),
     ...formatHeaderRows(sheetId),
+    outlineBlockBorder(sheetId, 1, HEADER_ROW_COUNT, labelColumnIndex, labelColumnIndex + 1, SECONDARY),
     ...manifest.weeks.flatMap((week) =>
       formatWeekSection(
         sheetId,
@@ -52,8 +57,22 @@ const applyTimesheetFormatting = async (
       manifest.supervisorSignatureCell,
     ),
     ...formatIncludeInPayrollRow(sheetId, manifest.includeInPayrollCell),
+    outlineBlockBorder(
+      sheetId,
+      manifest.employeeSignatureCell.row,
+      manifest.includeInPayrollCell.row,
+      labelColumnIndex,
+      4,
+      MUTED,
+    ),
     ...formatSummaryRows(sheetId, manifest.summaryRows),
   ];
+
+  if (lastSummaryRow) {
+    requests.push(
+      outlineBlockBorder(sheetId, manifest.summaryRows[0].row, lastSummaryRow.row, labelColumnIndex, 2, MUTED),
+    );
+  }
 
   await applyFormattingRequests(workbookId, requests);
   logger.debug(`Formatting complete for tab: ${tabName}`);

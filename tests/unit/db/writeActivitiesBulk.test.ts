@@ -12,8 +12,6 @@ const activity: Activity = {
   trackSeparately: false,
   payrollCategory: 'Regular',
   fundingSources: [{ fundingSourceName: 'Federal Grant', percentage: 100 }],
-  payRate: 'HourlyPayRate1',
-  flatRateAmount: 0,
 };
 
 describe('writeActivitiesBulk', () => {
@@ -26,9 +24,8 @@ describe('writeActivitiesBulk', () => {
         'FundingSource1Name', 'FundingSource1Percentage',
         'FundingSource2Name', 'FundingSource2Percentage',
         'FundingSource3Name', 'FundingSource3Percentage',
-        'PayRate', 'FlatRateAmount',
       ],
-      ['a1', 'Job Coaching', false, 'Regular', 'Federal Grant', 100, '', '', '', '', 'HourlyPayRate1', 0],
+      ['a1', 'Job Coaching', false, 'Regular', 'Federal Grant', 100, '', '', '', ''],
     ]);
   });
 
@@ -41,7 +38,6 @@ describe('writeActivitiesBulk', () => {
         'FundingSource1Name', 'FundingSource1Percentage',
         'FundingSource2Name', 'FundingSource2Percentage',
         'FundingSource3Name', 'FundingSource3Percentage',
-        'PayRate', 'FlatRateAmount',
       ],
     ]);
   });

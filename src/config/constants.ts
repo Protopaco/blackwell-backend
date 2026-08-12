@@ -16,7 +16,7 @@ export const HOURS_HEADERS: (keyof PayrollReportHoursRow)[] = [
 ];
 export const SUMMARY_HEADERS: (keyof PayrollReportSummaryRow)[] = [
   'GeneratedAt', 'EmployeeId', 'EmployeeName',
-  'PayrollCategory', 'PayRate', 'IsHoliday', 'TotalHours',
+  'PayrollCategory', 'PayRateType', 'IsHoliday', 'TotalHours',
 ];
 export const EMPLOYEE_EXPENSES_TAB = 'EmployeeExpenses';
 export const EMPLOYEE_EXPENSES_HEADERS: (keyof EmployeeExpense)[] = ['employeeId', 'employeeName', 'totalExpense'];
@@ -40,8 +40,7 @@ export const PAY_PERIOD_HEADERS = [
 
 export const EMPLOYEES_TAB = 'Employees';
 export const EMPLOYEES_HEADERS = [
-  'EmployeeId', 'FirstName', 'LastName', 'Position',
-  'HourlyPayRate1', 'HourlyPayRate2', 'HolidayPayRate',
+  'EmployeeId', 'FirstName', 'LastName', 'Position', 'SalaryAmount',
   'Email', 'Status', 'TimesheetFileId',
 ];
 export const ACTIVITIES_TAB = 'Activities';
@@ -50,7 +49,11 @@ export const ACTIVITIES_HEADERS = [
   'FundingSource1Name', 'FundingSource1Percentage',
   'FundingSource2Name', 'FundingSource2Percentage',
   'FundingSource3Name', 'FundingSource3Percentage',
-  'PayRate', 'FlatRateAmount',
+];
+export const EMPLOYEE_ACTIVITY_RATES_TAB = 'EmployeeActivityRates';
+export const EMPLOYEE_ACTIVITY_RATES_HEADERS = [
+  'Id', 'EmployeeId', 'EmployeeName', 'ActivityId', 'ActivityName',
+  'PayRateType', 'PayRate', 'HolidayPayRate',
 ];
 export const FUNDING_SOURCES_TAB = 'FundingSources';
 export const FUNDING_SOURCES_HEADERS = ['FundingSourceId', 'FundingSourceName', 'FundingSourceCode'];
