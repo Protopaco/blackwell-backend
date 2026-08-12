@@ -2,6 +2,7 @@ import Holiday from "#models/Holiday.js";
 import { ActivityRowManifest, WeekManifest } from "#models/TimesheetManifest.js";
 import { formatWeekRangeLabel } from "#utils/dateUtils.js";
 import { SortedActivities } from "./sortActivities.js";
+import buildFlatRateSection from "./buildFlatRateSection.js";
 import {
   buildActivityRow,
   buildDailyTotalRow,
@@ -21,7 +22,8 @@ interface WeekBuildResult {
 // where each row and date column landed — called once per week by generateTimesheets. The Hourly
 // section (work + time-off activities) and the Flat Rate section are each fully omitted — no
 // sectionLabelRow, no activity rows, no dailyTotalRow — when the employee has zero activities of that
-// type; a spacerRow separates the two sections only when both are present that week.
+// type; a spacerRow separates the two sections only when both are present that week. headerSpacerRow
+// always separates dateRow from whichever section comes first.
 const buildWeek = (
   weekIndex: number,
   dates: Date[],
@@ -47,6 +49,9 @@ const buildWeek = (
 
   const dateRow = nextRowNumber();
   rows.push(buildDateRow(dates, maxDays));
+
+  const headerSpacerRow = nextRowNumber();
+  rows.push(buildDividerRow());
 
   let hourlySectionLabelRow: number | undefined;
   const activityRows: ActivityRowManifest[] = [];
@@ -74,25 +79,9 @@ const buildWeek = (
     rows.push(buildDividerRow());
   }
 
-  let flatRateSectionLabelRow: number | undefined;
-  const flatRateRows: ActivityRowManifest[] = [];
-  let flatRateDailyTotalRow: number | undefined;
-
-  if (hasFlatRateActivities) {
-    flatRateSectionLabelRow = nextRowNumber();
-    rows.push(buildSectionLabelRow("Flat Rate", maxDays));
-
-    const firstFlatRateRow = nextRowNumber();
-    for (const activity of flatRateActivities) {
-      const rowNumber = nextRowNumber();
-      rows.push(buildActivityRow(activity, dayCount, rowNumber));
-      flatRateRows.push({ activityId: activity.activityId, activityName: activity.activityName, row: rowNumber });
-    }
-    const lastFlatRateRow = nextRowNumber() - 1;
-
-    flatRateDailyTotalRow = nextRowNumber();
-    rows.push(buildDailyTotalRow(dates, firstFlatRateRow, lastFlatRateRow, flatRateDailyTotalRow));
-  }
+  const flatRateSection = buildFlatRateSection(flatRateActivities, dates, maxDays, nextRowNumber());
+  rows.push(...flatRateSection.rows);
+  const { flatRateSectionLabelRow, flatRateRows, flatRateDailyTotalRow } = flatRateSection;
 
   const lastRow = nextRowNumber() - 1;
 
@@ -107,6 +96,7 @@ const buildWeek = (
       date: date.toISOString().split("T")[0],
       column: dateIndex + 2, // 1-based; A=1 is label col, so first day is B=2
     })),
+    headerSpacerRow,
     hourlySectionLabelRow,
     activityRows,
     hourlyDailyTotalRow,

@@ -57,6 +57,10 @@ const DAY_COLUMN_WIDTH = 100;
 // Google Sheets' default row height (~21px), for a cleaner, thinner break between sections.
 const SPACER_ROW_HEIGHT = 10;
 
+// Width in pixels for a ClockInOut week's activity dropdown column — wider than DAY_COLUMN_WIDTH so
+// long activity names aren't cut off in the dropdown cell.
+const CLOCK_IN_OUT_ACTIVITY_COLUMN_WIDTH = 250;
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 
 export type { Color };
@@ -77,4 +81,5 @@ export {
   HEADER_VALUE_COLUMN_WIDTH,
   DAY_COLUMN_WIDTH,
   SPACER_ROW_HEIGHT,
+  CLOCK_IN_OUT_ACTIVITY_COLUMN_WIDTH,
 };

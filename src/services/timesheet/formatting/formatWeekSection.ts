@@ -5,6 +5,7 @@ import isWeekend from "./isWeekend.js";
 import formatHolidayNameRow from "./formatHolidayNameRow.js";
 import formatDayOfWeekRow from "./formatDayOfWeekRow.js";
 import formatDateRow from "./formatDateRow.js";
+import formatHeaderSpacerRow from "./formatHeaderSpacerRow.js";
 import formatSectionLabelRow from "./formatSectionLabelRow.js";
 import formatActivityRows from "./formatActivityRows.js";
 import formatDividerRows from "./formatDividerRows.js";
@@ -39,6 +40,8 @@ const formatWeekSection = (
     ...formatHolidayNameRow(sheetId, week.weekLabelRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
     ...formatDayOfWeekRow(sheetId, week.dayOfWeekRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
     ...formatDateRow(sheetId, week.dateRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
+    ...formatHeaderSpacerRow(sheetId, week.headerSpacerRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
+    formatRowHeight(sheetId, week.headerSpacerRow, SPACER_ROW_HEIGHT),
   ];
 
   if (week.hourlySectionLabelRow !== undefined && week.hourlyDailyTotalRow !== undefined) {

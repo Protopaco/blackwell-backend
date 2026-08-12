@@ -1,6 +1,12 @@
 import Activity from '#models/Activity.js';
 import Holiday from '#models/Holiday.js';
-import { formatDateHeader, getDayOfWeek, getHolidayName } from '#utils/dateUtils.js';
+import { formatDateHeader, formatWeekRangeLabel, getDayOfWeek, getHolidayName } from '#utils/dateUtils.js';
+import {
+  CLOCK_IN_OUT_ACTIVITY_COLUMN_OFFSET,
+  CLOCK_IN_OUT_IN_COLUMN_OFFSET,
+  CLOCK_IN_OUT_OUT_COLUMN_OFFSET,
+  CLOCK_IN_OUT_TOTAL_COLUMN_OFFSET,
+} from '#config/constants.js';
 
 // colIndex is 0-based: 0=A, 1=B, 26=AA
 const colLetter = (colIndex: number): string => {
@@ -84,6 +90,62 @@ const buildDailyTotalRow = (
   return row;
 };
 
+// Builds a ClockInOut week's label row content (e.g. "Week 3/30 - 4/5"), scoped to just that week's own
+// 4-column group — weeks sit side by side, each with its own label, rather than one label spanning the
+// whole sheet width.
+const buildClockInOutWeekLabelRow = (dates: Date[]): unknown[] => [
+  formatWeekRangeLabel(dates),
+  '',
+  '',
+  '',
+];
+
+// Builds a ClockInOut day's header row: just the day name + date, in that week's label column. The
+// column headers (Hourly/In/Out/Total) are a separate row below — see buildClockInOutColumnHeaderRow.
+const buildClockInOutDayHeaderRow = (date: Date): unknown[] => [
+  `${getDayOfWeek(date)} ${formatDateHeader(date)}`,
+  '',
+  '',
+  '',
+];
+
+// Builds the "Hourly"/"In"/"Out"/"Total" column header row directly below a day's header row.
+const buildClockInOutColumnHeaderRow = (): unknown[] => ['Hourly', 'In', 'Out', 'Total'];
+
+// Builds one generic ClockInOut entry slot: blank activity dropdown, Clock In, and Clock Out cells, plus
+// a display-only Total formula (rounded to the nearest 15 minutes). This formula is for the employee/
+// supervisor's visibility only — readTimesheetEntries recomputes hours independently rather than
+// trusting it, since several of its validation rules need to inspect the raw In/Out values anyway.
+// labelColumnIndex is the 0-based sheet column where this row's week group starts (weeks sit side by
+// side — see buildClockInOutTimesheet), needed so the formula references the correct absolute columns.
+const buildClockInOutSlotRow = (rowNumber: number, labelColumnIndex: number): unknown[] => {
+  const inCellReference = `${colLetter(labelColumnIndex + CLOCK_IN_OUT_IN_COLUMN_OFFSET)}${rowNumber}`;
+  const outCellReference = `${colLetter(labelColumnIndex + CLOCK_IN_OUT_OUT_COLUMN_OFFSET)}${rowNumber}`;
+  return [
+    '',
+    '',
+    '',
+    `=IF(OR(${inCellReference}="",${outCellReference}=""),"",MROUND((${outCellReference}-${inCellReference})*24,0.25))`,
+  ];
+};
+
+// Builds the "Flat Rate"/"Shifts"/"Total" header row that introduces a ClockInOut week's Flat Rate
+// section — Shifts and Total occupy the same In/Out column pair the Hourly slots use above (Shifts
+// spans both visually via a merge, applied as formatting — see formatClockInOutTimesheet).
+const buildClockInOutFlatRateSectionLabelRow = (): unknown[] => ['Flat Rate', 'Shifts', '', 'Total'];
+
+// Builds one Flat Rate activity's row: the activity name, a blank Shifts cell for data entry, and a
+// Total formula that just echoes the Shifts value — flat-rate activities aren't clocked in/out, so
+// there's no computation, only a display of what was entered (per 2026-08-12 decision).
+const buildClockInOutFlatRateActivityRow = (
+  activity: Activity,
+  rowNumber: number,
+  labelColumnIndex: number,
+): unknown[] => {
+  const shiftsCellReference = `${colLetter(labelColumnIndex + CLOCK_IN_OUT_IN_COLUMN_OFFSET)}${rowNumber}`;
+  return [activity.activityName, '', '', `=${shiftsCellReference}`];
+};
+
 // Builds a summary row at the bottom of the timesheet with a label and a pre-computed formula string.
 const buildSummaryRow = (label: string, formula: string): unknown[] =>
   [label, formula];
@@ -107,6 +169,12 @@ export {
   buildSectionLabelRow,
   buildActivityRow,
   buildDailyTotalRow,
+  buildClockInOutWeekLabelRow,
+  buildClockInOutDayHeaderRow,
+  buildClockInOutColumnHeaderRow,
+  buildClockInOutSlotRow,
+  buildClockInOutFlatRateSectionLabelRow,
+  buildClockInOutFlatRateActivityRow,
   buildSummaryRow,
   buildSignatureRow,
   buildIncludeInPayrollRow,

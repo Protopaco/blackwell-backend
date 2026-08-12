@@ -15,6 +15,12 @@ import {
   buildSectionLabelRow,
   buildActivityRow,
   buildDailyTotalRow,
+  buildClockInOutWeekLabelRow,
+  buildClockInOutDayHeaderRow,
+  buildClockInOutColumnHeaderRow,
+  buildClockInOutSlotRow,
+  buildClockInOutFlatRateSectionLabelRow,
+  buildClockInOutFlatRateActivityRow,
   buildSummaryRow,
   buildSignatureRow,
 } from '#services/timesheet/rowBuilders.js';
@@ -205,6 +211,74 @@ describe('buildDailyTotalRow', () => {
     const row = buildDailyTotalRow(WEEK_DATES, 10, 15, 16);
     expect(row[1]).toBe('=SUM(B10:B15)');
     expect(row[8]).toBe('=SUM(B16:H16)');
+  });
+});
+
+describe('buildClockInOutWeekLabelRow', () => {
+  it('puts the week date-range label in the label column, scoped to just that week\'s 4 columns', () => {
+    const row = buildClockInOutWeekLabelRow(WEEK_DATES);
+    expect(row).toEqual(['Week 6/1 - 6/7', '', '', '']);
+  });
+});
+
+describe('buildClockInOutDayHeaderRow', () => {
+  it('combines day name and date in the label column, with the other 3 cells blank', () => {
+    const row = buildClockInOutDayHeaderRow(new Date('2026-06-01T12:00:00Z'));
+    expect(row).toEqual(['Mon 6/1', '', '', '']);
+  });
+});
+
+describe('buildClockInOutColumnHeaderRow', () => {
+  it('returns the Hourly/In/Out/Total column headers', () => {
+    expect(buildClockInOutColumnHeaderRow()).toEqual(['Hourly', 'In', 'Out', 'Total']);
+  });
+});
+
+describe('buildClockInOutSlotRow', () => {
+  it('leaves the activity/In/Out cells blank for data entry', () => {
+    const row = buildClockInOutSlotRow(10, 0);
+    expect(row[0]).toBe('');
+    expect(row[1]).toBe('');
+    expect(row[2]).toBe('');
+  });
+
+  it('builds a display-only Total formula referencing its own row\'s In/Out cells, rounded to 15 min', () => {
+    const row = buildClockInOutSlotRow(10, 0);
+    expect(row[3]).toBe('=IF(OR(B10="",C10=""),"",MROUND((C10-B10)*24,0.25))');
+  });
+
+  it('adjusts the formula\'s row references when rowNumber changes', () => {
+    const row = buildClockInOutSlotRow(42, 0);
+    expect(row[3]).toBe('=IF(OR(B42="",C42=""),"",MROUND((C42-B42)*24,0.25))');
+  });
+
+  it('offsets the formula\'s column references when labelColumnIndex is non-zero (a later week\'s group)', () => {
+    const row = buildClockInOutSlotRow(10, 5);
+    expect(row[3]).toBe('=IF(OR(G10="",H10=""),"",MROUND((H10-G10)*24,0.25))');
+  });
+});
+
+describe('buildClockInOutFlatRateSectionLabelRow', () => {
+  it('returns the Flat Rate/Shifts/Total header, with the Out-column cell blank for the Shifts merge', () => {
+    expect(buildClockInOutFlatRateSectionLabelRow()).toEqual(['Flat Rate', 'Shifts', '', 'Total']);
+  });
+});
+
+describe('buildClockInOutFlatRateActivityRow', () => {
+  it('puts the activity name in the label column and leaves Shifts blank for entry', () => {
+    const row = buildClockInOutFlatRateActivityRow(makeActivity('On-Call'), 17, 0);
+    expect(row[0]).toBe('On-Call');
+    expect(row[1]).toBe('');
+  });
+
+  it('the Total cell just echoes the Shifts cell — no computation for flat-rate activities', () => {
+    const row = buildClockInOutFlatRateActivityRow(makeActivity('On-Call'), 17, 0);
+    expect(row[3]).toBe('=B17');
+  });
+
+  it('offsets the Total formula\'s column reference when labelColumnIndex is non-zero', () => {
+    const row = buildClockInOutFlatRateActivityRow(makeActivity('On-Call'), 17, 5);
+    expect(row[3]).toBe('=G17');
   });
 });
 

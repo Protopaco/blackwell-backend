@@ -77,14 +77,16 @@ full 4-row block (Proposed — today each row is bordered individually, not the 
    which today is unused/blank on this row.
 2. `dayOfWeekRow` (Existing)
 3. `dateRow` (Existing)
-4. Hourly section — **omitted entirely (no `sectionLabelRow`, no `activityRow`s, no `dailyTotalRow`) if the employee has zero hourly activities that week**:
+4. `headerSpacerRow` — always present, separating `dateRow` from whichever section comes first that
+   week (Hourly, or Flat Rate if the employee has no Hourly activities)
+5. Hourly section — **omitted entirely (no `sectionLabelRow`, no `activityRow`s, no `dailyTotalRow`) if the employee has zero hourly activities that week**:
    - `sectionLabelRow` **(Proposed)** — "Hourly"
    - `activityRow` × N (Existing)
    - `dailyTotalRow` (Existing)
-5. `spacerRow` — this *is* the existing `formatDividerRows.ts` divider row (same concept, not a new style).
+6. `spacerRow` — this *is* the existing `formatDividerRows.ts` divider row (same concept, not a new style).
    **Only appears when both sections are present that week** — if a week has only Flat Rate activities (no
-   Hourly), the Flat Rate `sectionLabelRow` follows `dateRow` directly, no spacer in between
-6. Flat Rate section — **omitted entirely (same rule) if the employee has zero flat-rate activities that week**:
+   Hourly), the Flat Rate `sectionLabelRow` follows `headerSpacerRow` directly, no `spacerRow` in between
+7. Flat Rate section — **omitted entirely (same rule) if the employee has zero flat-rate activities that week**:
    - `sectionLabelRow` **(Proposed)** — "Flat Rate"
    - `activityRow` × N (Existing)
    - `dailyTotalRow` **(Existing, changing)** — currently only built for the Hourly section; the redesign adds one for Flat Rate too
@@ -96,6 +98,7 @@ full 4-row block (Proposed — today each row is bordered individually, not the 
 | `weekLabelRow` | Implemented | Existing Holiday Name Row; label cell (column A) also carries e.g. "Week 1/19 - 1/25" | Whole row `SECONDARY`/`HEADER_TEXT`, unless a holiday column overrides it to `ACCENT`. Label cell additionally bold/left-aligned |
 | `dayOfWeekRow` | Implemented | Mon/Tue/.../Sun | `PRIMARY_DARK`, `HEADER_TEXT`, bold, centered. Holiday columns → `ACCENT` |
 | `dateRow` | Implemented | Day numbers (1/19, 1/20, ...) | Same as `dayOfWeekRow`. Total column left blank — `sectionLabelRow` carries "Total" now |
+| `headerSpacerRow` | Implemented | Blank visual gap between `dateRow` and whichever section comes first | `SECONDARY` fill, `HEADER_TEXT`, holiday columns → `ACCENT`. Row height halved (`SPACER_ROW_HEIGHT`, ~10px), same as `spacerRow` |
 | `sectionLabelRow` | Implemented | "Hourly" / "Flat Rate" in column A; "Total" in the total column | Same styling as `dayOfWeekRow` (`PRIMARY_DARK`/`HEADER_TEXT`, bold, centered, holiday columns → `ACCENT`) |
 | `activityRow` | Existing | One row per activity, day-of-week values | Label column: `PRIMARY`/`HEADER_TEXT`. Day cells: alternating `WHITE`/`MUTED` by row index within the section. Weekend/holiday columns always overridden to `MUTED_ACCENT`/`MUTED_ACCENT_DARK` regardless of alternation — **same alternating behavior for both Hourly and Flat Rate sections, no special-casing.** Hourly rows get 2-decimal hour validation; flat-rate rows get whole-number validation |
 | `dailyTotalRow` | Implemented (now applies per-section, not just once per week) | Sum formula per day column | `PRIMARY_DARK`/`HEADER_TEXT`, bold, centered; label cell left-aligned |

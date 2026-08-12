@@ -54,37 +54,37 @@ const flatRateOnly: SortedActivities = {
 
 describe('buildWeek — row count', () => {
   it('produces only the fixed rows when there are zero activities (both sections omitted)', () => {
-    // weekLabel + dayOfWeek + date = 3
+    // weekLabel + dayOfWeek + date + headerSpacer = 4
     const { rows } = buildWeek(0, WEEK_DATES, noActivities, [], 1, 7);
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(4);
   });
 
   it('produces an Hourly section with no spacer and no Flat Rate section for work activities only', () => {
-    // weekLabel + dayOfWeek + date + sectionLabel + 2 work + dailyTotal = 7
+    // weekLabel + dayOfWeek + date + headerSpacer + sectionLabel + 2 work + dailyTotal = 8
     const { rows } = buildWeek(0, WEEK_DATES, workOnly, [], 1, 7);
-    expect(rows).toHaveLength(7);
+    expect(rows).toHaveLength(8);
   });
 
   it('produces correct row count with work and time-off activities', () => {
-    // weekLabel + dayOfWeek + date + sectionLabel + 4 hourly + dailyTotal = 9
+    // weekLabel + dayOfWeek + date + headerSpacer + sectionLabel + 4 hourly + dailyTotal = 10
     const { rows } = buildWeek(0, WEEK_DATES, withTimeOff, [], 1, 7);
-    expect(rows).toHaveLength(9);
+    expect(rows).toHaveLength(10);
   });
 
   it('adds an Hourly section, a spacer, and a Flat Rate section (each with its own dailyTotal) when both types exist', () => {
-    // weekLabel + dayOfWeek + date = 3
+    // weekLabel + dayOfWeek + date + headerSpacer = 4
     // Hourly: sectionLabel + 3 hourly + dailyTotal = 5
     // spacer = 1
     // Flat Rate: sectionLabel + 1 flatrate + dailyTotal = 3
-    // total = 12
+    // total = 13
     const { rows } = buildWeek(0, WEEK_DATES, withFlatRate, [], 1, 7);
-    expect(rows).toHaveLength(12);
+    expect(rows).toHaveLength(13);
   });
 
   it('omits the Hourly section entirely (no spacer) when the employee has only Flat Rate activities', () => {
-    // weekLabel + dayOfWeek + date + sectionLabel + 1 flatrate + dailyTotal = 6
+    // weekLabel + dayOfWeek + date + headerSpacer + sectionLabel + 1 flatrate + dailyTotal = 7
     const { rows } = buildWeek(0, WEEK_DATES, flatRateOnly, [], 1, 7);
-    expect(rows).toHaveLength(6);
+    expect(rows).toHaveLength(7);
   });
 });
 
@@ -92,8 +92,8 @@ describe('buildWeek — manifest row numbers', () => {
   it('assigns correct row numbers when startRow is 1', () => {
     const { weekManifest } = buildWeek(0, WEEK_DATES, workOnly, [], 1, 7);
     const rowNums = weekManifest.activityRows.map((activityRow) => activityRow.row);
-    // weekLabel=1, dayOfWeek=2, date=3, sectionLabel=4, Admin=5, Programs=6
-    expect(rowNums).toEqual([5, 6]);
+    // weekLabel=1, dayOfWeek=2, date=3, headerSpacer=4, sectionLabel=5, Admin=6, Programs=7
+    expect(rowNums).toEqual([6, 7]);
   });
 
   it('assigns correct row numbers when startRow is offset (second week)', () => {
@@ -103,8 +103,8 @@ describe('buildWeek — manifest row numbers', () => {
     const { weekManifest } = buildWeek(1, WEEK_DATES, workOnly, [], secondWeekStartRow, 7);
     const rowNums = weekManifest.activityRows.map((activityRow) => activityRow.row);
 
-    expect(rowNums[0]).toBe(secondWeekStartRow + 4); // weekLabel + dayOfWeek + date + sectionLabel, then first activity
-    expect(rowNums[1]).toBe(secondWeekStartRow + 5);
+    expect(rowNums[0]).toBe(secondWeekStartRow + 5); // weekLabel + dayOfWeek + date + headerSpacer + sectionLabel, then first activity
+    expect(rowNums[1]).toBe(secondWeekStartRow + 6);
   });
 
   it('assigns correct row numbers for work, time-off, and flat rate activities', () => {
@@ -116,12 +116,12 @@ describe('buildWeek — manifest row numbers', () => {
       weekManifest.flatRateRows.map((flatRateRow) => [flatRateRow.activityName, flatRateRow.row]),
     );
 
-    // weekLabel=1, dayOfWeek=2, date=3, hourlySectionLabel=4, Admin=5, Programs=6, ETO=7,
-    // hourlyDailyTotal=8, spacer=9, flatRateSectionLabel=10, On-Call=11, flatRateDailyTotal=12
-    expect(hourlyByName['Admin']).toBe(5);
-    expect(hourlyByName['Programs']).toBe(6);
-    expect(hourlyByName['ETO']).toBe(7);
-    expect(flatRateByName['On-Call']).toBe(11);
+    // weekLabel=1, dayOfWeek=2, date=3, headerSpacer=4, hourlySectionLabel=5, Admin=6, Programs=7, ETO=8,
+    // hourlyDailyTotal=9, spacer=10, flatRateSectionLabel=11, On-Call=12, flatRateDailyTotal=13
+    expect(hourlyByName['Admin']).toBe(6);
+    expect(hourlyByName['Programs']).toBe(7);
+    expect(hourlyByName['ETO']).toBe(8);
+    expect(flatRateByName['On-Call']).toBe(12);
   });
 
   it('records the date row correctly', () => {
@@ -162,32 +162,46 @@ describe('buildWeek — section omission', () => {
   it('only sets spacerRow when both sections are present', () => {
     expect(buildWeek(0, WEEK_DATES, workOnly, [], 1, 7).weekManifest.spacerRow).toBeUndefined();
     expect(buildWeek(0, WEEK_DATES, flatRateOnly, [], 1, 7).weekManifest.spacerRow).toBeUndefined();
-    expect(buildWeek(0, WEEK_DATES, withFlatRate, [], 1, 7).weekManifest.spacerRow).toBe(9);
+    expect(buildWeek(0, WEEK_DATES, withFlatRate, [], 1, 7).weekManifest.spacerRow).toBe(10);
+  });
+});
+
+describe('buildWeek — headerSpacerRow', () => {
+  it('always sits directly after dateRow, regardless of which sections are present', () => {
+    expect(buildWeek(0, WEEK_DATES, noActivities, [], 1, 7).weekManifest.headerSpacerRow).toBe(4);
+    expect(buildWeek(0, WEEK_DATES, workOnly, [], 1, 7).weekManifest.headerSpacerRow).toBe(4);
+    expect(buildWeek(0, WEEK_DATES, flatRateOnly, [], 1, 7).weekManifest.headerSpacerRow).toBe(4);
+    expect(buildWeek(0, WEEK_DATES, withFlatRate, [], 1, 7).weekManifest.headerSpacerRow).toBe(4);
+  });
+
+  it('is a blank row', () => {
+    const { rows, weekManifest } = buildWeek(0, WEEK_DATES, workOnly, [], 1, 7);
+    expect(rows[weekManifest.headerSpacerRow - 1]).toEqual([]);
   });
 });
 
 describe('buildWeek — daily total formulas', () => {
   it('daily total row sums the hourly activity rows', () => {
-    // startRow=1: weekLabel=1, dayOfWeek=2, date=3, sectionLabel=4, Admin=5, Programs=6, dailyTotal=7
+    // startRow=1: weekLabel=1, dayOfWeek=2, date=3, headerSpacer=4, sectionLabel=5, Admin=6, Programs=7, dailyTotal=8
     const { rows, weekManifest } = buildWeek(0, WEEK_DATES, workOnly, [], 1, 7);
     const dailyTotalRow = rows[weekManifest.hourlyDailyTotalRow! - 1] as string[];
 
     expect(dailyTotalRow[0]).toBe('Daily Total');
-    expect(dailyTotalRow[1]).toBe('=SUM(B5:B6)'); // first day col sums Admin and Programs
-    expect(dailyTotalRow[7]).toBe('=SUM(H5:H6)'); // last day col
-    expect(dailyTotalRow[8]).toBe('=SUM(B7:H7)'); // weekly total in row 7
+    expect(dailyTotalRow[1]).toBe('=SUM(B6:B7)'); // first day col sums Admin and Programs
+    expect(dailyTotalRow[7]).toBe('=SUM(H6:H7)'); // last day col
+    expect(dailyTotalRow[8]).toBe('=SUM(B8:H8)'); // weekly total in row 8
   });
 
   it('the Flat Rate section gets its own daily total, summing only its own rows', () => {
-    // startRow=1: weekLabel=1, dayOfWeek=2, date=3, hourlySectionLabel=4, Admin=5, Programs=6, ETO=7,
-    // hourlyDailyTotal=8, spacer=9, flatRateSectionLabel=10, On-Call=11, flatRateDailyTotal=12
+    // startRow=1: weekLabel=1, dayOfWeek=2, date=3, headerSpacer=4, hourlySectionLabel=5, Admin=6, Programs=7,
+    // ETO=8, hourlyDailyTotal=9, spacer=10, flatRateSectionLabel=11, On-Call=12, flatRateDailyTotal=13
     const { rows, weekManifest } = buildWeek(0, WEEK_DATES, withFlatRate, [], 1, 7);
     const hourlyDailyTotalRow = rows[weekManifest.hourlyDailyTotalRow! - 1] as string[];
     const flatRateDailyTotalRow = rows[weekManifest.flatRateDailyTotalRow! - 1] as string[];
 
-    expect(hourlyDailyTotalRow[1]).toBe('=SUM(B5:B7)');
-    expect(flatRateDailyTotalRow[1]).toBe('=SUM(B11:B11)');
-    expect(flatRateDailyTotalRow[8]).toBe('=SUM(B12:H12)');
+    expect(hourlyDailyTotalRow[1]).toBe('=SUM(B6:B8)');
+    expect(flatRateDailyTotalRow[1]).toBe('=SUM(B12:B12)');
+    expect(flatRateDailyTotalRow[8]).toBe('=SUM(B13:H13)');
   });
 });
 
