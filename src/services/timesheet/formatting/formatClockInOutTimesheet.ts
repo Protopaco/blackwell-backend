@@ -17,6 +17,7 @@ import applyRowStyle from "./applyRowStyle.js";
 import setActivityDataValidation from "./setActivityDataValidation.js";
 import outlineBlockBorder from "./outlineBlockBorder.js";
 import apiRange from "./apiRange.js";
+import { colLetter } from "../rowBuilders.js";
 
 // The custom number format applied to a ClockInOut day's In/Out cells so entered times render as
 // "09:00 AM" rather than a raw decimal — Google Sheets still stores the underlying value as a time
@@ -79,6 +80,43 @@ const buildTimeFormatRequest = (
   },
 });
 
+// Builds a setDataValidation request restricting a day's In/Out columns, across its whole slot-row
+// range, to either blank or a valid time-of-day — hard rejects typed garbage text and bare numbers,
+// matching the setHourDataValidation/setFlatDataValidation convention. Google Sheets stores a validly
+// typed time (e.g. "9:00 AM") as the fraction of a day it represents, always in [0, 1) — a plain number
+// like "2" is also ISNUMBER-true but falls outside that range, so ISNUMBER alone isn't enough to catch
+// it. This does not by itself guarantee Clock Out >= Clock In or that both slots in a row are filled —
+// those rules are enforced in the read path (see [079]), not here.
+const buildTimeEntryDataValidationRequest = (
+  sheetId: number,
+  firstSlotRowNumber: number,
+  lastSlotRowNumber: number,
+  labelColumnIndex: number,
+): object => {
+  const firstInCellReference = `${colLetter(labelColumnIndex + CLOCK_IN_OUT_IN_COLUMN_OFFSET)}${firstSlotRowNumber}`;
+  return {
+    setDataValidation: {
+      range: apiRange(
+        sheetId,
+        firstSlotRowNumber - 1,
+        lastSlotRowNumber,
+        labelColumnIndex + CLOCK_IN_OUT_IN_COLUMN_OFFSET,
+        labelColumnIndex + CLOCK_IN_OUT_OUT_COLUMN_OFFSET + 1,
+      ),
+      rule: {
+        condition: {
+          type: "CUSTOM_FORMULA",
+          values: [{
+            userEnteredValue: `=OR(ISBLANK(${firstInCellReference}),AND(ISNUMBER(${firstInCellReference}),${firstInCellReference}>=0,${firstInCellReference}<1))`,
+          }],
+        },
+        strict: true,
+        showCustomUi: false,
+      },
+    },
+  };
+};
+
 // Builds all formatting requests for every ClockInOut week's column group — called once by
 // applyTimesheetFormatting when manifest.clockInOutWeeks is populated. Deliberately minimal (2026-08-12
 // decision to make ClockInOut generation work first and defer bespoke polish): reuses the existing
@@ -105,6 +143,12 @@ const formatClockInOutTimesheet = (
         ...applyRowStyle(sheetId, dayOfWeekRow, day.dayHeaderRow, week.labelColumnIndex, weekEndColumnIndex),
         ...applyRowStyle(sheetId, dailyTotalRow, day.columnHeaderRow, week.labelColumnIndex, weekEndColumnIndex),
         buildTimeFormatRequest(
+          sheetId,
+          day.slotRows[0].row,
+          day.slotRows[day.slotRows.length - 1].row,
+          week.labelColumnIndex,
+        ),
+        buildTimeEntryDataValidationRequest(
           sheetId,
           day.slotRows[0].row,
           day.slotRows[day.slotRows.length - 1].row,
