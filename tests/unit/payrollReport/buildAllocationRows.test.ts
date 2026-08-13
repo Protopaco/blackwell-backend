@@ -68,13 +68,24 @@ const makeHoursRow = (
   ...overrides,
 });
 
-// wageExpense carries the full amount for existing tests (taxExpense left null) so their asserted sums
-// are unaffected by the [082] split — chunk 1 keeps buildAllocationRows.ts summing both fields together.
+// wageExpense carries the full amount for existing tests (taxExpense left null, so taxesAllocation is 0
+// and every existing total()/wagesAllocation assertion is unaffected by the [082] chunk 2 split).
 const makeExpense = (employeeId: string, wageExpense: number | null): EmployeeExpense => ({
   employeeId,
   employeeName: 'Jane Smith',
   wageExpense,
   taxExpense: null,
+});
+
+const makeWageAndTaxExpense = (
+  employeeId: string,
+  wageExpense: number | null,
+  taxExpense: number | null,
+): EmployeeExpense => ({
+  employeeId,
+  employeeName: 'Jane Smith',
+  wageExpense,
+  taxExpense,
 });
 
 const makeAdditional = (expenseName: string, amount: number): AdditionalExpense => ({
@@ -712,7 +723,7 @@ describe('buildAllocationRows', () => {
       expect(additionalSum).toBe(100);
     });
 
-    it('total equals wagesAllocation + additionalExpenses for each row', () => {
+    it('total equals wagesAllocation + taxesAllocation + additionalExpenses for each row', () => {
       const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
       const employee = makeEmployee({
@@ -722,7 +733,7 @@ describe('buildAllocationRows', () => {
         makeHoursRow(employee.employeeId, 'Activity A', 6),
         makeHoursRow(employee.employeeId, 'Activity B', 4),
       ];
-      const expenses = [makeExpense(employee.employeeId, 1000)];
+      const expenses = [makeWageAndTaxExpense(employee.employeeId, 1000, 80)];
       const additionalExpenses = [makeAdditional('HSA', 500)];
       const activityMap = new Map([
         [activityA.activityName, activityA],
@@ -734,7 +745,7 @@ describe('buildAllocationRows', () => {
 
       for (const row of rows) {
         expect(row.total).toBe(
-          Math.round((row.wagesAllocation + row.additionalExpenses) * 100) / 100,
+          Math.round((row.wagesAllocation + row.taxesAllocation + row.additionalExpenses) * 100) / 100,
         );
       }
     });
@@ -768,6 +779,120 @@ describe('buildAllocationRows', () => {
       expect(rows[0].fundingSourceName).toBe('Grant B'); // 70%
       expect(rows[1].fundingSourceName).toBe('Grant A'); // 20%
       expect(rows[2].fundingSourceName).toBe('Grant C'); // 10%
+    });
+  });
+
+  describe('taxesAllocation', () => {
+    it('allocates taxExpense independently of wageExpense using the same funding-source weighting', () => {
+      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
+      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
+      const expenses = [makeWageAndTaxExpense(employee.employeeId, 2400, 195)];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].wagesAllocation).toBe(2400);
+      expect(rows[0].taxesAllocation).toBe(195);
+    });
+
+    it('splits taxExpense across funding sources by the same hours proportion as wages', () => {
+      // Same 60/40 hours split as wages — Grant A gets 60% of both the wage and the tax total.
+      const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [makeActivityRate(activityA.activityId), makeActivityRate(activityB.activityId)],
+      });
+      const hoursRows = [
+        makeHoursRow(employee.employeeId, 'Activity A', 6),
+        makeHoursRow(employee.employeeId, 'Activity B', 4),
+      ];
+      const expenses = [makeWageAndTaxExpense(employee.employeeId, 1000, 200)];
+      const activityMap = new Map([
+        [activityA.activityName, activityA],
+        [activityB.activityName, activityB],
+      ]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
+      const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
+      expect(grantA.wagesAllocation).toBe(600);
+      expect(grantA.taxesAllocation).toBe(120);
+      expect(grantB.wagesAllocation).toBe(400);
+      expect(grantB.taxesAllocation).toBe(80);
+    });
+
+    it('allocates taxExpense for an employee whose wageExpense is null', () => {
+      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
+      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
+      const expenses = [makeWageAndTaxExpense(employee.employeeId, null, 195)];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].wagesAllocation).toBe(0);
+      expect(rows[0].taxesAllocation).toBe(195);
+    });
+
+    it('sums taxesAllocation across employees for the same funding source', () => {
+      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const emp1 = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
+      const emp2 = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
+      const hoursRows = [
+        makeHoursRow(emp1.employeeId, 'Programs', 8),
+        makeHoursRow(emp2.employeeId, 'Programs', 8),
+      ];
+      const expenses = [
+        makeWageAndTaxExpense(emp1.employeeId, 1000, 80),
+        makeWageAndTaxExpense(emp2.employeeId, 2000, 160),
+      ];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([
+        [emp1.employeeId, emp1],
+        [emp2.employeeId, emp2],
+      ]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].taxesAllocation).toBe(240);
+    });
+
+    it('last row absorbs remainder so taxesAllocation always sums to total employee taxes (3-way equal split)', () => {
+      const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const activityC = makeActivity('Activity C', [{ fundingSourceName: 'Grant C', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [
+          makeActivityRate(activityA.activityId),
+          makeActivityRate(activityB.activityId),
+          makeActivityRate(activityC.activityId),
+        ],
+      });
+      const hoursRows = [
+        makeHoursRow(employee.employeeId, 'Activity A', 1),
+        makeHoursRow(employee.employeeId, 'Activity B', 1),
+        makeHoursRow(employee.employeeId, 'Activity C', 1),
+      ];
+      const expenses = [makeWageAndTaxExpense(employee.employeeId, 300, 100)];
+      const activityMap = new Map([
+        [activityA.activityName, activityA],
+        [activityB.activityName, activityB],
+        [activityC.activityName, activityC],
+      ]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      const taxesSum = rows.reduce((sum, row) => sum + row.taxesAllocation, 0);
+      expect(taxesSum).toBe(100);
     });
   });
 });

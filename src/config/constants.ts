@@ -23,7 +23,7 @@ export const EMPLOYEE_EXPENSES_HEADERS: (keyof EmployeeExpense)[] = ['employeeId
 export const ADDITIONAL_EXPENSES_TAB = 'AdditionalExpenses';
 export const ADDITIONAL_EXPENSES_HEADERS: (keyof AdditionalExpense)[] = ['expenseName', 'amount'];
 export const ALLOCATION_REPORT_TAB = 'AllocationReport';
-export const ALLOCATION_REPORT_HEADERS: (keyof AllocationReportRow)[] = ['fundingSourceName', 'wagesAllocation', 'additionalExpenses', 'total'];
+export const ALLOCATION_REPORT_HEADERS: (keyof AllocationReportRow)[] = ['fundingSourceName', 'wagesAllocation', 'taxesAllocation', 'additionalExpenses', 'total'];
 
 // ─── Timesheet Tabs ───────────────────────────────────────────────────────────
 

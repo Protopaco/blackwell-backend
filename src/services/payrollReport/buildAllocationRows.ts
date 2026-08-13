@@ -25,7 +25,9 @@ const resolveDollarRate = (
   return isHoliday ? activityRate.holidayPayRate : activityRate.payRate;
 };
 
-// Runs the full allocation calculation.
+// Runs the full allocation calculation. Wages and taxes are allocated as two fully independent totals —
+// the bookkeeper's own spreadsheet keeps them separate — but both use the exact same per-employee
+// funding-source weighting (weightedCostByFundingSource), just applied to two different dollar amounts.
 // Returns one AllocationReportRow per funding source, sorted by wagesAllocation descending.
 const buildAllocationRows = (
   hoursRows: PayrollReportHoursRow[],
@@ -35,11 +37,10 @@ const buildAllocationRows = (
   employeeMap: Map<string, Employee>,
 ): AllocationReportRow[] => {
   const wagesAllocationByFundingSource = new Map<string, number>();
+  const taxesAllocationByFundingSource = new Map<string, number>();
   let processedWagesTotal = 0;
+  let processedTaxesTotal = 0;
 
-  // TODO([082] chunk 2): wageExpense and taxExpense will be allocated as two separate totals
-  // (wagesAllocation/taxesAllocation) using this same weighting — for now they're summed together so
-  // this chunk's rename is a pure no-op on report output.
   const activeExpenses = employeeExpenses.filter(
     (expense) => expense.wageExpense !== null || expense.taxExpense !== null,
   );
@@ -80,16 +81,22 @@ const buildAllocationRows = (
 
     if (totalWeightedCost === 0) continue;
 
-    // Apply proportions to employee's combined wage + tax expense
-    const totalExpense = (expense.wageExpense ?? 0) + (expense.taxExpense ?? 0);
+    // Apply the same per-funding-source proportions independently to wageExpense and taxExpense
+    const wageExpense = expense.wageExpense ?? 0;
+    const taxExpense = expense.taxExpense ?? 0;
     for (const [fundingSourceName, weightedCost] of weightedCostByFundingSource) {
       const proportion = weightedCost / totalWeightedCost;
       wagesAllocationByFundingSource.set(
         fundingSourceName,
-        (wagesAllocationByFundingSource.get(fundingSourceName) ?? 0) + proportion * totalExpense,
+        (wagesAllocationByFundingSource.get(fundingSourceName) ?? 0) + proportion * wageExpense,
+      );
+      taxesAllocationByFundingSource.set(
+        fundingSourceName,
+        (taxesAllocationByFundingSource.get(fundingSourceName) ?? 0) + proportion * taxExpense,
       );
     }
-    processedWagesTotal += totalExpense;
+    processedWagesTotal += wageExpense;
+    processedTaxesTotal += taxExpense;
   }
 
   if (wagesAllocationByFundingSource.size === 0) return [];
@@ -103,12 +110,14 @@ const buildAllocationRows = (
   const sortedEntries = Array.from(wagesAllocationByFundingSource.entries())
     .sort(([, a], [, b]) => b - a);
 
-  // Round all rows except the last normally; the last row gets the remainder so
-  // the sum of wagesAllocation across all rows always equals the exact sum of employee expenses.
+  // Round all rows except the last normally; the last row gets the remainder so each column's sum across
+  // all rows always equals its exact source total (employee wages, employee taxes, additional expenses).
   let accumulatedWages = 0;
+  let accumulatedTaxes = 0;
   let accumulatedAdditional = 0;
 
   return sortedEntries.map(([fundingSourceName, wagesAllocation], index) => {
+    const taxesAllocation = taxesAllocationByFundingSource.get(fundingSourceName) ?? 0;
     const share = totalWagesAllocation > 0 ? wagesAllocation / totalWagesAllocation : 0;
     const isLast = index === sortedEntries.length - 1;
 
@@ -116,18 +125,24 @@ const buildAllocationRows = (
       ? Math.round((processedWagesTotal - accumulatedWages) * 100) / 100
       : Math.round(wagesAllocation * 100) / 100;
 
+    const roundedTaxes = isLast
+      ? Math.round((processedTaxesTotal - accumulatedTaxes) * 100) / 100
+      : Math.round(taxesAllocation * 100) / 100;
+
     const roundedAdditional = isLast
       ? Math.round((targetAdditionalTotal - accumulatedAdditional) * 100) / 100
       : Math.round(share * targetAdditionalTotal * 100) / 100;
 
     accumulatedWages += roundedWages;
+    accumulatedTaxes += roundedTaxes;
     accumulatedAdditional += roundedAdditional;
 
     return {
       fundingSourceName,
       wagesAllocation: roundedWages,
+      taxesAllocation: roundedTaxes,
       additionalExpenses: roundedAdditional,
-      total: Math.round((roundedWages + roundedAdditional) * 100) / 100,
+      total: Math.round((roundedWages + roundedTaxes + roundedAdditional) * 100) / 100,
     };
   });
 };
