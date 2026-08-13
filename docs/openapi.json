@@ -77,13 +77,17 @@
             "type": "number",
             "example": 14250
           },
+          "taxesAllocation": {
+            "type": "number",
+            "example": 1156.5
+          },
           "additionalExpenses": {
             "type": "number",
             "example": 1843.75
           },
           "total": {
             "type": "number",
-            "example": 16093.75
+            "example": 17250.25
           }
         }
       },
@@ -440,10 +444,15 @@
             "type": "string",
             "example": "Jane Smith"
           },
-          "totalExpense": {
+          "wageExpense": {
             "type": "number",
             "nullable": true,
             "example": 2326.92
+          },
+          "taxExpense": {
+            "type": "number",
+            "nullable": true,
+            "example": 189.45
           }
         }
       },
@@ -454,10 +463,15 @@
             "type": "string",
             "format": "uuid"
           },
-          "totalExpense": {
+          "wageExpense": {
             "type": "number",
             "nullable": true,
             "example": 2326.92
+          },
+          "taxExpense": {
+            "type": "number",
+            "nullable": true,
+            "example": 189.45
           }
         }
       },
@@ -580,6 +594,11 @@
       },
       "Settings": {
         "type": "object",
+        "required": [
+          "timeInputMethod",
+          "payPeriodInterval",
+          "payPeriodStartDate"
+        ],
         "properties": {
           "timeInputMethod": {
             "type": "string",
@@ -1174,8 +1193,8 @@
     "/api/v1/payrollReport/{clientId}/{payPeriodId}/employeeExpenses/batch": {
       "put": {
         "operationId": "v1UpdateEmployeeExpensesBatch",
-        "summary": "Upsert totalExpense for multiple employees in a pay period at once",
-        "description": "For each employeeId with an existing EmployeeExpense record, overlays totalExpense onto it. For each employeeId without one, creates a new record (employeeName resolved from PayrollConfig). If any employeeId doesn't match a known employee in the client's PayrollConfig, the entire batch is rejected and nothing is written.\n",
+        "summary": "Upsert wageExpense/taxExpense for multiple employees in a pay period at once",
+        "description": "For each employeeId with an existing EmployeeExpense record, overlays wageExpense/taxExpense onto it. For each employeeId without one, creates a new record (employeeName resolved from PayrollConfig). If any employeeId doesn't match a known employee in the client's PayrollConfig, the entire batch is rejected and nothing is written.\n",
         "tags": [
           "PayrollReport"
         ],
@@ -1577,7 +1596,11 @@
                       "totalFlatRate": {
                         "type": "number"
                       },
-                      "totalExpense": {
+                      "wageExpense": {
+                        "type": "number",
+                        "nullable": true
+                      },
+                      "taxExpense": {
                         "type": "number",
                         "nullable": true
                       },

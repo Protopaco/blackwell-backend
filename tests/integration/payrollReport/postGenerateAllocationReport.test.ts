@@ -11,7 +11,8 @@ describe('POST /api/v1/payrollReport/:clientId/:payPeriodId/allocationReport', (
     const employeeExpense = {
       employeeId: completeEmployee.employeeId,
       employeeName: `${completeEmployee.firstName} ${completeEmployee.lastName}`,
-      totalExpense: 200,
+      wageExpense: 200,
+      taxExpense: 20,
     };
     const additionalExpenses = [
       { expenseName: 'Mileage', amount: 40 },
@@ -20,8 +21,9 @@ describe('POST /api/v1/payrollReport/:clientId/:payPeriodId/allocationReport', (
     const expectedRow = {
       fundingSourceName: activityMix.hourlyPayRate1Activity.fundingSources[0].fundingSourceName,
       wagesAllocation: 200,
+      taxesAllocation: 20,
       additionalExpenses: 100,
-      total: 300,
+      total: 320,
     };
 
     const employeeExpensesRes = await request(app)
