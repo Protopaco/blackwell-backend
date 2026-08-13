@@ -22,7 +22,8 @@ const writeEmployeeExpensesTab = async (
     ...expenses.map((expense) => [
       expense.employeeId,
       expense.employeeName,
-      expense.totalExpense ?? '',
+      expense.wageExpense ?? '',
+      expense.taxExpense ?? '',
     ]),
   ];
   await writeValues(workbookId, EMPLOYEE_EXPENSES_TAB, rows);

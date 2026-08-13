@@ -31,46 +31,46 @@ describe('updateEmployeeExpensesBatch', () => {
     } as any);
   });
 
-  it('overlays totalExpense onto an employee that already has an EmployeeExpense record', async () => {
+  it('overlays wageExpense/taxExpense onto an employee that already has an EmployeeExpense record', async () => {
     vi.mocked(readEmployeeExpensesTab).mockResolvedValue([
-      { employeeId: 'e1', employeeName: 'Jane Smith', totalExpense: 100 },
+      { employeeId: 'e1', employeeName: 'Jane Smith', wageExpense: 100, taxExpense: 10 },
     ]);
 
-    await updateEmployeeExpensesBatch('client-1', 'pp-1', [{ employeeId: 'e1', totalExpense: 250 }]);
+    await updateEmployeeExpensesBatch('client-1', 'pp-1', [{ employeeId: 'e1', wageExpense: 250, taxExpense: 25 }]);
 
     expect(getClientById).not.toHaveBeenCalled();
     expect(writeEmployeeExpensesTab).toHaveBeenCalledWith('report-1', [
-      { employeeId: 'e1', employeeName: 'Jane Smith', totalExpense: 250 },
+      { employeeId: 'e1', employeeName: 'Jane Smith', wageExpense: 250, taxExpense: 25 },
     ]);
   });
 
   it('creates a new EmployeeExpense record for an employee with no existing record', async () => {
-    await updateEmployeeExpensesBatch('client-1', 'pp-1', [{ employeeId: 'e2', totalExpense: 75 }]);
+    await updateEmployeeExpensesBatch('client-1', 'pp-1', [{ employeeId: 'e2', wageExpense: 75, taxExpense: 7.5 }]);
 
     expect(writeEmployeeExpensesTab).toHaveBeenCalledWith('report-1', [
-      { employeeId: 'e2', employeeName: 'John Doe', totalExpense: 75 },
+      { employeeId: 'e2', employeeName: 'John Doe', wageExpense: 75, taxExpense: 7.5 },
     ]);
   });
 
   it('handles a mix of overlay and create in the same batch', async () => {
     vi.mocked(readEmployeeExpensesTab).mockResolvedValue([
-      { employeeId: 'e1', employeeName: 'Jane Smith', totalExpense: 100 },
+      { employeeId: 'e1', employeeName: 'Jane Smith', wageExpense: 100, taxExpense: 10 },
     ]);
 
     await updateEmployeeExpensesBatch('client-1', 'pp-1', [
-      { employeeId: 'e1', totalExpense: 200 },
-      { employeeId: 'e2', totalExpense: 50 },
+      { employeeId: 'e1', wageExpense: 200, taxExpense: 20 },
+      { employeeId: 'e2', wageExpense: 50, taxExpense: 5 },
     ]);
 
     expect(writeEmployeeExpensesTab).toHaveBeenCalledWith('report-1', [
-      { employeeId: 'e1', employeeName: 'Jane Smith', totalExpense: 200 },
-      { employeeId: 'e2', employeeName: 'John Doe', totalExpense: 50 },
+      { employeeId: 'e1', employeeName: 'Jane Smith', wageExpense: 200, taxExpense: 20 },
+      { employeeId: 'e2', employeeName: 'John Doe', wageExpense: 50, taxExpense: 5 },
     ]);
   });
 
   it('rejects the whole batch with a 422-mapped error when an employeeId is unknown to PayrollConfig', async () => {
     await expect(
-      updateEmployeeExpensesBatch('client-1', 'pp-1', [{ employeeId: 'unknown', totalExpense: 999 }]),
+      updateEmployeeExpensesBatch('client-1', 'pp-1', [{ employeeId: 'unknown', wageExpense: 999, taxExpense: 99 }]),
     ).rejects.toThrow('Unknown employeeId(s) in employeeExpenses batch: unknown');
 
     expect(writeEmployeeExpensesTab).not.toHaveBeenCalled();
@@ -79,8 +79,8 @@ describe('updateEmployeeExpensesBatch', () => {
   it('names every offending id when multiple employeeIds are unknown', async () => {
     await expect(
       updateEmployeeExpensesBatch('client-1', 'pp-1', [
-        { employeeId: 'unknown-1', totalExpense: 1 },
-        { employeeId: 'unknown-2', totalExpense: 2 },
+        { employeeId: 'unknown-1', wageExpense: 1, taxExpense: 0.1 },
+        { employeeId: 'unknown-2', wageExpense: 2, taxExpense: 0.2 },
       ]),
     ).rejects.toThrow('Unknown employeeId(s) in employeeExpenses batch: unknown-1, unknown-2');
   });
@@ -89,7 +89,7 @@ describe('updateEmployeeExpensesBatch', () => {
     vi.mocked(getClientById).mockResolvedValueOnce(null);
 
     await expect(
-      updateEmployeeExpensesBatch('client-1', 'pp-1', [{ employeeId: 'e2', totalExpense: 50 }]),
+      updateEmployeeExpensesBatch('client-1', 'pp-1', [{ employeeId: 'e2', wageExpense: 50, taxExpense: 5 }]),
     ).rejects.toThrow('Client not found: client-1');
   });
 
@@ -97,7 +97,7 @@ describe('updateEmployeeExpensesBatch', () => {
     vi.mocked(getPayPeriodById).mockResolvedValueOnce({ payrollReportFileId: '' } as any);
 
     await expect(
-      updateEmployeeExpensesBatch('client-1', 'pp-1', [{ employeeId: 'e1', totalExpense: 50 }]),
+      updateEmployeeExpensesBatch('client-1', 'pp-1', [{ employeeId: 'e1', wageExpense: 50, taxExpense: 5 }]),
     ).rejects.toThrow('No payroll report file exists for pay period: pp-1');
   });
 });

@@ -2,7 +2,8 @@ import Guid from '#models/Guid.js';
 
 interface EmployeeExpenseUpdate {
   employeeId: Guid;
-  totalExpense: number | null;
+  wageExpense: number | null;
+  taxExpense: number | null;
 }
 
 export default EmployeeExpenseUpdate;

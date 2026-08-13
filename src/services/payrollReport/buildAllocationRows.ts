@@ -37,7 +37,12 @@ const buildAllocationRows = (
   const wagesAllocationByFundingSource = new Map<string, number>();
   let processedWagesTotal = 0;
 
-  const activeExpenses = employeeExpenses.filter((expense) => expense.totalExpense !== null);
+  // TODO([082] chunk 2): wageExpense and taxExpense will be allocated as two separate totals
+  // (wagesAllocation/taxesAllocation) using this same weighting — for now they're summed together so
+  // this chunk's rename is a pure no-op on report output.
+  const activeExpenses = employeeExpenses.filter(
+    (expense) => expense.wageExpense !== null || expense.taxExpense !== null,
+  );
 
   for (const expense of activeExpenses) {
     const employee = employeeMap.get(expense.employeeId);
@@ -75,8 +80,8 @@ const buildAllocationRows = (
 
     if (totalWeightedCost === 0) continue;
 
-    // Apply proportions to employee's totalExpense
-    const totalExpense = expense.totalExpense as number;
+    // Apply proportions to employee's combined wage + tax expense
+    const totalExpense = (expense.wageExpense ?? 0) + (expense.taxExpense ?? 0);
     for (const [fundingSourceName, weightedCost] of weightedCostByFundingSource) {
       const proportion = weightedCost / totalWeightedCost;
       wagesAllocationByFundingSource.set(

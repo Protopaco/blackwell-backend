@@ -3,7 +3,8 @@ const employeeExpenseUpdate = {
     type: 'object',
     properties: {
       employeeId: { type: 'string', format: 'uuid' },
-      totalExpense: { type: 'number', nullable: true, example: 2326.92 },
+      wageExpense: { type: 'number', nullable: true, example: 2326.92 },
+      taxExpense: { type: 'number', nullable: true, example: 189.45 },
     },
   },
 };

@@ -68,10 +68,13 @@ const makeHoursRow = (
   ...overrides,
 });
 
-const makeExpense = (employeeId: string, totalExpense: number | null): EmployeeExpense => ({
+// wageExpense carries the full amount for existing tests (taxExpense left null) so their asserted sums
+// are unaffected by the [082] split — chunk 1 keeps buildAllocationRows.ts summing both fields together.
+const makeExpense = (employeeId: string, wageExpense: number | null): EmployeeExpense => ({
   employeeId,
   employeeName: 'Jane Smith',
-  totalExpense,
+  wageExpense,
+  taxExpense: null,
 });
 
 const makeAdditional = (expenseName: string, amount: number): AdditionalExpense => ({
@@ -284,7 +287,7 @@ describe('buildAllocationRows', () => {
   });
 
   describe('filtering active employees', () => {
-    it('excludes employees where totalExpense is null', () => {
+    it('excludes employees where both wageExpense and taxExpense are null', () => {
       const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
       const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
