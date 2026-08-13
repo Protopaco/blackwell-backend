@@ -6,6 +6,13 @@ sections marked **Proposed** describe the redesign discussed to fix unlabeled/am
 (flat-rate rows blending into hourly rows, no week labels, no flat-rate Daily Total); everything else
 describes what's actually implemented today.
 
+**Two entirely different layouts exist**, chosen by `Settings.timeInputMethod`. Everything below the
+"ClockInOut Timesheets" section describes the **TotalHours** layout (`buildWeek.ts` /
+`applyTimesheetFormatting.ts`'s week-section path). See the dedicated "ClockInOut Timesheets" section
+near the bottom of this doc for the ClockInOut layout (`buildClockInOutTimesheet.ts` /
+`formatClockInOutTimesheet.ts`) — the two do not share row/column structure at all, only the color
+palette and a few row-style building blocks.
+
 ## Status legend
 
 - **Existing** — implemented today, unchanged by the redesign
@@ -135,6 +142,69 @@ Fixed, appears after the Approval block. **Border: `MUTED`, medium width, around
 | `summaryRow` | Existing | e.g. "Total Hours Worked" / "Holiday Hours" / "Flat Rate Shifts" — label + computed value | Label: `PRIMARY`/`HEADER_TEXT` left-aligned. Value: `MUTED`/`TEXT` centered |
 
 ---
+
+## ClockInOut Timesheets
+
+Built by `buildClockInOutTimesheet.ts` (rows) and `formatting/formatClockInOutTimesheet.ts`
+(formatting) — used instead of everything above when `Settings.timeInputMethod` is `ClockInOut`. Uses
+the same color palette (see top of this doc) but a completely different row/column structure: weeks sit
+**side by side**, not stacked, and there's no activity-per-row grid — instead each day gets a fixed
+number of generic entry slots.
+
+### Column layout
+
+Each week gets its own 4-column group, `CLOCK_IN_OUT_WEEK_COLUMN_WIDTH = 4`, at
+`labelColumnIndex = weekIndex * (4 + 1)` (the `+1` is a 1-column spacer between week groups):
+
+| Offset within group | Column offset constant | Purpose |
+|---|---|---|
+| 0 | `CLOCK_IN_OUT_ACTIVITY_COLUMN_OFFSET` | Activity dropdown (also the Flat Rate row's activity name) |
+| 1 | `CLOCK_IN_OUT_IN_COLUMN_OFFSET` | Clock In (also the Flat Rate row's merged "Shifts" cell start) |
+| 2 | `CLOCK_IN_OUT_OUT_COLUMN_OFFSET` | Clock Out (also the Flat Rate row's merged "Shifts" cell end) |
+| 3 | `CLOCK_IN_OUT_TOTAL_COLUMN_OFFSET` | Display-only Total formula |
+
+The activity column (offset 0) is widened to `CLOCK_IN_OUT_ACTIVITY_COLUMN_WIDTH = 250`px so long
+activity names aren't cut off.
+
+### Row order (rows are shared across every week's column group — every week has the same day count)
+
+1. `weekLabelRow` — styled `SECONDARY` (not `PRIMARY_DARK` — deliberately lighter than the day headers
+   below it).
+2. Per day, repeated for every day in the pay period:
+   - `dayHeaderRow` — day name + date, styled `dayOfWeekRow` (`PRIMARY_DARK`/`HEADER_TEXT`, bold,
+     centered).
+   - `columnHeaderRow` — "Hourly" / "In" / "Out" / "Total" labels, styled `dailyTotalRow`
+     (`PRIMARY_DARK`/`HEADER_TEXT`, bold, **left-aligned** — not centered, so it reads as a section
+     label rather than a data header).
+   - `CLOCK_IN_OUT_SLOTS_PER_DAY` (6) slot rows — activity dropdown (data validation against the
+     employee's assigned activities) + Clock In + Clock Out (both formatted `hh:mm AM/PM`, data-validated
+     to blank-or-a-real-time-of-day) + a display-only Total formula. Zebra-striped `MUTED`/`PRIMARY`
+     (`mutedDataEntryRow`/`primaryDataEntryRow` in `rowStyles.ts`), restarting at index 0 for each day
+     (not continuing across days).
+   - **If the employee has any flat-rate activities**, that day's own Flat Rate section directly below
+     the slots: a section-label row (styled the same left-aligned `dailyTotalRow` as `columnHeaderRow`,
+     with the In/Out columns merged into one "Shifts" header cell), then one row per flat-rate activity
+     (activity name + a merged Shifts entry cell), zebra-striped the same way, restarting at index 0.
+   - A thick (`SOLID_THICK`, width 3) `PRIMARY_DARK` border box wraps the day's whole block — Hourly
+     slots plus Flat Rate section if present — via `outlineBlockBorder.ts`'s `thick` parameter.
+   - A blank break row (not styled, just empty) separates this day from the next — omitted after the
+     last day.
+
+### Data validation
+
+- Activity dropdown: same `setActivityDataValidation` mechanism as TotalHours mode, restricted to the
+  employee's assigned activities.
+- Clock In / Clock Out: `CUSTOM_FORMULA`, `strict: true` — `OR(ISBLANK(cell), AND(ISNUMBER(cell),
+  cell>=0, cell<1))`. A real Sheets time value is always a day-fraction in `[0, 1)`; the `>=0`/`<1`
+  bounds reject plain typed numbers (e.g. `2`, `5`), which are `ISNUMBER`-true but not valid times —
+  added after live testing produced a nonsense 72-hour total from exactly that input.
+
+### Not enforced by sheet-level validation (enforced at read time instead — see `BUSINESS_RULES.md`)
+
+Whether Clock Out is after Clock In, whether both slot cells are filled together, and what happens with
+an unrecognized activity name are all validated by `readClockInOutSlotRows.ts` at report-generation
+time, not by anything on the sheet itself — the sheet only guarantees "blank or a syntactically valid
+time," nothing about the relationship between two cells.
 
 ## Open questions
 
