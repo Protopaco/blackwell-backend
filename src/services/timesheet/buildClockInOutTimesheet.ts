@@ -1,5 +1,5 @@
 import { ClockInOutDayManifest, ClockInOutFlatRateRowManifest, ClockInOutWeekManifest } from "#models/TimesheetManifest.js";
-import { SortedActivities } from "./sortActivities.js";
+import SortedActivities from '#models/SortedActivities.js';
 import { CLOCK_IN_OUT_SLOTS_PER_DAY, CLOCK_IN_OUT_SPACER_COLUMN_WIDTH, CLOCK_IN_OUT_WEEK_COLUMN_WIDTH } from "#config/constants.js";
 import {
   buildClockInOutColumnHeaderRow,

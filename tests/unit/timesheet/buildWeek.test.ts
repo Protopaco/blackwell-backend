@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import Activity from '#models/Activity.js';
 import Holiday from '#models/Holiday.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
-import { SortedActivities } from '#services/timesheet/sortActivities.js';
+import SortedActivities from '#models/SortedActivities.js';
 import buildWeek from '#services/timesheet/buildWeek.js';
 
 const makeActivity = (activityName: string, payrollCategory: string = PayrollCategory.Regular): Activity => ({

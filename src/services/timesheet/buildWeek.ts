@@ -1,7 +1,7 @@
 import Holiday from "#models/Holiday.js";
 import { ActivityRowManifest, WeekManifest } from "#models/TimesheetManifest.js";
 import { formatWeekRangeLabel } from "#utils/dateUtils.js";
-import { SortedActivities } from "./sortActivities.js";
+import SortedActivities from '#models/SortedActivities.js';
 import buildFlatRateSection from "./buildFlatRateSection.js";
 import {
   buildActivityRow,

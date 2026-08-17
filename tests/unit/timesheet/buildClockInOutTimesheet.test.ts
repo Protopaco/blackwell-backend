@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import Activity from '#models/Activity.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
-import { SortedActivities } from '#services/timesheet/sortActivities.js';
+import SortedActivities from '#models/SortedActivities.js';
 import buildClockInOutTimesheet from '#services/timesheet/buildClockInOutTimesheet.js';
 import { CLOCK_IN_OUT_SLOTS_PER_DAY } from '#config/constants.js';
 
