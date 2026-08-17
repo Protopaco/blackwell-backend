@@ -1,6 +1,7 @@
 import additionalExpense from './additionalExpense.js';
 import allocationReportRow from './allocationReportRow.js';
 import activity from './activity.js';
+import activityReorderUpdate from './activityReorderUpdate.js';
 import client from './client.js';
 import clientCreateRequest from './clientCreateRequest.js';
 import clientUpdateRequest from './clientUpdateRequest.js';
@@ -27,6 +28,7 @@ const schemas = {
   ...additionalExpense,
   ...allocationReportRow,
   ...activity,
+  ...activityReorderUpdate,
   ...client,
   ...clientCreateRequest,
   ...clientUpdateRequest,
