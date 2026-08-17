@@ -16,6 +16,8 @@ describe('POST /api/v1/activity/:clientId', () => {
       activityName: `Test Activity ${uniqueCode}`,
       trackSeparately: true,
       payrollCategory: PayrollCategory.Regular,
+      groupLabel: 'VT Grows',
+      sortOrder: 3,
       fundingSources: [
         {
           fundingSourceName: fundingSource.fundingSourceName,

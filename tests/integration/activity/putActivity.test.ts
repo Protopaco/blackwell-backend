@@ -39,6 +39,25 @@ describe('PUT /api/v1/activity/:clientId/:activityId', () => {
     });
   });
 
+  it('200 - Updates groupLabel and sortOrder', async () => {
+    const client = await createTestClient();
+    const activity = await createTestActivity(client.clientId);
+
+    const res = await request(app)
+      .put(`/api/v1/activity/${client.clientId}/${activity.activityId}`)
+      .send({ ...activity, groupLabel: 'VT Grows', sortOrder: 3 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe('Activity updated');
+
+    const activitiesRes = await request(app).get(`/api/v1/activity/${client.clientId}`);
+    expect(activitiesRes.status).toBe(200);
+    const persistedActivity = activitiesRes.body.find(
+      (candidate: Activity) => candidate.activityId === activity.activityId,
+    );
+    expect(persistedActivity).toMatchObject({ groupLabel: 'VT Grows', sortOrder: 3 });
+  });
+
   it('422 - More than 3 funding sources', async () => {
     const client = await createTestClient();
     const activity = await createTestActivity(client.clientId);

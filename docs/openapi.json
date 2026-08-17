@@ -114,6 +114,15 @@
               "STO"
             ]
           },
+          "groupLabel": {
+            "type": "string",
+            "nullable": true,
+            "example": "VT Grows"
+          },
+          "sortOrder": {
+            "type": "number",
+            "example": 0
+          },
           "fundingSources": {
             "type": "array",
             "items": {
@@ -129,6 +138,24 @@
                 }
               }
             }
+          }
+        }
+      },
+      "ActivityReorderUpdate": {
+        "type": "object",
+        "properties": {
+          "activityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupLabel": {
+            "type": "string",
+            "nullable": true,
+            "example": "VT Grows"
+          },
+          "sortOrder": {
+            "type": "number",
+            "example": 0
           }
         }
       },
@@ -2918,6 +2945,50 @@
           },
           "404": {
             "description": "Client or activity not found"
+          }
+        }
+      }
+    },
+    "/api/v1/activity/{clientId}/batch": {
+      "put": {
+        "operationId": "v1UpdateActivitiesBatch",
+        "summary": "Overlay groupLabel/sortOrder onto multiple activities at once",
+        "description": "Reads the client's PayrollConfig once, overlays groupLabel/sortOrder onto each matching activity, and writes once. If any activityId doesn't match a known activity in the client's PayrollConfig, the entire batch is rejected and nothing is written.\n",
+        "tags": [
+          "Activity"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ActivityReorderUpdate"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Activities updated"
+          },
+          "404": {
+            "description": "Client not found"
+          },
+          "422": {
+            "description": "One or more activityId values do not match a known activity in the client's PayrollConfig"
           }
         }
       }
