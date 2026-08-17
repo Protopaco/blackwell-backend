@@ -2,16 +2,24 @@ import { describe, it, expect } from 'vitest';
 import Activity from '#models/Activity.js';
 import Holiday from '#models/Holiday.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
+import { EmployeeActivityPayRateType, EmployeeActivityPayRateTypeType } from '#models/EmployeeActivityPayRateType.js';
+import ActivityGroup from '#models/ActivityGroup.js';
 import SortedActivities from '#models/SortedActivities.js';
 import buildWeek from '#services/timesheet/buildWeek.js';
 
-const makeActivity = (activityName: string, payrollCategory: string = PayrollCategory.Regular): Activity => ({
+let nextSortOrder = 0;
+
+const makeActivity = (
+  activityName: string,
+  payrollCategory: string = PayrollCategory.Regular,
+  groupLabel: string | null = null,
+): Activity => ({
   activityId: crypto.randomUUID(),
   activityName,
   trackSeparately: false,
   payrollCategory: payrollCategory as Activity['payrollCategory'],
-  groupLabel: null,
-  sortOrder: 0,
+  groupLabel,
+  sortOrder: nextSortOrder++,
   fundingSources: [],
 });
 
@@ -21,81 +29,78 @@ const makeHoliday = (date: string, name: string): Holiday => ({
   holidayDate: date,
 });
 
+// Wraps a flat activity list as a single ungrouped ActivityGroup bucket — buildWeek re-groups the
+// combined list itself, so bucket-level grouping isn't under test here (see sortActivities.test.ts).
+const asBucket = (activities: Activity[]): ActivityGroup[] =>
+  activities.length > 0 ? [{ groupLabel: null, activities }] : [];
+
+const buildSortedActivities = (
+  work: Activity[],
+  timeOff: Activity[],
+  flatRate: Activity[],
+): SortedActivities => {
+  const payRateTypeByActivityId = new Map<string, EmployeeActivityPayRateTypeType>([
+    ...work.map((activity): [string, EmployeeActivityPayRateTypeType] => [activity.activityId, EmployeeActivityPayRateType.Hourly]),
+    ...timeOff.map((activity): [string, EmployeeActivityPayRateTypeType] => [activity.activityId, EmployeeActivityPayRateType.Hourly]),
+    ...flatRate.map((activity): [string, EmployeeActivityPayRateTypeType] => [activity.activityId, EmployeeActivityPayRateType.FlatRate]),
+  ]);
+
+  return {
+    workActivities: asBucket(work),
+    timeOffActivities: asBucket(timeOff),
+    flatRateActivities: asBucket(flatRate),
+    payRateTypeByActivityId,
+  };
+};
+
 const WEEK_DATES = ['2026-06-01', '2026-06-02', '2026-06-03', '2026-06-04', '2026-06-05', '2026-06-06', '2026-06-07']
   .map((s) => new Date(`${s}T12:00:00Z`));
 
-const noActivities: SortedActivities = {
-  workActivities: [],
-  timeOffActivities: [],
-  flatRateActivities: [],
-};
+const noActivities = buildSortedActivities([], [], []);
 
-const workOnly: SortedActivities = {
-  workActivities: [makeActivity('Admin'), makeActivity('Programs')],
-  timeOffActivities: [],
-  flatRateActivities: [],
-};
+const admin = makeActivity('Admin');
+const programs = makeActivity('Programs');
+const workOnly = buildSortedActivities([admin, programs], [], []);
 
-const withTimeOff: SortedActivities = {
-  workActivities: [makeActivity('Admin'), makeActivity('Programs')],
-  timeOffActivities: [makeActivity('ETO', PayrollCategory.ETO), makeActivity('PTO', PayrollCategory.PTO)],
-  flatRateActivities: [],
-};
+const eto = makeActivity('ETO', PayrollCategory.ETO);
+const pto = makeActivity('PTO', PayrollCategory.PTO);
+const withTimeOff = buildSortedActivities([admin, programs], [eto, pto], []);
 
-const withFlatRate: SortedActivities = {
-  workActivities: [makeActivity('Admin'), makeActivity('Programs')],
-  timeOffActivities: [makeActivity('ETO', PayrollCategory.ETO)],
-  flatRateActivities: [makeActivity('On-Call')],
-};
+const onCall = makeActivity('On-Call');
+const withFlatRate = buildSortedActivities([admin, programs], [eto], [onCall]);
 
-const flatRateOnly: SortedActivities = {
-  workActivities: [],
-  timeOffActivities: [],
-  flatRateActivities: [makeActivity('On-Call')],
-};
+const flatRateOnly = buildSortedActivities([], [], [onCall]);
 
 describe('buildWeek — row count', () => {
-  it('produces only the fixed rows when there are zero activities (both sections omitted)', () => {
+  it('produces only the fixed rows when there are zero activities', () => {
     // weekLabel + dayOfWeek + date + headerSpacer = 4
     const { rows } = buildWeek(0, WEEK_DATES, noActivities, [], 1, 7);
     expect(rows).toHaveLength(4);
   });
 
-  it('produces an Hourly section with no spacer and no Flat Rate section for work activities only', () => {
-    // weekLabel + dayOfWeek + date + headerSpacer + sectionLabel + 2 work + dailyTotal = 8
+  it('adds one row per activity, with no section label or daily total rows, for ungrouped activities', () => {
     const { rows } = buildWeek(0, WEEK_DATES, workOnly, [], 1, 7);
-    expect(rows).toHaveLength(8);
+    expect(rows).toHaveLength(4 + 2);
   });
 
-  it('produces correct row count with work and time-off activities', () => {
-    // weekLabel + dayOfWeek + date + headerSpacer + sectionLabel + 4 hourly + dailyTotal = 10
-    const { rows } = buildWeek(0, WEEK_DATES, withTimeOff, [], 1, 7);
-    expect(rows).toHaveLength(10);
-  });
-
-  it('adds an Hourly section, a spacer, and a Flat Rate section (each with its own dailyTotal) when both types exist', () => {
-    // weekLabel + dayOfWeek + date + headerSpacer = 4
-    // Hourly: sectionLabel + 3 hourly + dailyTotal = 5
-    // spacer = 1
-    // Flat Rate: sectionLabel + 1 flatrate + dailyTotal = 3
-    // total = 13
+  it('combines work, time off, and flat-rate activities into the same block', () => {
     const { rows } = buildWeek(0, WEEK_DATES, withFlatRate, [], 1, 7);
-    expect(rows).toHaveLength(13);
-  });
-
-  it('omits the Hourly section entirely (no spacer) when the employee has only Flat Rate activities', () => {
-    // weekLabel + dayOfWeek + date + headerSpacer + sectionLabel + 1 flatrate + dailyTotal = 7
-    const { rows } = buildWeek(0, WEEK_DATES, flatRateOnly, [], 1, 7);
-    expect(rows).toHaveLength(7);
+    expect(rows).toHaveLength(4 + 4); // Admin, Programs, ETO, On-Call
   });
 });
 
-describe('buildWeek — manifest row numbers', () => {
-  it('assigns correct row numbers when startRow is 1', () => {
-    const { weekManifest } = buildWeek(0, WEEK_DATES, workOnly, [], 1, 7);
-    const rowNums = weekManifest.activityRows.map((activityRow) => activityRow.row);
-    // weekLabel=1, dayOfWeek=2, date=3, headerSpacer=4, sectionLabel=5, Admin=6, Programs=7
-    expect(rowNums).toEqual([6, 7]);
+describe('buildWeek — manifest row numbers and rowType', () => {
+  it('assigns correct row numbers and tags each row with its pay type', () => {
+    const { weekManifest } = buildWeek(0, WEEK_DATES, withFlatRate, [], 1, 7);
+    const rowsByName = Object.fromEntries(
+      weekManifest.activityRows.map((activityRow) => [activityRow.activityName, activityRow]),
+    );
+
+    // weekLabel=1, dayOfWeek=2, date=3, headerSpacer=4, then Admin=5, Programs=6, ETO=7, On-Call=8
+    expect(rowsByName['Admin']).toEqual({ activityId: admin.activityId, activityName: 'Admin', row: 5, rowType: 'Hourly' });
+    expect(rowsByName['Programs'].row).toBe(6);
+    expect(rowsByName['ETO']).toMatchObject({ row: 7, rowType: 'ETO' });
+    expect(rowsByName['On-Call']).toMatchObject({ row: 8, rowType: 'FlatRate' });
   });
 
   it('assigns correct row numbers when startRow is offset (second week)', () => {
@@ -105,25 +110,8 @@ describe('buildWeek — manifest row numbers', () => {
     const { weekManifest } = buildWeek(1, WEEK_DATES, workOnly, [], secondWeekStartRow, 7);
     const rowNums = weekManifest.activityRows.map((activityRow) => activityRow.row);
 
-    expect(rowNums[0]).toBe(secondWeekStartRow + 5); // weekLabel + dayOfWeek + date + headerSpacer + sectionLabel, then first activity
-    expect(rowNums[1]).toBe(secondWeekStartRow + 6);
-  });
-
-  it('assigns correct row numbers for work, time-off, and flat rate activities', () => {
-    const { weekManifest } = buildWeek(0, WEEK_DATES, withFlatRate, [], 1, 7);
-    const hourlyByName = Object.fromEntries(
-      weekManifest.activityRows.map((activityRow) => [activityRow.activityName, activityRow.row]),
-    );
-    const flatRateByName = Object.fromEntries(
-      weekManifest.flatRateRows.map((flatRateRow) => [flatRateRow.activityName, flatRateRow.row]),
-    );
-
-    // weekLabel=1, dayOfWeek=2, date=3, headerSpacer=4, hourlySectionLabel=5, Admin=6, Programs=7, ETO=8,
-    // hourlyDailyTotal=9, spacer=10, flatRateSectionLabel=11, On-Call=12, flatRateDailyTotal=13
-    expect(hourlyByName['Admin']).toBe(6);
-    expect(hourlyByName['Programs']).toBe(7);
-    expect(hourlyByName['ETO']).toBe(8);
-    expect(flatRateByName['On-Call']).toBe(12);
+    expect(rowNums[0]).toBe(secondWeekStartRow + 4); // weekLabel + dayOfWeek + date + headerSpacer, then first activity
+    expect(rowNums[1]).toBe(secondWeekStartRow + 5);
   });
 
   it('records the date row correctly', () => {
@@ -142,34 +130,61 @@ describe('buildWeek — manifest row numbers', () => {
   it('records firstRow/lastRow bounding the whole week block', () => {
     const { weekManifest } = buildWeek(0, WEEK_DATES, workOnly, [], 1, 7);
     expect(weekManifest.firstRow).toBe(weekManifest.weekLabelRow);
-    expect(weekManifest.lastRow).toBe(weekManifest.hourlyDailyTotalRow);
+    expect(weekManifest.lastRow).toBe(weekManifest.activityRows[weekManifest.activityRows.length - 1].row);
+  });
+
+  it('produces an empty activityRows list with zero activities', () => {
+    const { weekManifest } = buildWeek(0, WEEK_DATES, noActivities, [], 1, 7);
+    expect(weekManifest.activityRows).toEqual([]);
   });
 });
 
-describe('buildWeek — section omission', () => {
-  it('leaves hourlySectionLabelRow/hourlyDailyTotalRow undefined and activityRows empty with no hourly activities', () => {
-    const { weekManifest } = buildWeek(0, WEEK_DATES, flatRateOnly, [], 1, 7);
-    expect(weekManifest.hourlySectionLabelRow).toBeUndefined();
-    expect(weekManifest.hourlyDailyTotalRow).toBeUndefined();
-    expect(weekManifest.activityRows).toEqual([]);
-  });
-
-  it('leaves flatRateSectionLabelRow/flatRateDailyTotalRow undefined and flatRateRows empty with no flat rate activities', () => {
+describe('buildWeek — group header rows', () => {
+  it('adds no group header row for ungrouped activities', () => {
     const { weekManifest } = buildWeek(0, WEEK_DATES, workOnly, [], 1, 7);
-    expect(weekManifest.flatRateSectionLabelRow).toBeUndefined();
-    expect(weekManifest.flatRateDailyTotalRow).toBeUndefined();
-    expect(weekManifest.flatRateRows).toEqual([]);
+    expect(weekManifest.groupHeaderRows).toEqual([]);
   });
 
-  it('only sets spacerRow when both sections are present', () => {
-    expect(buildWeek(0, WEEK_DATES, workOnly, [], 1, 7).weekManifest.spacerRow).toBeUndefined();
-    expect(buildWeek(0, WEEK_DATES, flatRateOnly, [], 1, 7).weekManifest.spacerRow).toBeUndefined();
-    expect(buildWeek(0, WEEK_DATES, withFlatRate, [], 1, 7).weekManifest.spacerRow).toBe(10);
+  it('emits one header row for a named group and includes its own activities regardless of pay type', () => {
+    const groupedHourly = makeActivity('Relocation Hours', PayrollCategory.Regular, 'VT Grows');
+    const groupedFlatRate = makeActivity('Outreach Shifts', PayrollCategory.Regular, 'VT Grows');
+    const sortedActivities = buildSortedActivities([groupedHourly], [], [groupedFlatRate]);
+
+    const { rows, weekManifest } = buildWeek(0, WEEK_DATES, sortedActivities, [], 1, 7);
+
+    expect(weekManifest.groupHeaderRows).toHaveLength(1);
+    expect(weekManifest.groupHeaderRows[0].groupLabel).toBe('VT Grows');
+
+    const headerRow = rows[weekManifest.groupHeaderRows[0].row - 1] as string[];
+    expect(headerRow[0]).toBe('VT Grows');
+    expect(headerRow[headerRow.length - 1]).toBe('Total');
+
+    const activityNames = weekManifest.activityRows.map((activityRow) => activityRow.activityName);
+    expect(activityNames).toEqual(['Relocation Hours', 'Outreach Shifts']);
+  });
+
+  it('places the ungrouped block first, followed by named groups alphabetically', () => {
+    const ungrouped = makeActivity('Solo');
+    const zetaMember = makeActivity('Z Member', PayrollCategory.Regular, 'Zeta Group');
+    const alphaMember = makeActivity('A Member', PayrollCategory.Regular, 'Alpha Group');
+    const sortedActivities = buildSortedActivities([ungrouped, zetaMember, alphaMember], [], []);
+
+    const { weekManifest } = buildWeek(0, WEEK_DATES, sortedActivities, [], 1, 7);
+
+    expect(weekManifest.groupHeaderRows.map((groupHeaderRow) => groupHeaderRow.groupLabel)).toEqual([
+      'Alpha Group',
+      'Zeta Group',
+    ]);
+    expect(weekManifest.activityRows.map((activityRow) => activityRow.activityName)).toEqual([
+      'Solo',
+      'A Member',
+      'Z Member',
+    ]);
   });
 });
 
 describe('buildWeek — headerSpacerRow', () => {
-  it('always sits directly after dateRow, regardless of which sections are present', () => {
+  it('always sits directly after dateRow, regardless of activity content', () => {
     expect(buildWeek(0, WEEK_DATES, noActivities, [], 1, 7).weekManifest.headerSpacerRow).toBe(4);
     expect(buildWeek(0, WEEK_DATES, workOnly, [], 1, 7).weekManifest.headerSpacerRow).toBe(4);
     expect(buildWeek(0, WEEK_DATES, flatRateOnly, [], 1, 7).weekManifest.headerSpacerRow).toBe(4);
@@ -182,41 +197,14 @@ describe('buildWeek — headerSpacerRow', () => {
   });
 });
 
-describe('buildWeek — daily total formulas', () => {
-  it('daily total row sums the hourly activity rows', () => {
-    // startRow=1: weekLabel=1, dayOfWeek=2, date=3, headerSpacer=4, sectionLabel=5, Admin=6, Programs=7, dailyTotal=8
+describe('buildWeek — activity row content', () => {
+  it('gives each activity row a per-day SUM formula in the weekly total column', () => {
     const { rows, weekManifest } = buildWeek(0, WEEK_DATES, workOnly, [], 1, 7);
-    const dailyTotalRow = rows[weekManifest.hourlyDailyTotalRow! - 1] as string[];
+    const adminRowNumber = weekManifest.activityRows.find((activityRow) => activityRow.activityName === 'Admin')!.row;
+    const adminRow = rows[adminRowNumber - 1] as string[];
 
-    expect(dailyTotalRow[0]).toBe('Daily Total');
-    expect(dailyTotalRow[1]).toBe('=SUM(B6:B7)'); // first day col sums Admin and Programs
-    expect(dailyTotalRow[7]).toBe('=SUM(H6:H7)'); // last day col
-    expect(dailyTotalRow[8]).toBe('=SUM(B8:H8)'); // weekly total in row 8
-  });
-
-  it('the Flat Rate section gets its own daily total, summing only its own rows', () => {
-    // startRow=1: weekLabel=1, dayOfWeek=2, date=3, headerSpacer=4, hourlySectionLabel=5, Admin=6, Programs=7,
-    // ETO=8, hourlyDailyTotal=9, spacer=10, flatRateSectionLabel=11, On-Call=12, flatRateDailyTotal=13
-    const { rows, weekManifest } = buildWeek(0, WEEK_DATES, withFlatRate, [], 1, 7);
-    const hourlyDailyTotalRow = rows[weekManifest.hourlyDailyTotalRow! - 1] as string[];
-    const flatRateDailyTotalRow = rows[weekManifest.flatRateDailyTotalRow! - 1] as string[];
-
-    expect(hourlyDailyTotalRow[1]).toBe('=SUM(B6:B8)');
-    expect(flatRateDailyTotalRow[1]).toBe('=SUM(B12:B12)');
-    expect(flatRateDailyTotalRow[8]).toBe('=SUM(B13:H13)');
-  });
-});
-
-describe('buildWeek — section label rows', () => {
-  it('labels the Hourly and Flat Rate sections and each carries its own Total header', () => {
-    const { rows, weekManifest } = buildWeek(0, WEEK_DATES, withFlatRate, [], 1, 7);
-    const hourlySectionLabelRow = rows[weekManifest.hourlySectionLabelRow! - 1] as string[];
-    const flatRateSectionLabelRow = rows[weekManifest.flatRateSectionLabelRow! - 1] as string[];
-
-    expect(hourlySectionLabelRow[0]).toBe('Hourly');
-    expect(hourlySectionLabelRow[8]).toBe('Total');
-    expect(flatRateSectionLabelRow[0]).toBe('Flat Rate');
-    expect(flatRateSectionLabelRow[8]).toBe('Total');
+    expect(adminRow[0]).toBe('Admin');
+    expect(adminRow[8]).toBe(`=SUM(B${adminRowNumber}:H${adminRowNumber})`);
   });
 
   it('does not duplicate the Total header onto the date row', () => {

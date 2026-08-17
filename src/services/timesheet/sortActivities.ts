@@ -11,10 +11,11 @@ const TIME_OFF_CATEGORIES = [
   PayrollCategory.STO,
 ];
 
-// Orders one bucket's activities into groups: ungrouped activities first (by their own sortOrder) as a
+// Orders a list of activities into groups: ungrouped activities first (by their own sortOrder) as a
 // single groupLabel-null entry, then named groups alphabetically by groupLabel, with each group's
-// activities ordered by their own sortOrder. The ungrouped entry is omitted when empty.
-const groupBucket = (activities: Activity[]): ActivityGroup[] => {
+// activities ordered by their own sortOrder. The ungrouped entry is omitted when empty. Exported so
+// buildWeek can re-run this same ordering across a combined list spanning multiple sortActivities buckets.
+const groupActivities = (activities: Activity[]): ActivityGroup[] => {
   const bySortOrder = (a: Activity, b: Activity) => a.sortOrder - b.sortOrder;
 
   const ungroupedActivities = activities
@@ -68,10 +69,12 @@ const sortActivities = (activities: Activity[], employeeActivityRates: EmployeeA
   });
 
   return {
-    workActivities: groupBucket(workActivities),
-    timeOffActivities: groupBucket(timeOffActivities),
-    flatRateActivities: groupBucket(flatRateActivities),
+    workActivities: groupActivities(workActivities),
+    timeOffActivities: groupActivities(timeOffActivities),
+    flatRateActivities: groupActivities(flatRateActivities),
+    payRateTypeByActivityId,
   };
 };
 
+export { groupActivities };
 export default sortActivities;

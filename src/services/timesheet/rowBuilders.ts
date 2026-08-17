@@ -72,24 +72,6 @@ const buildActivityRow = (activity: Activity, numberOfDays: number, rowNumber: n
   ];
 };
 
-// Builds the daily total row with SUM formulas covering all hourly activity rows for each day.
-const buildDailyTotalRow = (
-  dates: Date[],
-  firstActivityRow: number,
-  lastActivityRow: number,
-  dailyTotalRowNum: number,
-): unknown[] => {
-  const row: unknown[] = ['Daily Total'];
-  for (let dayIndex = 0; dayIndex < dates.length; dayIndex++) {
-    const dayColLetter = colLetter(dayIndex + 1);
-    row.push(`=SUM(${dayColLetter}${firstActivityRow}:${dayColLetter}${lastActivityRow})`);
-  }
-  const firstDayCol = colLetter(1);
-  const lastDayCol = colLetter(dates.length);
-  row.push(`=SUM(${firstDayCol}${dailyTotalRowNum}:${lastDayCol}${dailyTotalRowNum})`);
-  return row;
-};
-
 // Builds a ClockInOut week's label row content (e.g. "Week 3/30 - 4/5"), scoped to just that week's own
 // 4-column group — weeks sit side by side, each with its own label, rather than one label spanning the
 // whole sheet width.
@@ -168,7 +150,6 @@ export {
   buildDateRow,
   buildSectionLabelRow,
   buildActivityRow,
-  buildDailyTotalRow,
   buildClockInOutWeekLabelRow,
   buildClockInOutDayHeaderRow,
   buildClockInOutColumnHeaderRow,

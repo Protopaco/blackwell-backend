@@ -5,34 +5,43 @@ interface DateColumnManifest {
   column: number;
 }
 
+// The pay-type tag shown on an activity row's label cell — 'ETO'/'PTO'/'STO' come straight from
+// PayrollCategory, 'Hourly'/'Salary'/'FlatRate' from EmployeeActivityPayRateType. Kept as a plain string
+// union here (rather than importing both enums) since it's just a display/summary-math tag, not a shared
+// domain concept.
+type ActivityRowType = 'Hourly' | 'Salary' | 'FlatRate' | 'ETO' | 'PTO' | 'STO';
+
 interface ActivityRowManifest {
   activityId: Guid;
   activityName: string;
+  row: number;
+  rowType: ActivityRowType;
+}
+
+// One named group's header row within a week's activity block — omitted for ungrouped activities, which
+// render with no header row at all (see sortActivities.groupActivities).
+interface GroupHeaderRowManifest {
+  groupLabel: string;
   row: number;
 }
 
 interface WeekManifest {
   weekIndex: number;
-  // firstRow/lastRow bound the week's full block (weekLabelRow through the last row of whichever
-  // section — Hourly or Flat Rate — ends the week), used to draw the week's block-level border.
+  // firstRow/lastRow bound the week's full block (weekLabelRow through the last activity row), used to
+  // draw the week's block-level border.
   firstRow: number;
   lastRow: number;
   weekLabelRow: number;
   dayOfWeekRow: number;
   dateRow: number;
   dates: DateColumnManifest[];
-  // Always present — the half-height gap between dateRow and whichever section comes first that week.
+  // Always present — the half-height gap between dateRow and the activity block.
   headerSpacerRow: number;
-  // Hourly and Flat Rate sections are each fully omitted (all fields below undefined, activityRows/
-  // flatRateRows empty) when the employee has zero activities of that type.
-  hourlySectionLabelRow?: number;
+  // Every activity the employee has (work, time off, and flat-rate combined into one grouped/ordered
+  // block — see buildWeek), each tagged with its rowType. No more separate Hourly/Flat Rate sections,
+  // section-label rows, or Daily Total rows — replaced by rowType and groupHeaderRows.
   activityRows: ActivityRowManifest[];
-  hourlyDailyTotalRow?: number;
-  // Only set when both the Hourly and Flat Rate sections are present that week.
-  spacerRow?: number;
-  flatRateSectionLabelRow?: number;
-  flatRateRows: ActivityRowManifest[];
-  flatRateDailyTotalRow?: number;
+  groupHeaderRows: GroupHeaderRowManifest[];
 }
 
 interface SignatureCell {
@@ -105,7 +114,9 @@ interface TimesheetManifest {
 
 export type {
   DateColumnManifest,
+  ActivityRowType,
   ActivityRowManifest,
+  GroupHeaderRowManifest,
   WeekManifest,
   SignatureCell,
   SummaryRowManifest,

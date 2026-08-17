@@ -14,7 +14,6 @@ import {
   buildDateRow,
   buildSectionLabelRow,
   buildActivityRow,
-  buildDailyTotalRow,
   buildClockInOutWeekLabelRow,
   buildClockInOutDayHeaderRow,
   buildClockInOutColumnHeaderRow,
@@ -191,30 +190,6 @@ describe('buildActivityRow', () => {
   });
 });
 
-describe('buildDailyTotalRow', () => {
-  it('puts Daily Total label in column A', () => {
-    const row = buildDailyTotalRow(WEEK_DATES, 4, 8, 9);
-    expect(row[0]).toBe('Daily Total');
-  });
-
-  it('generates a SUM formula for each day column', () => {
-    const row = buildDailyTotalRow(WEEK_DATES, 4, 8, 9);
-    expect(row[1]).toBe('=SUM(B4:B8)');
-    expect(row[2]).toBe('=SUM(C4:C8)');
-    expect(row[7]).toBe('=SUM(H4:H8)');
-  });
-
-  it('appends a weekly total formula summing all day columns in this row', () => {
-    const row = buildDailyTotalRow(WEEK_DATES, 4, 8, 9);
-    expect(row[8]).toBe('=SUM(B9:H9)');
-  });
-
-  it('adjusts formulas when activity range changes', () => {
-    const row = buildDailyTotalRow(WEEK_DATES, 10, 15, 16);
-    expect(row[1]).toBe('=SUM(B10:B15)');
-    expect(row[8]).toBe('=SUM(B16:H16)');
-  });
-});
 
 describe('buildClockInOutWeekLabelRow', () => {
   it('puts the week date-range label in the label column, scoped to just that week\'s 4 columns', () => {

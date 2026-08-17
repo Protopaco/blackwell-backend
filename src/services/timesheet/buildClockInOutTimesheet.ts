@@ -1,6 +1,7 @@
 import { ClockInOutDayManifest, ClockInOutFlatRateRowManifest, ClockInOutWeekManifest } from "#models/TimesheetManifest.js";
 import SortedActivities from '#models/SortedActivities.js';
 import { CLOCK_IN_OUT_SLOTS_PER_DAY, CLOCK_IN_OUT_SPACER_COLUMN_WIDTH, CLOCK_IN_OUT_WEEK_COLUMN_WIDTH } from "#config/constants.js";
+import flattenActivityGroups from "./flattenActivityGroups.js";
 import {
   buildClockInOutColumnHeaderRow,
   buildClockInOutDayHeaderRow,
@@ -29,10 +30,9 @@ const buildClockInOutTimesheet = (
   sortedActivities: SortedActivities,
   startRow: number,
 ): TimesheetBuildResult => {
-  const { workActivities, timeOffActivities, flatRateActivities } = sortedActivities;
-  const hourlyActivities = [...workActivities, ...timeOffActivities];
+  const flatRateActivityList = flattenActivityGroups(sortedActivities.flatRateActivities);
   const daysPerWeek = weeks[0]?.length ?? 0;
-  const hasFlatRateActivities = flatRateActivities.length > 0;
+  const hasFlatRateActivities = flatRateActivityList.length > 0;
 
   const rows: unknown[][] = [];
   const nextRowNumber = (): number => startRow + rows.length;
@@ -76,7 +76,7 @@ const buildClockInOutTimesheet = (
       flatRateSectionLabelRow = nextRowNumber();
       pushRow(weeks.map(() => buildClockInOutFlatRateSectionLabelRow()));
 
-      for (const activity of flatRateActivities) {
+      for (const activity of flatRateActivityList) {
         const flatRateRowNumber = nextRowNumber();
         pushRow(
           weeks.map((_weekDates, weekIndex) =>

@@ -6,10 +6,10 @@ import TimesheetEntry from '#models/TimesheetEntry.js';
 import { WeekManifest } from '#models/TimesheetManifest.js';
 import { getHolidayName } from '#utils/dateUtils.js';
 
-// Reads every TimesheetEntry out of a TotalHours-shaped timesheet: each week's activity/flat-rate rows
-// hold one hours cell per day column directly, so no per-slot validation is needed — just a numeric read
-// per (row, date) pair, skipping zero and empty cells. Called by readTimesheetEntries when the manifest
-// isn't ClockInOut-shaped.
+// Reads every TimesheetEntry out of a TotalHours-shaped timesheet: each week's activity rows (work, time
+// off, and flat-rate all combined into one block) hold one hours cell per day column directly, so no
+// per-slot validation is needed — just a numeric read per (row, date) pair, skipping zero and empty
+// cells. Called by readTimesheetEntries when the manifest isn't ClockInOut-shaped.
 const readTotalHoursEntries = (
   employee: Employee,
   employeeName: string,
@@ -22,9 +22,7 @@ const readTotalHoursEntries = (
   const entries: TimesheetEntry[] = [];
 
   for (const weekManifest of weeks) {
-    const allActivityRows = [...weekManifest.activityRows, ...weekManifest.flatRateRows];
-
-    for (const activityRow of allActivityRows) {
+    for (const activityRow of weekManifest.activityRows) {
       const activity = activityMap.get(activityRow.activityId);
       const payRateType = payRateTypeByActivityId.get(activityRow.activityId);
       if (!activity || !payRateType) continue;

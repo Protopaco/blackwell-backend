@@ -29,15 +29,20 @@ const DAY_BLOCK_SIZE = CLOCK_IN_OUT_SLOTS_PER_DAY + 2;
 const DAY_BLOCK_SIZE_WITH_FLAT_RATE = DAY_BLOCK_SIZE + 2;
 
 const workOnly: SortedActivities = {
-  workActivities: [makeActivity('Admin'), makeActivity('Programs')],
+  workActivities: [{ groupLabel: null, activities: [makeActivity('Admin'), makeActivity('Programs')] }],
   timeOffActivities: [],
   flatRateActivities: [],
+  payRateTypeByActivityId: new Map(),
 };
 
+const withFlatRateAdmin = makeActivity('Admin');
+const withFlatRateEto = makeActivity('ETO', PayrollCategory.ETO);
+const withFlatRateOnCall = makeActivity('On-Call');
 const withFlatRate: SortedActivities = {
-  workActivities: [makeActivity('Admin')],
-  timeOffActivities: [makeActivity('ETO', PayrollCategory.ETO)],
-  flatRateActivities: [makeActivity('On-Call')],
+  workActivities: [{ groupLabel: null, activities: [withFlatRateAdmin] }],
+  timeOffActivities: [{ groupLabel: null, activities: [withFlatRateEto] }],
+  flatRateActivities: [{ groupLabel: null, activities: [withFlatRateOnCall] }],
+  payRateTypeByActivityId: new Map(),
 };
 
 // A blank break row separates each day's block from the next — one fewer break than there are days.
