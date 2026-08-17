@@ -10,6 +10,8 @@ const makeActivity = (activityName: string, payrollCategory: string = PayrollCat
   activityName,
   trackSeparately: false,
   payrollCategory: payrollCategory as Activity['payrollCategory'],
+  groupLabel: null,
+  sortOrder: 0,
   fundingSources: [],
 });
 

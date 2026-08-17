@@ -71,6 +71,7 @@ export const ACTIVITIES_HEADERS = [
   'FundingSource1Name', 'FundingSource1Percentage',
   'FundingSource2Name', 'FundingSource2Percentage',
   'FundingSource3Name', 'FundingSource3Percentage',
+  'GroupLabel', 'SortOrder',
 ];
 export const EMPLOYEE_ACTIVITY_RATES_TAB = 'EmployeeActivityRates';
 export const EMPLOYEE_ACTIVITY_RATES_HEADERS = [

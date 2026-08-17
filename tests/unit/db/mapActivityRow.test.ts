@@ -7,6 +7,8 @@ const activity: Activity = {
   activityName: 'Job Coaching',
   trackSeparately: false,
   payrollCategory: 'Regular',
+  groupLabel: null,
+  sortOrder: 0,
   fundingSources: [{ fundingSourceName: 'Federal Grant', percentage: 100 }],
 };
 
@@ -17,6 +19,8 @@ describe('mapActivityRow', () => {
       ActivityName: 'Job Coaching',
       TrackSeparately: false,
       PayrollCategory: 'Regular',
+      GroupLabel: '',
+      SortOrder: 0,
       FundingSource1Name: 'Federal Grant',
       FundingSource1Percentage: 100,
       FundingSource2Name: '',

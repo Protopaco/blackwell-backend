@@ -18,6 +18,8 @@ const mapActivity = (row: Record<string, unknown>): Activity => ({
   activityName: row['ActivityName'] as string,
   trackSeparately: row['TrackSeparately'] === true || row['TrackSeparately'] === 'TRUE',
   payrollCategory: row['PayrollCategory'] as PayrollCategoryType,
+  groupLabel: (row['GroupLabel'] as string) || null,
+  sortOrder: Number(row['SortOrder']),
   fundingSources: mapFundingSources(row),
 });
 

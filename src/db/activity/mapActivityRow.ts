@@ -7,6 +7,8 @@ const mapActivityRow = (activity: Activity): Record<string, unknown> => ({
   ActivityName: activity.activityName,
   TrackSeparately: activity.trackSeparately,
   PayrollCategory: activity.payrollCategory,
+  GroupLabel: activity.groupLabel ?? '',
+  SortOrder: activity.sortOrder,
   ...flattenActivityFundingSources(activity.fundingSources),
 });
 

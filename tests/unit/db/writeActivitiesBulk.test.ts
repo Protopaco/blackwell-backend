@@ -11,6 +11,8 @@ const activity: Activity = {
   activityName: 'Job Coaching',
   trackSeparately: false,
   payrollCategory: 'Regular',
+  groupLabel: null,
+  sortOrder: 0,
   fundingSources: [{ fundingSourceName: 'Federal Grant', percentage: 100 }],
 };
 
@@ -24,8 +26,9 @@ describe('writeActivitiesBulk', () => {
         'FundingSource1Name', 'FundingSource1Percentage',
         'FundingSource2Name', 'FundingSource2Percentage',
         'FundingSource3Name', 'FundingSource3Percentage',
+        'GroupLabel', 'SortOrder',
       ],
-      ['a1', 'Job Coaching', false, 'Regular', 'Federal Grant', 100, '', '', '', ''],
+      ['a1', 'Job Coaching', false, 'Regular', 'Federal Grant', 100, '', '', '', '', '', 0],
     ]);
   });
 
@@ -38,6 +41,7 @@ describe('writeActivitiesBulk', () => {
         'FundingSource1Name', 'FundingSource1Percentage',
         'FundingSource2Name', 'FundingSource2Percentage',
         'FundingSource3Name', 'FundingSource3Percentage',
+        'GroupLabel', 'SortOrder',
       ],
     ]);
   });

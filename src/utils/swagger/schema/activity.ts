@@ -6,6 +6,8 @@ const activity = {
       activityName: { type: 'string', example: 'Job Coaching' },
       trackSeparately: { type: 'boolean' },
       payrollCategory: { type: 'string', enum: ['Regular', 'ETO', 'PTO', 'STO'] },
+      groupLabel: { type: 'string', nullable: true, example: 'VT Grows' },
+      sortOrder: { type: 'number', example: 0 },
       fundingSources: {
         type: 'array',
         items: {

@@ -10,6 +10,8 @@ const appendActivity = async (workbookId: string, activity: Activity): Promise<v
     ActivityName: activity.activityName,
     TrackSeparately: activity.trackSeparately,
     PayrollCategory: activity.payrollCategory,
+    GroupLabel: activity.groupLabel ?? '',
+    SortOrder: activity.sortOrder,
     ...flattenActivityFundingSources(activity.fundingSources),
   };
 
