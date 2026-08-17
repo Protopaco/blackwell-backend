@@ -44,7 +44,6 @@ const createConfiguredClientSetup = async (client: Client): Promise<void> => {
 
   await createActivity(client.clientId, {
     activityName: 'Direct Services',
-    trackSeparately: true,
     payrollCategory: PayrollCategory.Regular,
     groupLabel: null,
     sortOrder: 0,
@@ -52,7 +51,6 @@ const createConfiguredClientSetup = async (client: Client): Promise<void> => {
   });
   await createActivity(client.clientId, {
     activityName: 'Administration',
-    trackSeparately: true,
     payrollCategory: PayrollCategory.Regular,
     groupLabel: null,
     sortOrder: 1,
@@ -60,7 +58,6 @@ const createConfiguredClientSetup = async (client: Client): Promise<void> => {
   });
   await createActivity(client.clientId, {
     activityName: 'PTO',
-    trackSeparately: false,
     payrollCategory: PayrollCategory.PTO,
     groupLabel: null,
     sortOrder: 2,

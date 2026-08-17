@@ -67,7 +67,7 @@ export const EMPLOYEES_HEADERS = [
 ];
 export const ACTIVITIES_TAB = 'Activities';
 export const ACTIVITIES_HEADERS = [
-  'ActivityId', 'ActivityName', 'TrackSeparately', 'PayrollCategory',
+  'ActivityId', 'ActivityName', 'PayrollCategory',
   'FundingSource1Name', 'FundingSource1Percentage',
   'FundingSource2Name', 'FundingSource2Percentage',
   'FundingSource3Name', 'FundingSource3Percentage',

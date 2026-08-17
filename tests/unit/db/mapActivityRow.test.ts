@@ -5,7 +5,6 @@ import Activity from '#models/Activity.js';
 const activity: Activity = {
   activityId: 'a1',
   activityName: 'Job Coaching',
-  trackSeparately: false,
   payrollCategory: 'Regular',
   groupLabel: null,
   sortOrder: 0,
@@ -17,7 +16,6 @@ describe('mapActivityRow', () => {
     expect(mapActivityRow(activity)).toEqual({
       ActivityId: 'a1',
       ActivityName: 'Job Coaching',
-      TrackSeparately: false,
       PayrollCategory: 'Regular',
       GroupLabel: '',
       SortOrder: 0,

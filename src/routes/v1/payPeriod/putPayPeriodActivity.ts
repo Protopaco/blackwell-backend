@@ -12,7 +12,7 @@ const router = Router();
  *     summary: Update an activity on a pay period
  *     description: >
  *       activityId is taken from the path — ignored if present in the request body. activityName,
- *       trackSeparately, payrollCategory, payRate, and flatRateAmount are locked once the first timesheet
+ *       payrollCategory, payRate, and flatRateAmount are locked once the first timesheet
  *       has been generated for this pay period. fundingSources percentages stay editable through
  *       Processed status and lock once the allocation report has been generated (Allocated). fundingSources
  *       cannot have more than 3 entries, and the last entry's percentage is always overwritten with the

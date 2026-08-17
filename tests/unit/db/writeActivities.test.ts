@@ -5,7 +5,6 @@ const { existingActivity } = vi.hoisted(() => ({
   existingActivity: {
     activityId: 'a1',
     activityName: 'Job Coaching',
-    trackSeparately: false,
     payrollCategory: 'Regular',
     groupLabel: null,
     sortOrder: 0,
@@ -27,7 +26,7 @@ describe('writeActivities', () => {
       'config-1',
       'Activities',
       [
-        'ActivityId', 'ActivityName', 'TrackSeparately', 'PayrollCategory',
+        'ActivityId', 'ActivityName', 'PayrollCategory',
         'FundingSource1Name', 'FundingSource1Percentage',
         'FundingSource2Name', 'FundingSource2Percentage',
         'FundingSource3Name', 'FundingSource3Percentage',
@@ -37,7 +36,6 @@ describe('writeActivities', () => {
         {
           ActivityId: 'a1',
           ActivityName: 'Renamed Activity',
-          TrackSeparately: false,
           PayrollCategory: 'Regular',
           GroupLabel: '',
           SortOrder: 0,

@@ -13,7 +13,7 @@ import { logger } from '#utils/logger.js';
 import { NotFoundError, UnprocessableError } from '#utils/errors.js';
 
 // Two independent locks on a snapshot Activity:
-// - Structural fields (activityName, trackSeparately, payrollCategory) are baked into timesheet
+// - Structural fields (activityName, payrollCategory) are baked into timesheet
 //   rows/columns at generation time, so they lock the same moment presence does (status !== Pending).
 // - fundingSources percentages only affect payroll/allocation report math, recomputed fresh on every
 //   report generation, so they stay editable through Processed and lock once the allocation report has
@@ -36,11 +36,10 @@ const updateActivityOnPayPeriod = async (
 
   const structuralFieldsChanged =
     existingActivity.activityName !== updatedActivity.activityName ||
-    existingActivity.trackSeparately !== updatedActivity.trackSeparately ||
     existingActivity.payrollCategory !== updatedActivity.payrollCategory;
 
   if (structuralFieldsChanged) {
-    assertPayPeriodNotLocked(payPeriod, 'change activity name, category, or tracking on this pay period');
+    assertPayPeriodNotLocked(payPeriod, 'change activity name or category on this pay period');
   }
 
   const fundingSourcesChanged =

@@ -5,7 +5,6 @@ import Activity from '#models/Activity.js';
 const mapActivityRow = (activity: Activity): Record<string, unknown> => ({
   ActivityId: activity.activityId,
   ActivityName: activity.activityName,
-  TrackSeparately: activity.trackSeparately,
   PayrollCategory: activity.payrollCategory,
   GroupLabel: activity.groupLabel ?? '',
   SortOrder: activity.sortOrder,

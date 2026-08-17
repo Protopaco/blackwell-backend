@@ -8,7 +8,6 @@ const appendActivity = async (workbookId: string, activity: Activity): Promise<v
   const row: Record<string, unknown> = {
     ActivityId: activity.activityId,
     ActivityName: activity.activityName,
-    TrackSeparately: activity.trackSeparately,
     PayrollCategory: activity.payrollCategory,
     GroupLabel: activity.groupLabel ?? '',
     SortOrder: activity.sortOrder,

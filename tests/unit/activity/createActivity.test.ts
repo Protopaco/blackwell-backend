@@ -4,7 +4,6 @@ const { testClient, baseActivity } = vi.hoisted(() => ({
   testClient: { payrollConfigFileId: 'config-1' } as any,
   baseActivity: {
     activityName: 'Job Coaching',
-    trackSeparately: false,
     payrollCategory: 'Regular',
     fundingSources: [{ fundingSourceName: 'Federal Grant', percentage: 100 }],
     payRate: 'HourlyPayRate1',

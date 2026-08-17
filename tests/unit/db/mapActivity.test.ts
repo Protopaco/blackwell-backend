@@ -6,7 +6,6 @@ describe('mapActivity', () => {
     const activity = mapActivity({
       ActivityId: 'a1',
       ActivityName: 'Job Coaching',
-      TrackSeparately: 'TRUE',
       PayrollCategory: 'Regular',
       GroupLabel: 'VT Grows',
       SortOrder: '2',
@@ -17,7 +16,6 @@ describe('mapActivity', () => {
     expect(activity).toEqual({
       activityId: 'a1',
       activityName: 'Job Coaching',
-      trackSeparately: true,
       payrollCategory: 'Regular',
       groupLabel: 'VT Grows',
       sortOrder: 2,
@@ -36,28 +34,6 @@ describe('mapActivity', () => {
 
     it('parses SortOrder as a number', () => {
       expect(mapActivity({ SortOrder: '3' }).sortOrder).toBe(3);
-    });
-  });
-
-  describe('trackSeparately coercion', () => {
-    it('treats boolean true as true', () => {
-      expect(mapActivity({ TrackSeparately: true }).trackSeparately).toBe(true);
-    });
-
-    it('treats string "TRUE" as true', () => {
-      expect(mapActivity({ TrackSeparately: 'TRUE' }).trackSeparately).toBe(true);
-    });
-
-    it('treats string "FALSE" as false', () => {
-      expect(mapActivity({ TrackSeparately: 'FALSE' }).trackSeparately).toBe(false);
-    });
-
-    it('treats lowercase "true" as false — coercion is case-sensitive', () => {
-      expect(mapActivity({ TrackSeparately: 'true' }).trackSeparately).toBe(false);
-    });
-
-    it('treats a missing value as false', () => {
-      expect(mapActivity({}).trackSeparately).toBe(false);
     });
   });
 

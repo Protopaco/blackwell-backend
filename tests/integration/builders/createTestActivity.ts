@@ -16,7 +16,6 @@ const createTestActivity = async (
   ];
   const requestBody = {
     activityName: `Test Activity ${uniqueCode}`,
-    trackSeparately: true,
     payrollCategory: PayrollCategory.Regular,
     groupLabel: null,
     sortOrder: 0,

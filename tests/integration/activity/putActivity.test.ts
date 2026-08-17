@@ -9,7 +9,7 @@ import getUniqueCode from '../helpers/getUniqueCode.js';
 
 describe('PUT /api/v1/activity/:clientId/:activityId', () => {
   // DISABLED — this asserted a payRate/flatRateAmount round-trip, removed from Activity in [052].
-  // Rewrite around a still-existing field (e.g. activityName/trackSeparately) — note left to come back to.
+  // Rewrite around a still-existing field (e.g. activityName) — note left to come back to.
   it.skip('200 - Updates activity', async () => {
     const client = await createTestClient();
     const activity = await createTestActivity(client.clientId);
