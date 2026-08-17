@@ -8,6 +8,8 @@ describe('mapActivity', () => {
       ActivityName: 'Job Coaching',
       TrackSeparately: 'TRUE',
       PayrollCategory: 'Regular',
+      GroupLabel: 'VT Grows',
+      SortOrder: '2',
       FundingSource1Name: 'Federal Grant',
       FundingSource1Percentage: '50',
     });
@@ -17,7 +19,23 @@ describe('mapActivity', () => {
       activityName: 'Job Coaching',
       trackSeparately: true,
       payrollCategory: 'Regular',
+      groupLabel: 'VT Grows',
+      sortOrder: 2,
       fundingSources: [{ fundingSourceName: 'Federal Grant', percentage: 50 }],
+    });
+  });
+
+  describe('groupLabel/sortOrder coercion', () => {
+    it('treats a missing GroupLabel as null', () => {
+      expect(mapActivity({}).groupLabel).toBeNull();
+    });
+
+    it('treats an empty-string GroupLabel as null', () => {
+      expect(mapActivity({ GroupLabel: '' }).groupLabel).toBeNull();
+    });
+
+    it('parses SortOrder as a number', () => {
+      expect(mapActivity({ SortOrder: '3' }).sortOrder).toBe(3);
     });
   });
 

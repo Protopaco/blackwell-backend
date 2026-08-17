@@ -12,6 +12,8 @@ const makeActivity = (
   activityName,
   trackSeparately: false,
   payrollCategory: payrollCategory as any,
+  groupLabel: null,
+  sortOrder: 0,
   fundingSources: [],
 });
 

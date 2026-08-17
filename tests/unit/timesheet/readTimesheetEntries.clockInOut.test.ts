@@ -35,6 +35,8 @@ const activityMap = new Map<string, Activity>([
     activityName: 'Admin',
     trackSeparately: false,
     payrollCategory: PayrollCategory.Regular,
+    groupLabel: null,
+    sortOrder: 0,
     fundingSources: [],
   }],
   ['activity-oncall', {
@@ -42,6 +44,8 @@ const activityMap = new Map<string, Activity>([
     activityName: 'On-Call',
     trackSeparately: false,
     payrollCategory: PayrollCategory.Regular,
+    groupLabel: null,
+    sortOrder: 0,
     fundingSources: [],
   }],
 ]);

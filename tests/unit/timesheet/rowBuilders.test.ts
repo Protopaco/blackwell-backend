@@ -30,6 +30,8 @@ const makeActivity = (activityName: string): Activity => ({
   activityName,
   trackSeparately: false,
   payrollCategory: PayrollCategory.Regular,
+  groupLabel: null,
+  sortOrder: 0,
   fundingSources: [],
 });
 
