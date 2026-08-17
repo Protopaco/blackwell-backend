@@ -8,7 +8,6 @@ import { CLOCK_IN_OUT_SLOTS_PER_DAY } from '#config/constants.js';
 const makeActivity = (activityName: string, payrollCategory: string = PayrollCategory.Regular): Activity => ({
   activityId: crypto.randomUUID(),
   activityName,
-  trackSeparately: false,
   payrollCategory: payrollCategory as Activity['payrollCategory'],
   groupLabel: null,
   sortOrder: 0,

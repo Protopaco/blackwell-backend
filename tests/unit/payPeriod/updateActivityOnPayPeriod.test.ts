@@ -20,7 +20,6 @@ const { pendingPayPeriod, openPayPeriod, processedPayPeriod, allocatedPayPeriod,
     existingActivity: {
       activityId: 'a1',
       activityName: 'Job Coaching',
-      trackSeparately: false,
       payrollCategory: 'Regular',
       groupLabel: null,
       sortOrder: 0,

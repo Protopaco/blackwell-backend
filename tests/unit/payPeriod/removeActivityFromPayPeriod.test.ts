@@ -24,7 +24,6 @@ const { pendingPayPeriod, openPayPeriod, snapshotActivity } = vi.hoisted(() => (
   snapshotActivity: {
     activityId: 'a1',
     activityName: 'Job Coaching',
-    trackSeparately: false,
     payrollCategory: 'Regular',
     groupLabel: null,
     sortOrder: 0,

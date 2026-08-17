@@ -33,7 +33,6 @@ const activityMap = new Map<string, Activity>([
   ['activity-admin', {
     activityId: 'activity-admin',
     activityName: 'Admin',
-    trackSeparately: false,
     payrollCategory: PayrollCategory.Regular,
     groupLabel: null,
     sortOrder: 0,
@@ -42,7 +41,6 @@ const activityMap = new Map<string, Activity>([
   ['activity-oncall', {
     activityId: 'activity-oncall',
     activityName: 'On-Call',
-    trackSeparately: false,
     payrollCategory: PayrollCategory.Regular,
     groupLabel: null,
     sortOrder: 0,

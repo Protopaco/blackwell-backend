@@ -88,7 +88,7 @@ describe('generatePayrollReport', () => {
     vi.mocked(readPayPeriodConfigSnapshot).mockResolvedValue({
       ...emptySnapshot,
       employees: [salariedEmployee],
-      activities: [{ activityId: 'a1', activityName: 'Programs', trackSeparately: false, payrollCategory: 'Regular', groupLabel: null, sortOrder: 0, fundingSources: [] }],
+      activities: [{ activityId: 'a1', activityName: 'Programs', payrollCategory: 'Regular', groupLabel: null, sortOrder: 0, fundingSources: [] }],
     });
     vi.mocked(readTimesheetEntries).mockResolvedValue([]);
 
@@ -101,7 +101,7 @@ describe('generatePayrollReport', () => {
     vi.mocked(readPayPeriodConfigSnapshot).mockResolvedValue({
       ...emptySnapshot,
       employees: [salariedEmployee],
-      activities: [{ activityId: 'a1', activityName: 'Programs', trackSeparately: false, payrollCategory: 'Regular', groupLabel: null, sortOrder: 0, fundingSources: [] }],
+      activities: [{ activityId: 'a1', activityName: 'Programs', payrollCategory: 'Regular', groupLabel: null, sortOrder: 0, fundingSources: [] }],
     });
     vi.mocked(readTimesheetEntries).mockResolvedValue([
       {

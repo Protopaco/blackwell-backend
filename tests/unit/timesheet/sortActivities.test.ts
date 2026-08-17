@@ -12,7 +12,6 @@ const makeActivity = (
 ): Activity => ({
   activityId: crypto.randomUUID(),
   activityName,
-  trackSeparately: false,
   payrollCategory: payrollCategory as any,
   groupLabel,
   sortOrder,
