@@ -104,7 +104,7 @@ const formatActivityRows = (
         rowNumber,
         totalCellColumnIndex,
         totalCellColumnIndex + 1,
-        PRIMARY,
+        rowTypeColor,
         HEADER_TEXT,
         false,
         "CENTER",
