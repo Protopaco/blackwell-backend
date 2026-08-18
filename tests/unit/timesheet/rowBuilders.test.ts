@@ -152,22 +152,22 @@ describe('buildDateRow', () => {
     expect(row[7]).toBe('6/7');
   });
 
-  it('leaves the weekly total column blank — sectionLabelRow carries "Total" now, not this row', () => {
+  it('puts "Total" in the weekly total column', () => {
     const row = buildDateRow(WEEK_DATES, 7);
-    expect(row[row.length - 1]).toBe('');
+    expect(row[row.length - 1]).toBe('Total');
   });
 });
 
 describe('buildSectionLabelRow', () => {
-  it('puts the section label in column A and Total in the last column', () => {
+  it('puts the section label in column A and leaves the rest of the row blank', () => {
     const row = buildSectionLabelRow('Hourly', 7);
-    expect(row).toEqual(['Hourly', '', '', '', '', '', '', '', 'Total']);
+    expect(row).toEqual(['Hourly', '', '', '', '', '', '', '', '']);
   });
 
   it('supports the Flat Rate label too', () => {
     const row = buildSectionLabelRow('Flat Rate', 7);
     expect(row[0]).toBe('Flat Rate');
-    expect(row[row.length - 1]).toBe('Total');
+    expect(row[row.length - 1]).toBe('');
   });
 });
 

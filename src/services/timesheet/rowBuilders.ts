@@ -36,10 +36,11 @@ const buildPositionRow = (position: string): unknown[] => [position];
 // Returns an empty row used as a visual separator between sections.
 const buildDividerRow = (): unknown[] => [];
 
-// Builds the sectionLabelRow that introduces a week's Hourly or Flat Rate section — the section label
-// in column A and "Total" in the weekly total column (the only row in the Week block that carries it).
+// Builds the sectionLabelRow that introduces a named activity group within a week — the group label in
+// column A, with the rest of the row left blank. "Total" lives on the week's dateRow instead (see
+// buildDateRow), since a group header row doesn't exist for ungrouped activities.
 const buildSectionLabelRow = (sectionLabel: string, maxDays: number): unknown[] =>
-  [sectionLabel, ...Array(maxDays).fill(''), 'Total'];
+  [sectionLabel, ...Array(maxDays + 1).fill('')];
 
 // Builds the weekLabelRow: the week's date-range label in column A (e.g. "Week 6/1 - 6/7"), plus the
 // holiday name above each date column where a holiday falls.
@@ -55,10 +56,11 @@ const buildHolidayRow = (dates: Date[], holidays: Holiday[], weekLabel = ''): un
 const buildDayRow = (dates: Date[]): unknown[] =>
   ['', ...dates.map(getDayOfWeek)];
 
-// Builds the row of M/D formatted dates for a week. The weekly total column is left blank here —
-// each section's own sectionLabelRow carries the "Total" header now, so this would otherwise duplicate it.
+// Builds the row of M/D formatted dates for a week, with "Total" in the weekly total column — the one
+// place that header appears, since not every group has its own sectionLabelRow (ungrouped activities
+// don't get a group header row at all).
 const buildDateRow = (dates: Date[], maxDays: number): unknown[] =>
-  ['', ...dates.map(formatDateHeader), ...Array(maxDays - dates.length).fill(''), ''];
+  ['', ...dates.map(formatDateHeader), ...Array(maxDays - dates.length).fill(''), 'Total'];
 
 // Builds a blank data-entry row for a single activity with one empty cell per day, a SUM formula in the
 // weekly total column covering that row's day cells, and a trailing cell naming the unit that total is

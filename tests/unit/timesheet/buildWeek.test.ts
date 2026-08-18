@@ -156,7 +156,7 @@ describe('buildWeek — group header rows', () => {
 
     const headerRow = rows[weekManifest.groupHeaderRows[0].row - 1] as string[];
     expect(headerRow[0]).toBe('VT Grows');
-    expect(headerRow[headerRow.length - 1]).toBe('Total');
+    expect(headerRow[headerRow.length - 1]).toBe('');
 
     const activityNames = weekManifest.activityRows.map((activityRow) => activityRow.activityName);
     expect(activityNames).toEqual(['Relocation Hours', 'Outreach Shifts']);
@@ -206,10 +206,10 @@ describe('buildWeek — activity row content', () => {
     expect(adminRow[8]).toBe(`=SUM(B${adminRowNumber}:H${adminRowNumber})`);
   });
 
-  it('does not duplicate the Total header onto the date row', () => {
+  it('puts the Total header on the date row', () => {
     const { rows, weekManifest } = buildWeek(0, WEEK_DATES, workOnly, [], 1, 7);
     const dateRow = rows[weekManifest.dateRow - 1] as string[];
-    expect(dateRow[dateRow.length - 1]).toBe('');
+    expect(dateRow[dateRow.length - 1]).toBe('Total');
   });
 });
 
