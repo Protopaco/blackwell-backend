@@ -137,8 +137,9 @@ const buildClockInOutFlatRateActivityRow = (
 const buildSummaryRow = (label: string, formula: string): unknown[] =>
   [label, formula];
 
-// Builds a signature row with just a label and an empty cell for the signature — cell location is tracked in the manifest.
-const buildSignatureRow = (label: string): unknown[] => [label];
+// Builds a signature row: a label, an empty signature cell (columns B-D, merged by formatSignatureRows),
+// a "Date" label, and an empty date-entry cell — cell location is tracked in the manifest.
+const buildSignatureRow = (label: string): unknown[] => [label, '', '', '', 'Date', ''];
 
 // Builds the include-in-payroll checkbox row with a label and a default-checked value — cell location is tracked in the manifest.
 const buildIncludeInPayrollRow = (label: string): unknown[] => [label, true];
