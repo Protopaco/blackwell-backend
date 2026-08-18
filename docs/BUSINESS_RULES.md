@@ -162,18 +162,58 @@ The `src/utils/dateUtils.ts` module provides:
 
 ## Timesheet Templates
 
-- Two templates defined: TotalHours and ClockInOut
-- ClockInOut template is defined but not yet implemented
-- For ClockInOut timesheets, hours will be calculated from clock in/out times at read time
+- Two time input methods defined: TotalHours and ClockInOut, both fully implemented (ClockInOut as of
+  2026-08-13)
+- `generateTimesheets.ts` branches on `Settings.timeInputMethod` to choose which layout to build:
+  `buildWeek.ts` (TotalHours, stacked-per-week) or `buildClockInOutTimesheet.ts` (ClockInOut, side-by-side
+  week columns)
+- `readTimesheetEntries.ts` branches on which shape the timesheet's manifest has (`weeks` vs.
+  `clockInOutWeeks`) to choose `readTotalHoursEntries.ts` or `readClockInOutEntries.ts`
+- For ClockInOut timesheets, hours are calculated from clock in/out times at read time, not stored as a
+  separate persisted field — see "ClockInOut Timesheets" below
 
 > ⚠️ Cleanup: `TimesheetTemplate` is a misnomer. TotalHours and ClockInOut are not different templates — they are different time input methods for the same template. Should be renamed to `TimeInputMethod` in a future cleanup pass.
 
 ## Time Entry
 
-- A TimeEntry must have either `hours` OR both `clockIn` and `clockOut` — never neither
-- For TotalHours timesheets: `hours` is set directly by the employee
-- For ClockInOut timesheets: `clockIn` and `clockOut` are set, `hours` is calculated at read time and also stored
-- Clock in/out raw values will need to be persisted to the database in a future phase — currently only hours are stored
+- A `TimesheetEntry` (the mode-agnostic shape both read paths produce) always carries a resolved
+  `hours` value — for ClockInOut entries this is computed at read time via `calculateClockInOutHours`
+  and never persisted as raw clock times; see "ClockInOut Timesheets" below for the sheet-level
+  representation
+- For TotalHours timesheets: `hours` is entered directly by the employee, one cell per activity per day
+- For ClockInOut timesheets: Clock In/Clock Out times are entered per slot row; hours are computed at
+  read time only, not written back to the sheet or persisted separately
+- Clock in/out raw values are not persisted to a database anywhere in this system today — only the
+  computed `hours` reaches the payroll report's `Hours` tab, same as TotalHours mode
+
+## ClockInOut Timesheets
+
+Layout (built by `buildClockInOutTimesheet.ts`, see `TIMESHEET_STYLE_GUIDE.md` for full visual detail):
+weeks sit side by side (not stacked), each in its own 4-column group (`activity/In/Out/Total`). Each day
+gets a day header row, a column header row, `CLOCK_IN_OUT_SLOTS_PER_DAY` (6) generic entry-slot rows
+(activity dropdown + Clock In + Clock Out + a display-only Total formula), and — when the employee has
+any flat-rate activities — that day's own Flat Rate section directly below the slots. A blank break row
+separates each day's block.
+
+Read-time validation (`readClockInOutSlotRows.ts`), per slot row:
+
+1. No activity, both times blank → skip.
+2. No activity, either time filled → `UnprocessableError` (orphaned time entry).
+3. Activity selected, both times blank → 0 hours, skip.
+4. Activity selected, only one time filled → `UnprocessableError`.
+5. Activity selected, both filled, Clock Out before Clock In → `UnprocessableError`.
+6. Activity selected, both filled, Clock Out ≥ Clock In → compute hours, emit a `TimesheetEntry` (or
+   skip if the computed hours round to 0).
+7. Either time present but unparseable → `UnprocessableError`.
+8. Activity name doesn't match any activity currently assigned to the employee — fine if no hours are
+   attached (skip); `UnprocessableError` if hours are attached.
+
+Hours are computed by `calculateClockInOutHours.ts`: elapsed time rounded to the nearest quarter hour,
+standard round-half-up. Known simplifications, not implemented: no break deduction, one In/Out pair per
+day only, no overnight shifts.
+
+Flat Rate activities on a ClockInOut timesheet are read the same way as TotalHours mode (a quantity per
+activity per day, `Number(cellValue)`, no NaN guard — tracked as [077]).
 
 ## Data Mapping
 

@@ -9,8 +9,9 @@ interface ActivityFundingSource {
 interface Activity {
   activityId: Guid;
   activityName: string;
-  trackSeparately: boolean;
   payrollCategory: PayrollCategoryType;
+  groupLabel: string | null;
+  sortOrder: number;
   fundingSources: ActivityFundingSource[];  // max 3 — limit accepted for now
 }
 

@@ -5,12 +5,14 @@ import Employee from '#models/Employee.js';
 import Guid from '#models/Guid.js';
 import Holiday from '#models/Holiday.js';
 import TimesheetEntry from '#models/TimesheetEntry.js';
-import { getHolidayName } from '#utils/dateUtils.js';
 import { logger } from '#utils/logger.js';
+import readClockInOutEntries from './readClockInOutEntries.js';
+import readTotalHoursEntries from './readTotalHoursEntries.js';
 
-// Reads raw daily time entries from one employee's timesheet tab using the manifest for row/column coordinates.
-// Returns one entry per activity per day where hours > 0 — skips empty cells.
-// Called once per Complete employee by generatePayrollReport.
+// Reads raw daily time entries from one employee's timesheet tab using the manifest for row/column
+// coordinates. Branches on whether the manifest is ClockInOut- or TotalHours-shaped (see
+// TimesheetManifest.clockInOutWeeks) and delegates the actual row reading to readClockInOutEntries or
+// readTotalHoursEntries respectively. Called once per Complete employee by generatePayrollReport.
 const readTimesheetEntries = async (
   employee: Employee,
   tabName: string,
@@ -23,43 +25,33 @@ const readTimesheetEntries = async (
   if (!manifest) return [];
 
   const tabValues = await readTabValues(employee.timesheetFileId, tabName);
-  const entries: TimesheetEntry[] = [];
+  const employeeName = `${employee.firstName} ${employee.lastName}`;
 
   const payRateTypeByActivityId = new Map(
     employee.activityRates.map((activityRate) => [activityRate.activityId, activityRate.payRateType]),
   );
 
-  for (const weekManifest of manifest.weeks) {
-    const allActivityRows = [...weekManifest.activityRows, ...weekManifest.flatRateRows];
+  const entries = manifest.clockInOutWeeks && manifest.clockInOutWeeks.length > 0
+    ? readClockInOutEntries(
+        employee,
+        employeeName,
+        activityMap,
+        payRateTypeByActivityId,
+        tabValues,
+        manifest.clockInOutWeeks,
+        holidays,
+      )
+    : readTotalHoursEntries(
+        employee,
+        employeeName,
+        activityMap,
+        payRateTypeByActivityId,
+        tabValues,
+        manifest.weeks,
+        holidays,
+      );
 
-    for (const activityRow of allActivityRows) {
-      const activity = activityMap.get(activityRow.activityId);
-      const payRateType = payRateTypeByActivityId.get(activityRow.activityId);
-      if (!activity || !payRateType) continue;
-
-      for (const dateEntry of weekManifest.dates) {
-        const cellValue = tabValues[activityRow.row - 1]?.[dateEntry.column - 1];
-        const hours = cellValue !== undefined && cellValue !== '' ? Number(cellValue) : 0;
-        if (hours === 0) continue;
-
-        const isHoliday = getHolidayName(new Date(dateEntry.date), holidays) !== null;
-
-        entries.push({
-          employeeId: employee.employeeId,
-          employeeName: `${employee.firstName} ${employee.lastName}`,
-          activityId: activity.activityId,
-          activityName: activity.activityName,
-          payrollCategory: activity.payrollCategory,
-          payRateType,
-          date: dateEntry.date,
-          isHoliday,
-          hours,
-        });
-      }
-    }
-  }
-
-  logger.debug(`readTimesheetEntries found ${entries.length} entries for ${employee.firstName} ${employee.lastName}`);
+  logger.debug(`readTimesheetEntries found ${entries.length} entries for ${employeeName}`);
   return entries;
 };
 

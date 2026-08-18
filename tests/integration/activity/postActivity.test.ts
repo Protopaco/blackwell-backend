@@ -14,8 +14,9 @@ describe('POST /api/v1/activity/:clientId', () => {
     const uniqueCode = getUniqueCode('ACT');
     const activityRequest = {
       activityName: `Test Activity ${uniqueCode}`,
-      trackSeparately: true,
       payrollCategory: PayrollCategory.Regular,
+      groupLabel: 'VT Grows',
+      sortOrder: 3,
       fundingSources: [
         {
           fundingSourceName: fundingSource.fundingSourceName,
@@ -51,7 +52,6 @@ describe('POST /api/v1/activity/:clientId', () => {
     const uniqueCode = getUniqueCode('FLATACT');
     const activityRequest = {
       activityName: `Test Flat Activity ${uniqueCode}`,
-      trackSeparately: true,
       payrollCategory: PayrollCategory.Regular,
       fundingSources: [
         {
@@ -89,7 +89,6 @@ describe('POST /api/v1/activity/:clientId', () => {
       .post(`/api/v1/activity/${client.clientId}`)
       .send({
         activityName: `Test Activity ${uniqueCode}`,
-        trackSeparately: true,
         payrollCategory: PayrollCategory.Regular,
         fundingSources: fundingSources.map((fundingSource) => ({
           fundingSourceName: fundingSource.fundingSourceName,
@@ -109,7 +108,6 @@ describe('POST /api/v1/activity/:clientId', () => {
       .post(`/api/v1/activity/${client.clientId}`)
       .send({
         activityName: `Test Activity ${uniqueCode}`,
-        trackSeparately: true,
         payrollCategory: PayrollCategory.Regular,
         fundingSources: [
           {
@@ -128,7 +126,6 @@ describe('POST /api/v1/activity/:clientId', () => {
 
     const res = await request(app).post(`/api/v1/activity/${missingClientId}`).send({
       activityName: 'Missing Client Activity',
-      trackSeparately: true,
       payrollCategory: PayrollCategory.Regular,
       fundingSources: [
         {

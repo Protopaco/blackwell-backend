@@ -39,7 +39,10 @@ const router = Router();
  *                     type: number
  *                   totalFlatRate:
  *                     type: number
- *                   totalExpense:
+ *                   wageExpense:
+ *                     type: number
+ *                     nullable: true
+ *                   taxExpense:
  *                     type: number
  *                     nullable: true
  *                   hourly:

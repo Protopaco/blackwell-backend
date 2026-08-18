@@ -12,7 +12,8 @@ describe('PATCH /api/v1/payPeriod/:clientId/:payPeriodId/close', () => {
     const employeeExpense = {
       employeeId: completeEmployee.employeeId,
       employeeName: `${completeEmployee.firstName} ${completeEmployee.lastName}`,
-      totalExpense: 200,
+      wageExpense: 200,
+      taxExpense: 20,
     };
     const additionalExpenses = [
       { expenseName: 'Mileage', amount: 40 },

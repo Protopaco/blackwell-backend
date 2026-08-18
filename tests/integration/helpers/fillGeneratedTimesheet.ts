@@ -37,7 +37,7 @@ const fillGeneratedTimesheet = async ({
     );
     if (!week) throw new Error(`fillGeneratedTimesheet date not found: ${entry.date}`);
 
-    const activityRow = [...week.activityRows, ...week.flatRateRows].find(
+    const activityRow = week.activityRows.find(
       (candidate) => candidate.activityId === entry.activityId,
     );
     if (!activityRow) throw new Error(`fillGeneratedTimesheet activity not found: ${entry.activityId}`);

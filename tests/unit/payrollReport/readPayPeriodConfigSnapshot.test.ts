@@ -19,7 +19,7 @@ describe('readPayPeriodConfigSnapshot', () => {
     vi.mocked(readTabs).mockResolvedValue([
       [{ EmployeeId: 'e1', FirstName: 'Jane', LastName: 'Smith', Position: 'Coordinator', SalaryAmount: '0', Email: 'jane@example.com', Status: 'Active', TimesheetFileId: 'file-1' }],
       [{ FundingSourceId: 'fs1', FundingSourceName: 'Federal Grant', FundingSourceCode: 'FG-100' }],
-      [{ ActivityId: 'a1', ActivityName: 'Job Coaching', TrackSeparately: 'FALSE', PayrollCategory: 'Regular' }],
+      [{ ActivityId: 'a1', ActivityName: 'Job Coaching', PayrollCategory: 'Regular' }],
       [{ Id: 'ear1', EmployeeId: 'e1', ActivityId: 'a1', PayRateType: 'Hourly', PayRate: '20', HolidayPayRate: '25' }],
       [{ TimesheetTemplate: 'ClockInOut', PayPeriodInterval: 'Bi-Weekly', PayPeriodStartDate: '2026-01-05' }],
       [{ HolidayId: 'h1', HolidayName: 'Labor Day', HolidayDate: '2026-09-07' }],

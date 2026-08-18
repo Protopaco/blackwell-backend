@@ -10,18 +10,20 @@ import writePayPeriod from "#db/payPeriod/writePayPeriod.js";
 import getClientAndPayPeriod from "#services/payPeriod/getClientAndPayPeriod.js";
 import readPayPeriodConfigSnapshot from "#db/payrollReport/readPayPeriodConfigSnapshot.js";
 import { UnprocessableError } from "#utils/errors.js";
-import Activity from "#models/Activity.js";
 import Guid from "#models/Guid.js";
 import { PayPeriodStatus } from "#models/PayPeriodStatus.js";
 import { PayrollCategory } from "#models/PayrollCategory.js";
-import TimesheetManifest, { WeekManifest } from "#models/TimesheetManifest.js";
+import { TimeInputMethod } from "#models/TimeInputMethod.js";
+import TimesheetManifest, { ClockInOutWeekManifest, WeekManifest } from "#models/TimesheetManifest.js";
 import {
   chunkDatesByWeek,
   getDatesBetween,
   getHolidayName,
 } from "#utils/dateUtils.js";
+import { CLOCK_IN_OUT_ACTIVITY_COLUMN_OFFSET, CLOCK_IN_OUT_TOTAL_COLUMN_OFFSET } from "#config/constants.js";
 import { logger } from "#utils/logger.js";
 import buildWeek from "./buildWeek.js";
+import buildClockInOutTimesheet from "./buildClockInOutTimesheet.js";
 import applyTimesheetFormatting from "./applyTimesheetFormatting.js";
 import sortTimesheetTabs from "./sortTimesheetTabs.js";
 import {
@@ -36,6 +38,7 @@ import {
   colLetter,
 } from "./rowBuilders.js";
 import sortActivities from "./sortActivities.js";
+import flattenActivityGroups from "./flattenActivityGroups.js";
 
 const TIME_OFF_CATEGORIES = [
   PayrollCategory.ETO,
@@ -49,6 +52,14 @@ const sumRows = (rowNums: number[], maxDays: number): string => {
   const lastCol = colLetter(maxDays);
   const ranges = rowNums.map((rowNum) => `B${rowNum}:${lastCol}${rowNum}`);
   return `=SUM(${ranges.join(",")})`;
+};
+
+// Builds a =SUM() formula over an explicit list of cell references (e.g. "C42") — used for ClockInOut
+// timesheets, where an activity's hours per day live at a cell specific to that one day's block rather
+// than a row shared across the whole pay period the way sumRows assumes.
+const sumCellReferences = (cellReferences: string[]): string => {
+  if (cellReferences.length === 0) return "0";
+  return `=SUM(${cellReferences.join(",")})`;
 };
 
 // For each active employee, creates a new timesheet file if needed, writes all week rows and summary formulas,
@@ -91,10 +102,6 @@ const generateTimesheets = async (
   const weeks = chunkDatesByWeek(dates);
   const maxDays = Math.max(...weeks.map((week) => week.length));
 
-  const activityMap = new Map<Guid, Activity>(
-    payrollConfig.activities.map((activity) => [activity.activityId, activity]),
-  );
-
   const payPeriods = await getPayPeriods(client.payPeriodRegistryFileId);
 
   for (const employee of activeEmployees) {
@@ -129,9 +136,10 @@ const generateTimesheets = async (
     const employeeActivities = payrollConfig.activities.filter((activity) => employeeActivityIds.has(activity.activityId));
     const sortedActivities = sortActivities(employeeActivities, employee.activityRates);
     const { timeOffActivities, flatRateActivities } = sortedActivities;
-    const hasFlatRate = flatRateActivities.length > 0;
+    const timeOffActivityList = flattenActivityGroups(timeOffActivities);
+    const hasFlatRate = flattenActivityGroups(flatRateActivities).length > 0;
     const presentTimeOffCategories = TIME_OFF_CATEGORIES.filter((category) =>
-      timeOffActivities.some((activity) => activity.payrollCategory === category),
+      timeOffActivityList.some((activity) => activity.payrollCategory === category),
     );
 
     const allRows: unknown[][] = [];
@@ -143,22 +151,41 @@ const generateTimesheets = async (
     allRows.push(buildPayPeriodValueRow(payPeriod.payPeriodName));
     allRows.push(buildDividerRow());
 
+    const isClockInOut = payrollConfig.settings.timeInputMethod === TimeInputMethod.ClockInOut;
+    const hourlyActivityNames = [
+      ...flattenActivityGroups(sortedActivities.workActivities),
+      ...timeOffActivityList,
+    ].map((activity) => activity.activityName);
+
     let currentRow = allRows.length + 1; // 1-based; starts after the header section
-    for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
-      const result = buildWeek(
-        weekIndex,
-        weeks[weekIndex],
-        sortedActivities,
-        payrollConfig.holidays,
-        currentRow,
-        maxDays,
-      );
+    let clockInOutWeeks: ClockInOutWeekManifest[] = [];
+
+    if (isClockInOut) {
+      // ClockInOut weeks sit side by side sharing row numbers rather than stacking, so this is one call
+      // for the whole pay period instead of a per-week loop — see buildClockInOutTimesheet.
+      const result = buildClockInOutTimesheet(weeks, sortedActivities, currentRow);
       allRows.push(...result.rows);
-      weekManifests.push(result.weekManifest);
+      clockInOutWeeks = result.clockInOutWeeks;
       currentRow += result.rows.length;
-      // Add a blank row after each week for visual separation
       allRows.push(buildDividerRow());
       currentRow += 1;
+    } else {
+      for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
+        const result = buildWeek(
+          weekIndex,
+          weeks[weekIndex],
+          sortedActivities,
+          payrollConfig.holidays,
+          currentRow,
+          maxDays,
+        );
+        allRows.push(...result.rows);
+        weekManifests.push(result.weekManifest);
+        currentRow += result.rows.length;
+        // Add a blank row after each week for visual separation
+        allRows.push(buildDividerRow());
+        currentRow += 1;
+      }
     }
 
     // One extra blank row before signatures
@@ -181,27 +208,30 @@ const generateTimesheets = async (
       TIME_OFF_CATEGORIES.map((category) => [category, []]),
     );
 
+    // weekManifest.activityRows now holds every activity the employee has (hourly, salary, time off, and
+    // flat-rate all combined into one block — see the 2026-08-17 redesign), tagged per row via rowType, so
+    // splitting by type here replaces what used to be two separate manifest arrays (activityRows/flatRateRows).
     for (const weekManifest of weekManifests) {
       for (const activityRow of weekManifest.activityRows) {
-        hourlyRowNums.push(activityRow.row);
-        const activity = activityMap.get(activityRow.activityId);
-        if (
-          activity &&
-          TIME_OFF_CATEGORIES.includes(activity.payrollCategory as any)
-        ) {
-          categoryRowNums.get(activity.payrollCategory)?.push(activityRow.row);
+        if (activityRow.rowType === 'FlatRate') {
+          flatRateRowNums.push(activityRow.row);
+        } else {
+          hourlyRowNums.push(activityRow.row);
+          if (TIME_OFF_CATEGORIES.includes(activityRow.rowType as any)) {
+            categoryRowNums.get(activityRow.rowType)?.push(activityRow.row);
+          }
         }
-      }
-      for (const flatRateRow of weekManifest.flatRateRows) {
-        flatRateRowNums.push(flatRateRow.row);
       }
     }
 
-    // weekManifest.activityRows already excludes flat-rate rows (those live in flatRateRows), so every
-    // row here is hourly/salary and counts toward holiday hours.
+    // Holiday hours count every non-flat-rate row (hourly/salary/time off) worked on a holiday — matches
+    // hourlyRowNums' scope above. Empty for ClockInOut timesheets, whose equivalent totals are collected
+    // separately below (activity hours live in per-day cells, not rows shared across the whole pay period).
     const holidayHoursCells: string[] = [];
     for (const weekManifest of weekManifests) {
-      const weekHourlyRowNumbers = weekManifest.activityRows.map((activityRow) => activityRow.row);
+      const weekHourlyRowNumbers = weekManifest.activityRows
+        .filter((activityRow) => activityRow.rowType !== 'FlatRate')
+        .map((activityRow) => activityRow.row);
 
       for (const dateEntry of weekManifest.dates) {
         if (
@@ -216,6 +246,48 @@ const generateTimesheets = async (
       }
     }
 
+    // ClockInOut equivalent of the collections above. There's no per-activity daily summary cell to lean
+    // on anymore (removed as noise per the 2026-08-12 mockup) — an entry slot's activity is chosen freely
+    // via dropdown at data-entry time, not fixed per row, so each day's own slot-row range is summed (or
+    // SUMIF-matched, for the per-category breakdown) directly instead.
+    const clockInOutDayRanges = clockInOutWeeks.flatMap((week) => {
+      const totalColumn = colLetter(week.labelColumnIndex + CLOCK_IN_OUT_TOTAL_COLUMN_OFFSET);
+      const activityColumn = colLetter(week.labelColumnIndex + CLOCK_IN_OUT_ACTIVITY_COLUMN_OFFSET);
+      return week.days.map((day) => {
+        const firstSlotRow = day.slotRows[0].row;
+        const lastSlotRow = day.slotRows[day.slotRows.length - 1].row;
+        return {
+          date: day.date,
+          totalRange: `${totalColumn}${firstSlotRow}:${totalColumn}${lastSlotRow}`,
+          activityRange: `${activityColumn}${firstSlotRow}:${activityColumn}${lastSlotRow}`,
+        };
+      });
+    });
+
+    const totalHoursCellReferencesClockInOut = clockInOutDayRanges.map((dayRange) => dayRange.totalRange);
+
+    const holidayHoursCellReferencesClockInOut = clockInOutDayRanges
+      .filter((dayRange) => getHolidayName(new Date(dayRange.date), payrollConfig.holidays) !== null)
+      .map((dayRange) => dayRange.totalRange);
+
+    // Builds a =SUM() of SUMIF terms, one per (day, activity-in-category) pair, matching that day's slot
+    // rows' chosen activity against the category's activity names — the ClockInOut equivalent of
+    // sumRows(categoryRowNums), since there's no fixed row per activity to sum directly.
+    const buildCategorySumFormulaClockInOut = (categoryActivityNames: string[]): string => {
+      if (categoryActivityNames.length === 0 || clockInOutDayRanges.length === 0) return "0";
+      const sumIfTerms = clockInOutDayRanges.flatMap((dayRange) =>
+        categoryActivityNames.map(
+          (activityName) => `SUMIF(${dayRange.activityRange},"${activityName}",${dayRange.totalRange})`,
+        ),
+      );
+      return `=${sumIfTerms.join("+")}`;
+    };
+
+    const flatRateCellReferencesClockInOut = clockInOutWeeks.flatMap((week) => {
+      const totalColumn = colLetter(week.labelColumnIndex + CLOCK_IN_OUT_TOTAL_COLUMN_OFFSET);
+      return week.days.flatMap((day) => day.flatRateRows.map((flatRateRow) => `${totalColumn}${flatRateRow.row}`));
+    });
+
     const summaryRows: { label: string; row: number }[] = [];
 
     const pushSummary = (label: string, formula: string) => {
@@ -223,23 +295,34 @@ const generateTimesheets = async (
       allRows.push(buildSummaryRow(label, formula));
     };
 
-    pushSummary("Total Hours Worked", sumRows(hourlyRowNums, maxDays));
+    pushSummary(
+      "Total Hours Worked",
+      isClockInOut ? sumCellReferences(totalHoursCellReferencesClockInOut) : sumRows(hourlyRowNums, maxDays),
+    );
     pushSummary(
       "Holiday Hours",
-      holidayHoursCells.length > 0
-        ? `=SUM(${holidayHoursCells.join(",")})`
-        : "0",
+      isClockInOut
+        ? sumCellReferences(holidayHoursCellReferencesClockInOut)
+        : holidayHoursCells.length > 0
+          ? `=SUM(${holidayHoursCells.join(",")})`
+          : "0",
     );
 
     for (const category of presentTimeOffCategories) {
+      const categoryActivityNames = timeOffActivityList
+        .filter((activity) => activity.payrollCategory === category)
+        .map((activity) => activity.activityName);
       pushSummary(
         category,
-        sumRows(categoryRowNums.get(category) ?? [], maxDays),
+        isClockInOut ? buildCategorySumFormulaClockInOut(categoryActivityNames) : sumRows(categoryRowNums.get(category) ?? [], maxDays),
       );
     }
 
     if (hasFlatRate) {
-      pushSummary("Flat Rate Shifts", sumRows(flatRateRowNums, maxDays));
+      pushSummary(
+        "Flat Rate Shifts",
+        isClockInOut ? sumCellReferences(flatRateCellReferencesClockInOut) : sumRows(flatRateRowNums, maxDays),
+      );
     }
 
     await createTabIfNotExists(
@@ -262,6 +345,7 @@ const generateTimesheets = async (
       supervisorSignatureCell,
       includeInPayrollCell,
       summaryRows,
+      clockInOutWeeks: isClockInOut ? clockInOutWeeks : undefined,
     };
 
     await applyTimesheetFormatting(
@@ -270,6 +354,7 @@ const generateTimesheets = async (
       manifest,
       payrollConfig.holidays,
       maxDays,
+      isClockInOut ? hourlyActivityNames : [],
     );
 
     await saveManifest(employee.timesheetFileId, manifest);

@@ -5,18 +5,16 @@ import isWeekend from "./isWeekend.js";
 import formatHolidayNameRow from "./formatHolidayNameRow.js";
 import formatDayOfWeekRow from "./formatDayOfWeekRow.js";
 import formatDateRow from "./formatDateRow.js";
+import formatHeaderSpacerRow from "./formatHeaderSpacerRow.js";
 import formatSectionLabelRow from "./formatSectionLabelRow.js";
 import formatActivityRows from "./formatActivityRows.js";
-import formatDividerRows from "./formatDividerRows.js";
-import formatDailyTotalRow from "./formatDailyTotalRow.js";
 import formatRowHeight from "./formatRowHeight.js";
 import outlineBlockBorder from "./outlineBlockBorder.js";
 
 // Builds all formatting requests for a single week section — called once per week by
-// applyTimesheetFormatting. Row positions come directly from the manifest (buildWeek already omitted
-// the Hourly and/or Flat Rate section entirely when the employee has zero activities of that type), so
-// this just formats whichever rows the manifest says are present, plus a block-level border around the
-// week's full bounding range.
+// applyTimesheetFormatting. Formats the header rows, every group header row (named groups only —
+// ungrouped activities render with no header, see buildWeek), and every activity row (tinted per its
+// rowType — see formatActivityRows), plus a block-level border around the week's full bounding range.
 const formatWeekSection = (
   sheetId: number,
   week: WeekManifest,
@@ -39,47 +37,27 @@ const formatWeekSection = (
     ...formatHolidayNameRow(sheetId, week.weekLabelRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
     ...formatDayOfWeekRow(sheetId, week.dayOfWeekRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
     ...formatDateRow(sheetId, week.dateRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
+    ...formatHeaderSpacerRow(sheetId, week.headerSpacerRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
+    formatRowHeight(sheetId, week.headerSpacerRow, SPACER_ROW_HEIGHT),
   ];
 
-  if (week.hourlySectionLabelRow !== undefined && week.hourlyDailyTotalRow !== undefined) {
+  for (const groupHeaderRow of week.groupHeaderRows) {
     requests.push(
-      ...formatSectionLabelRow(sheetId, week.hourlySectionLabelRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
-      ...formatActivityRows(
-        sheetId,
-        week.activityRows,
-        labelColumnIndex,
-        firstDayColumnIndex,
-        totalColumnCount,
-        specialColumnIndexes,
-        holidayColumnIndexes,
-      ),
-      ...formatDailyTotalRow(sheetId, week.hourlyDailyTotalRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
+      ...formatSectionLabelRow(sheetId, groupHeaderRow.row, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
     );
   }
 
-  if (week.spacerRow !== undefined) {
-    requests.push(
-      ...formatDividerRows(sheetId, week.spacerRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
-      formatRowHeight(sheetId, week.spacerRow, SPACER_ROW_HEIGHT),
-    );
-  }
-
-  if (week.flatRateSectionLabelRow !== undefined && week.flatRateDailyTotalRow !== undefined) {
-    requests.push(
-      ...formatSectionLabelRow(sheetId, week.flatRateSectionLabelRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
-      ...formatActivityRows(
-        sheetId,
-        week.flatRateRows,
-        labelColumnIndex,
-        firstDayColumnIndex,
-        totalColumnCount,
-        specialColumnIndexes,
-        holidayColumnIndexes,
-        true,
-      ),
-      ...formatDailyTotalRow(sheetId, week.flatRateDailyTotalRow, labelColumnIndex, totalColumnCount, holidayColumnIndexes),
-    );
-  }
+  requests.push(
+    ...formatActivityRows(
+      sheetId,
+      week.activityRows,
+      labelColumnIndex,
+      firstDayColumnIndex,
+      totalColumnCount,
+      specialColumnIndexes,
+      holidayColumnIndexes,
+    ),
+  );
 
   requests.push(
     outlineBlockBorder(sheetId, week.firstRow, week.lastRow, labelColumnIndex, totalColumnCount, PRIMARY_DARK),

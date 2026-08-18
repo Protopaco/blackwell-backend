@@ -44,13 +44,15 @@ const updateEmployeeExpensesBatch = async (
       );
     }
 
-    const totalExpenseByEmployeeId = new Map(updates.map((update) => [update.employeeId, update.totalExpense]));
+    const updateByEmployeeId = new Map(updates.map((update) => [update.employeeId, update]));
     for (const employeeId of newEmployeeIds) {
       const employee = employeesById.get(employeeId)!;
+      const update = updateByEmployeeId.get(employeeId);
       mergedExpenses.push({
         employeeId,
         employeeName: `${employee.firstName} ${employee.lastName}`,
-        totalExpense: totalExpenseByEmployeeId.get(employeeId) ?? null,
+        wageExpense: update?.wageExpense ?? null,
+        taxExpense: update?.taxExpense ?? null,
       });
     }
   }

@@ -6,8 +6,9 @@ const { testClient, activity } = vi.hoisted(() => ({
   activity: {
     activityId: 'a1',
     activityName: 'Job Coaching',
-    trackSeparately: false,
     payrollCategory: 'Regular',
+    groupLabel: null,
+    sortOrder: 0,
     fundingSources: [{ fundingSourceName: 'Federal Grant', percentage: 100 }],
     payRate: 'HourlyPayRate1',
     flatRateAmount: 0,

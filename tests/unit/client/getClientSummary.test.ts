@@ -50,7 +50,6 @@ describe('getClientSummary', () => {
   const activity = {
     activityId: 'activity-1',
     activityName: 'Program',
-    trackSeparately: true,
     payrollCategory: 'Regular',
     fundingSource1Name: 'Grant',
     fundingSource1Percentage: 100,

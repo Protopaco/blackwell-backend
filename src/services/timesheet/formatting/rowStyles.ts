@@ -3,8 +3,10 @@ import {
   type Color,
   HEADER_TEXT,
   MUTED,
+  PRIMARY,
   PRIMARY_DARK,
   SECONDARY,
+  TEXT,
   WHITE,
 } from "#utils/timesheetTheme.js";
 
@@ -84,6 +86,23 @@ const spacerRow: RowStyle = {
   holidayFill: { backgroundColor: ACCENT, textColor: HEADER_TEXT, bold: false, horizontalAlignment: "CENTER" },
 };
 
+// headerSpacerRow — the blank visual gap between dateRow and whichever section comes first that week.
+const headerSpacerRow: RowStyle = {
+  fill: { backgroundColor: SECONDARY, textColor: HEADER_TEXT, bold: false, horizontalAlignment: "LEFT" },
+  holidayFill: { backgroundColor: ACCENT, textColor: HEADER_TEXT, bold: false, horizontalAlignment: "CENTER" },
+};
+
+// mutedDataEntryRow / primaryDataEntryRow — the two colors ClockInOut's Hourly and Flat Rate sections
+// zebra-stripe between, restarting at mutedDataEntryRow for the first data row of every section instance
+// (per 2026-08-12 decision).
+const mutedDataEntryRow: RowStyle = {
+  fill: { backgroundColor: MUTED, textColor: TEXT, bold: false, horizontalAlignment: "LEFT" },
+};
+
+const primaryDataEntryRow: RowStyle = {
+  fill: { backgroundColor: PRIMARY, textColor: TEXT, bold: false, horizontalAlignment: "LEFT" },
+};
+
 export type { RowStyle, CellFill, BorderSides };
 export {
   identityRow,
@@ -93,4 +112,7 @@ export {
   sectionLabelRow,
   dailyTotalRow,
   spacerRow,
+  headerSpacerRow,
+  mutedDataEntryRow,
+  primaryDataEntryRow,
 };

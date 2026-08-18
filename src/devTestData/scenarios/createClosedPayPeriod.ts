@@ -18,7 +18,8 @@ const createClosedPayPeriod = async (client: Client): Promise<void> => {
     processedPayPeriod.payPeriodId,
     activeEmployees.map((employee, index) => ({
       employeeId: employee.employeeId,
-      totalExpense: 1000 + index * 250,
+      wageExpense: 1000 + index * 250,
+      taxExpense: 100 + index * 25,
     })),
   );
   await generateAllocationReport(client.clientId, processedPayPeriod.payPeriodId);

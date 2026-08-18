@@ -44,20 +44,23 @@ const createConfiguredClientSetup = async (client: Client): Promise<void> => {
 
   await createActivity(client.clientId, {
     activityName: 'Direct Services',
-    trackSeparately: true,
     payrollCategory: PayrollCategory.Regular,
+    groupLabel: null,
+    sortOrder: 0,
     fundingSources: [{ fundingSourceName: 'Program Grant', percentage: 100 }],
   });
   await createActivity(client.clientId, {
     activityName: 'Administration',
-    trackSeparately: true,
     payrollCategory: PayrollCategory.Regular,
+    groupLabel: null,
+    sortOrder: 1,
     fundingSources: [{ fundingSourceName: 'General Operating', percentage: 100 }],
   });
   await createActivity(client.clientId, {
     activityName: 'PTO',
-    trackSeparately: false,
     payrollCategory: PayrollCategory.PTO,
+    groupLabel: null,
+    sortOrder: 2,
     fundingSources: [{ fundingSourceName: 'General Operating', percentage: 100 }],
   });
 

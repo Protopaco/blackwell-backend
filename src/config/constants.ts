@@ -19,16 +19,38 @@ export const SUMMARY_HEADERS: (keyof PayrollReportSummaryRow)[] = [
   'PayrollCategory', 'PayRateType', 'IsHoliday', 'TotalHours',
 ];
 export const EMPLOYEE_EXPENSES_TAB = 'EmployeeExpenses';
-export const EMPLOYEE_EXPENSES_HEADERS: (keyof EmployeeExpense)[] = ['employeeId', 'employeeName', 'totalExpense'];
+export const EMPLOYEE_EXPENSES_HEADERS: (keyof EmployeeExpense)[] = ['employeeId', 'employeeName', 'wageExpense', 'taxExpense'];
 export const ADDITIONAL_EXPENSES_TAB = 'AdditionalExpenses';
 export const ADDITIONAL_EXPENSES_HEADERS: (keyof AdditionalExpense)[] = ['expenseName', 'amount'];
 export const ALLOCATION_REPORT_TAB = 'AllocationReport';
-export const ALLOCATION_REPORT_HEADERS: (keyof AllocationReportRow)[] = ['fundingSourceName', 'wagesAllocation', 'additionalExpenses', 'total'];
+export const ALLOCATION_REPORT_HEADERS: (keyof AllocationReportRow)[] = ['fundingSourceName', 'wagesAllocation', 'taxesAllocation', 'additionalExpenses', 'total'];
 
 // ─── Timesheet Tabs ───────────────────────────────────────────────────────────
 
 export const MANIFEST_TAB = '_manifest';
 export const MANIFEST_HEADERS = ['tabName', 'manifest'];
+
+// Number of generic entry slots (activity dropdown + Clock In + Clock Out) written per day for
+// ClockInOut clients. Only one slot is needed today, but the read path (readTimesheetEntries) iterates
+// whatever slots exist, so raising this later needs no code change beyond this constant.
+export const CLOCK_IN_OUT_SLOTS_PER_DAY = 6;
+
+// ClockInOut timesheets lay weeks out side by side (label/In/Out/Total) rather than stacking them, with
+// one blank spacer column between each week's group — see buildClockInOutTimesheet.
+export const CLOCK_IN_OUT_WEEK_COLUMN_WIDTH = 4;
+export const CLOCK_IN_OUT_SPACER_COLUMN_WIDTH = 1;
+
+// Column offsets used by every ClockInOut row builder, relative to whichever week's own 4-column group
+// the row belongs to. labelColumnIndex (the sheet column where that week's group starts) is added to
+// these to get a cell's real sheet column, since ClockInOut weeks sit side by side rather than stacked —
+// see buildClockInOutTimesheet. Consumed by rowBuilders.ts, formatClockInOutTimesheet.ts, and
+// generateTimesheets.ts, so they live here alongside the other ClockInOut layout constants rather than
+// inside rowBuilders.ts.
+export const CLOCK_IN_OUT_ACTIVITY_COLUMN_OFFSET = 0;
+// Also the Flat Rate section's Shifts cell.
+export const CLOCK_IN_OUT_IN_COLUMN_OFFSET = 1;
+export const CLOCK_IN_OUT_OUT_COLUMN_OFFSET = 2;
+export const CLOCK_IN_OUT_TOTAL_COLUMN_OFFSET = 3;
 
 // ─── Pay Period Registry Tabs ─────────────────────────────────────────────────
 
@@ -45,10 +67,11 @@ export const EMPLOYEES_HEADERS = [
 ];
 export const ACTIVITIES_TAB = 'Activities';
 export const ACTIVITIES_HEADERS = [
-  'ActivityId', 'ActivityName', 'TrackSeparately', 'PayrollCategory',
+  'ActivityId', 'ActivityName', 'PayrollCategory',
   'FundingSource1Name', 'FundingSource1Percentage',
   'FundingSource2Name', 'FundingSource2Percentage',
   'FundingSource3Name', 'FundingSource3Percentage',
+  'GroupLabel', 'SortOrder',
 ];
 export const EMPLOYEE_ACTIVITY_RATES_TAB = 'EmployeeActivityRates';
 export const EMPLOYEE_ACTIVITY_RATES_HEADERS = [

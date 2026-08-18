@@ -4,7 +4,7 @@ import EmployeePayrollSummary from '#models/EmployeePayrollSummary.js';
 import PayrollReportResponse from '#models/PayrollReportResponse.js';
 
 // Transforms flat PayrollReportSummaryRow records (read from the spreadsheet) into a grouped-by-employee response shape.
-// employeeExpenses is joined in by employeeId; an employee with no expense entry gets totalExpense: null.
+// employeeExpenses is joined in by employeeId; an employee with no expense entry gets wageExpense/taxExpense: null.
 // Rows are routed by PayRateType: FlatRate goes to the flatRate bucket; Hourly and Salary (both hour-tracked
 // on the timesheet) go to the hourly bucket — salary's own dollar handling is [057]'s scope, not this response shape.
 const buildPayrollReportResponse = (
@@ -12,7 +12,7 @@ const buildPayrollReportResponse = (
   employeeExpenses: EmployeeExpense[] | null = [],
 ): PayrollReportResponse => {
   const response: PayrollReportResponse = {};
-  const totalExpenseByEmployeeId = new Map((employeeExpenses ?? []).map((expense) => [expense.employeeId, expense.totalExpense]));
+  const expenseByEmployeeId = new Map((employeeExpenses ?? []).map((expense) => [expense.employeeId, expense]));
 
   for (const row of rawRows) {
     const employeeId = row['EmployeeId'] as string;
@@ -23,7 +23,8 @@ const buildPayrollReportResponse = (
         employeeName: row['EmployeeName'] as string,
         totalHours: 0,
         totalFlatRate: 0,
-        totalExpense: totalExpenseByEmployeeId.get(employeeId) ?? null,
+        wageExpense: expenseByEmployeeId.get(employeeId)?.wageExpense ?? null,
+        taxExpense: expenseByEmployeeId.get(employeeId)?.taxExpense ?? null,
         hourly: [],
         flatRate: [],
       } satisfies EmployeePayrollSummary;

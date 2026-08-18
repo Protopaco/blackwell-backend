@@ -16,8 +16,9 @@ const createTestActivity = async (
   ];
   const requestBody = {
     activityName: `Test Activity ${uniqueCode}`,
-    trackSeparately: true,
     payrollCategory: PayrollCategory.Regular,
+    groupLabel: null,
+    sortOrder: 0,
     fundingSources: names.map((fundingSourceName) => ({
       fundingSourceName,
       percentage: Math.floor(100 / names.length),

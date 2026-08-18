@@ -26,6 +26,12 @@ const MUTED_ACCENT: Color = { red: 0.996, green: 0.886, blue: 0.886 };
 // #FECACA — mid-light red for holiday columns on odd-indexed activity rows.
 const MUTED_ACCENT_DARK: Color = { red: 0.996, green: 0.792, blue: 0.792 };
 
+// #D9F2E3 — light green for a FlatRate activity row's label cell.
+const FLAT_RATE: Color = { red: 0.851, green: 0.949, blue: 0.890 };
+
+// #FDECC8 — light amber for a time-off (ETO/PTO/STO) activity row's label cell.
+const TIME_OFF: Color = { red: 0.992, green: 0.925, blue: 0.784 };
+
 // #F1F3F4 — very light gray for weekend cells and summary values.
 const MUTED: Color = { red: 0.945, green: 0.953, blue: 0.957 };
 
@@ -53,9 +59,17 @@ const HEADER_VALUE_COLUMN_WIDTH = 105;
 // Width in pixels for each day column and the weekly total column.
 const DAY_COLUMN_WIDTH = 100;
 
-// Height in pixels for the spacerRow between a week's Hourly and Flat Rate sections — about half
-// Google Sheets' default row height (~21px), for a cleaner, thinner break between sections.
+// Width in pixels for a TotalHours activity row's trailing "hours"/"shifts" unit-label column — narrower
+// than DAY_COLUMN_WIDTH since it only ever holds one short word.
+const UNIT_LABEL_COLUMN_WIDTH = 70;
+
+// Height in pixels for headerSpacerRow, the half-height gap between a week's dateRow and its activity
+// block — about half Google Sheets' default row height (~21px), for a cleaner, thinner break.
 const SPACER_ROW_HEIGHT = 10;
+
+// Width in pixels for a ClockInOut week's activity dropdown column — wider than DAY_COLUMN_WIDTH so
+// long activity names aren't cut off in the dropdown cell.
+const CLOCK_IN_OUT_ACTIVITY_COLUMN_WIDTH = 250;
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
 
@@ -67,6 +81,8 @@ export {
   ACCENT,
   MUTED_ACCENT,
   MUTED_ACCENT_DARK,
+  FLAT_RATE,
+  TIME_OFF,
   MUTED,
   MUTED_DARK,
   TEXT,
@@ -76,5 +92,7 @@ export {
   LABEL_COLUMN_WIDTH,
   HEADER_VALUE_COLUMN_WIDTH,
   DAY_COLUMN_WIDTH,
+  UNIT_LABEL_COLUMN_WIDTH,
   SPACER_ROW_HEIGHT,
+  CLOCK_IN_OUT_ACTIVITY_COLUMN_WIDTH,
 };

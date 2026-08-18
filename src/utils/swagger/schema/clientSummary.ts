@@ -1,6 +1,7 @@
 const clientSummary = {
   ClientSummary: {
     type: 'object',
+    required: ['settings'],
     properties: {
       employees: {
         type: 'array',

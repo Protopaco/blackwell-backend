@@ -1,10 +1,13 @@
 import Holiday from "#models/Holiday.js";
 import { ActivityRowManifest, WeekManifest } from "#models/TimesheetManifest.js";
 import { formatWeekRangeLabel } from "#utils/dateUtils.js";
-import { SortedActivities } from "./sortActivities.js";
+import SortedActivities from '#models/SortedActivities.js';
+import flattenActivityGroups from "./flattenActivityGroups.js";
+import getActivityRowType from "./getActivityRowType.js";
+import getActivityRowUnitLabel from "./getActivityRowUnitLabel.js";
+import { groupActivities } from "./sortActivities.js";
 import {
   buildActivityRow,
-  buildDailyTotalRow,
   buildDateRow,
   buildDayRow,
   buildDividerRow,
@@ -18,10 +21,12 @@ interface WeekBuildResult {
 }
 
 // Builds all sheet rows for one week of a timesheet and returns row data plus a manifest summary of
-// where each row and date column landed — called once per week by generateTimesheets. The Hourly
-// section (work + time-off activities) and the Flat Rate section are each fully omitted — no
-// sectionLabelRow, no activity rows, no dailyTotalRow — when the employee has zero activities of that
-// type; a spacerRow separates the two sections only when both are present that week.
+// where each row and date column landed — called once per week by generateTimesheets. Work, time off,
+// and flat-rate activities are combined into one grouped/ordered block (no more separate Hourly/Flat
+// Rate sections, section-label rows, or Daily Total rows — see the 2026-08-17 redesign): each activity's
+// pay type is instead tagged on its own row (ActivityRowManifest.rowType) for formatting and downstream
+// summary math, and named groups (activity.groupLabel) get their own header row via buildSectionLabelRow,
+// reused from its former "Hourly"/"Flat Rate" section-label role.
 const buildWeek = (
   weekIndex: number,
   dates: Date[],
@@ -30,10 +35,13 @@ const buildWeek = (
   startRow: number,
   maxDays: number,
 ): WeekBuildResult => {
-  const { workActivities, timeOffActivities, flatRateActivities } = sortedActivities;
-  const hourlyActivities = [...workActivities, ...timeOffActivities];
-  const hasHourlyActivities = hourlyActivities.length > 0;
-  const hasFlatRateActivities = flatRateActivities.length > 0;
+  const { workActivities, timeOffActivities, flatRateActivities, payRateTypeByActivityId } = sortedActivities;
+  const allActivities = [
+    ...flattenActivityGroups(workActivities),
+    ...flattenActivityGroups(timeOffActivities),
+    ...flattenActivityGroups(flatRateActivities),
+  ];
+  const activityGroups = groupActivities(allActivities);
   const dayCount = dates.length;
 
   const rows: unknown[][] = [];
@@ -48,50 +56,30 @@ const buildWeek = (
   const dateRow = nextRowNumber();
   rows.push(buildDateRow(dates, maxDays));
 
-  let hourlySectionLabelRow: number | undefined;
+  const headerSpacerRow = nextRowNumber();
+  rows.push(buildDividerRow());
+
   const activityRows: ActivityRowManifest[] = [];
-  let hourlyDailyTotalRow: number | undefined;
+  const groupHeaderRows: { groupLabel: string; row: number }[] = [];
 
-  if (hasHourlyActivities) {
-    hourlySectionLabelRow = nextRowNumber();
-    rows.push(buildSectionLabelRow("Hourly", maxDays));
-
-    const firstActivityRow = nextRowNumber();
-    for (const activity of hourlyActivities) {
-      const rowNumber = nextRowNumber();
-      rows.push(buildActivityRow(activity, dayCount, rowNumber));
-      activityRows.push({ activityId: activity.activityId, activityName: activity.activityName, row: rowNumber });
+  for (const group of activityGroups) {
+    if (group.groupLabel !== null) {
+      const groupHeaderRowNumber = nextRowNumber();
+      rows.push(buildSectionLabelRow(group.groupLabel, maxDays));
+      groupHeaderRows.push({ groupLabel: group.groupLabel, row: groupHeaderRowNumber });
     }
-    const lastActivityRow = nextRowNumber() - 1;
 
-    hourlyDailyTotalRow = nextRowNumber();
-    rows.push(buildDailyTotalRow(dates, firstActivityRow, lastActivityRow, hourlyDailyTotalRow));
-  }
-
-  let spacerRow: number | undefined;
-  if (hasHourlyActivities && hasFlatRateActivities) {
-    spacerRow = nextRowNumber();
-    rows.push(buildDividerRow());
-  }
-
-  let flatRateSectionLabelRow: number | undefined;
-  const flatRateRows: ActivityRowManifest[] = [];
-  let flatRateDailyTotalRow: number | undefined;
-
-  if (hasFlatRateActivities) {
-    flatRateSectionLabelRow = nextRowNumber();
-    rows.push(buildSectionLabelRow("Flat Rate", maxDays));
-
-    const firstFlatRateRow = nextRowNumber();
-    for (const activity of flatRateActivities) {
+    for (const activity of group.activities) {
       const rowNumber = nextRowNumber();
-      rows.push(buildActivityRow(activity, dayCount, rowNumber));
-      flatRateRows.push({ activityId: activity.activityId, activityName: activity.activityName, row: rowNumber });
+      const rowType = getActivityRowType(activity, payRateTypeByActivityId);
+      rows.push(buildActivityRow(activity, dayCount, rowNumber, getActivityRowUnitLabel(rowType)));
+      activityRows.push({
+        activityId: activity.activityId,
+        activityName: activity.activityName,
+        row: rowNumber,
+        rowType,
+      });
     }
-    const lastFlatRateRow = nextRowNumber() - 1;
-
-    flatRateDailyTotalRow = nextRowNumber();
-    rows.push(buildDailyTotalRow(dates, firstFlatRateRow, lastFlatRateRow, flatRateDailyTotalRow));
   }
 
   const lastRow = nextRowNumber() - 1;
@@ -107,13 +95,9 @@ const buildWeek = (
       date: date.toISOString().split("T")[0],
       column: dateIndex + 2, // 1-based; A=1 is label col, so first day is B=2
     })),
-    hourlySectionLabelRow,
+    headerSpacerRow,
     activityRows,
-    hourlyDailyTotalRow,
-    spacerRow,
-    flatRateSectionLabelRow,
-    flatRateRows,
-    flatRateDailyTotalRow,
+    groupHeaderRows,
   };
 
   return { rows, weekManifest };
