@@ -59,6 +59,10 @@ const HEADER_VALUE_COLUMN_WIDTH = 105;
 // Width in pixels for each day column and the weekly total column.
 const DAY_COLUMN_WIDTH = 100;
 
+// Width in pixels for a TotalHours activity row's trailing "hours"/"shifts" unit-label column — narrower
+// than DAY_COLUMN_WIDTH since it only ever holds one short word.
+const UNIT_LABEL_COLUMN_WIDTH = 70;
+
 // Height in pixels for headerSpacerRow, the half-height gap between a week's dateRow and its activity
 // block — about half Google Sheets' default row height (~21px), for a cleaner, thinner break.
 const SPACER_ROW_HEIGHT = 10;
@@ -88,6 +92,7 @@ export {
   LABEL_COLUMN_WIDTH,
   HEADER_VALUE_COLUMN_WIDTH,
   DAY_COLUMN_WIDTH,
+  UNIT_LABEL_COLUMN_WIDTH,
   SPACER_ROW_HEIGHT,
   CLOCK_IN_OUT_ACTIVITY_COLUMN_WIDTH,
 };

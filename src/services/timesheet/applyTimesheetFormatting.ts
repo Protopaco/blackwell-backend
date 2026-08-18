@@ -35,14 +35,15 @@ const applyTimesheetFormatting = async (
   const isClockInOut = manifest.clockInOutWeeks !== undefined && manifest.clockInOutWeeks.length > 0;
 
   // Column layout (all 0-based):
-  //   TotalHours: 0=A labels, 1…N=B…X one column per day (N=maxDays), N+1=weekly total column.
+  //   TotalHours: 0=A labels, 1…N=B…X one column per day (N=maxDays), N+1=weekly total column, N+2=each
+  //   activity row's trailing "hours"/"shifts" unit-label column (see buildActivityRow).
   //   ClockInOut: weeks sit side by side, each a 4-column group (label/In/Out/Total) — see
   //   buildClockInOutTimesheet — so the sheet's total width is however many week-groups there are.
   const labelColumnIndex = 0;
   const firstDayColumnIndex = 1;
   const totalColumnCount = isClockInOut
     ? manifest.clockInOutWeeks![manifest.clockInOutWeeks!.length - 1].labelColumnIndex + CLOCK_IN_OUT_WEEK_COLUMN_WIDTH
-    : maxDays + 2;
+    : maxDays + 3;
 
   const lastSummaryRow = manifest.summaryRows[manifest.summaryRows.length - 1];
 

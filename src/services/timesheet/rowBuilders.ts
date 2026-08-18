@@ -60,15 +60,18 @@ const buildDayRow = (dates: Date[]): unknown[] =>
 const buildDateRow = (dates: Date[], maxDays: number): unknown[] =>
   ['', ...dates.map(formatDateHeader), ...Array(maxDays - dates.length).fill(''), ''];
 
-// Builds a blank data-entry row for a single activity with one empty cell per day, plus a SUM formula
-// in the weekly total column covering that row's day cells. rowNumber is this row's own 1-based sheet row.
-const buildActivityRow = (activity: Activity, numberOfDays: number, rowNumber: number): unknown[] => {
+// Builds a blank data-entry row for a single activity with one empty cell per day, a SUM formula in the
+// weekly total column covering that row's day cells, and a trailing cell naming the unit that total is
+// captured in ("hours" or "shifts" — see getActivityRowUnitLabel). rowNumber is this row's own 1-based
+// sheet row.
+const buildActivityRow = (activity: Activity, numberOfDays: number, rowNumber: number, unitLabel: string): unknown[] => {
   const firstDayCol = colLetter(1);
   const lastDayCol = colLetter(numberOfDays);
   return [
     activity.activityName,
     ...Array(numberOfDays).fill(''),
     `=SUM(${firstDayCol}${rowNumber}:${lastDayCol}${rowNumber})`,
+    unitLabel,
   ];
 };
 

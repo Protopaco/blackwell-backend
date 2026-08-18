@@ -4,6 +4,7 @@ import { formatWeekRangeLabel } from "#utils/dateUtils.js";
 import SortedActivities from '#models/SortedActivities.js';
 import flattenActivityGroups from "./flattenActivityGroups.js";
 import getActivityRowType from "./getActivityRowType.js";
+import getActivityRowUnitLabel from "./getActivityRowUnitLabel.js";
 import { groupActivities } from "./sortActivities.js";
 import {
   buildActivityRow,
@@ -70,12 +71,13 @@ const buildWeek = (
 
     for (const activity of group.activities) {
       const rowNumber = nextRowNumber();
-      rows.push(buildActivityRow(activity, dayCount, rowNumber));
+      const rowType = getActivityRowType(activity, payRateTypeByActivityId);
+      rows.push(buildActivityRow(activity, dayCount, rowNumber, getActivityRowUnitLabel(rowType)));
       activityRows.push({
         activityId: activity.activityId,
         activityName: activity.activityName,
         row: rowNumber,
-        rowType: getActivityRowType(activity, payRateTypeByActivityId),
+        rowType,
       });
     }
   }

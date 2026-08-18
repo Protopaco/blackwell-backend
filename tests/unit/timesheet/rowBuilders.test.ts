@@ -173,19 +173,24 @@ describe('buildSectionLabelRow', () => {
 
 describe('buildActivityRow', () => {
   it('puts the activity name in the label column', () => {
-    const row = buildActivityRow(makeActivity('Programs'), 7, 9);
+    const row = buildActivityRow(makeActivity('Programs'), 7, 9, 'hours');
     expect(row[0]).toBe('Programs');
   });
 
   it('fills day columns with empty strings for data entry', () => {
-    const row = buildActivityRow(makeActivity('Programs'), 7, 9);
-    expect(row).toHaveLength(9);
+    const row = buildActivityRow(makeActivity('Programs'), 7, 9, 'hours');
+    expect(row).toHaveLength(10);
     expect(row.slice(1, 8).every((cell) => cell === '')).toBe(true);
   });
 
   it('sums the row\'s own day columns in the weekly total column', () => {
-    const row = buildActivityRow(makeActivity('Programs'), 7, 9);
+    const row = buildActivityRow(makeActivity('Programs'), 7, 9, 'hours');
     expect(row[8]).toBe('=SUM(B9:H9)');
+  });
+
+  it('puts the unit label in the trailing column', () => {
+    const row = buildActivityRow(makeActivity('Programs'), 7, 9, 'shifts');
+    expect(row[9]).toBe('shifts');
   });
 });
 
