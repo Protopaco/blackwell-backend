@@ -19,7 +19,7 @@ const writeAllocationReportTab = async (
   await clearTabContent(workbookId, ALLOCATION_REPORT_TAB);
   const values: unknown[][] = [
     ALLOCATION_REPORT_HEADERS,
-    ...rows.map((row) => [row.fundingSourceName, row.wagesAllocation, row.taxesAllocation, row.additionalExpenses, row.total]),
+    ...rows.map((row) => [row.fundingSourceName, row.hoursAllocation, row.wagesAllocation, row.taxesAllocation, row.additionalExpenses, row.total]),
   ];
   await writeValues(workbookId, ALLOCATION_REPORT_TAB, values);
   allocationReportCache.delete(workbookId);

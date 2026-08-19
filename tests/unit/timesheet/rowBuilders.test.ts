@@ -273,7 +273,9 @@ describe('buildSummaryRow', () => {
 });
 
 describe('buildSignatureRow', () => {
-  it('returns the label in the first column only', () => {
-    expect(buildSignatureRow('Employee Signature:')).toEqual(['Employee Signature:']);
+  it('returns the label, a blank signature area, a "Date" label, and a blank date cell', () => {
+    expect(buildSignatureRow('Employee Signature:')).toEqual([
+      'Employee Signature:', '', '', '', 'Date', '',
+    ]);
   });
 });

@@ -74,7 +74,7 @@ const applyTimesheetFormatting = async (
       manifest.employeeSignatureCell.row,
       manifest.includeInPayrollCell.row,
       labelColumnIndex,
-      4,
+      6,
       MUTED,
     ),
     ...formatSummaryRows(sheetId, manifest.summaryRows),

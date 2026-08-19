@@ -5,7 +5,7 @@ import { logger } from '#utils/logger.js';
 import allocationReportCache from '#utils/caches/allocationReportCache.js';
 import AllocationReportRow from '#models/AllocationReportRow.js';
 
-const [fundingSourceName, wagesAllocation, taxesAllocation, additionalExpenses, total] = ALLOCATION_REPORT_HEADERS;
+const [fundingSourceName, hoursAllocation, wagesAllocation, taxesAllocation, additionalExpenses, total] = ALLOCATION_REPORT_HEADERS;
 
 // Reads all rows from the AllocationReport tab, cached for 5 minutes. Returns null if the tab doesn't
 // exist yet, or an empty array if it exists but has no rows.
@@ -21,6 +21,7 @@ const readAllocationReportTab = async (workbookId: string): Promise<AllocationRe
   const rows = await readTab(workbookId, ALLOCATION_REPORT_TAB);
   const allocationRows = rows.map((row) => ({
     fundingSourceName: row[fundingSourceName] as string,
+    hoursAllocation: Number(row[hoursAllocation]),
     wagesAllocation: Number(row[wagesAllocation]),
     taxesAllocation: Number(row[taxesAllocation]),
     additionalExpenses: Number(row[additionalExpenses]),

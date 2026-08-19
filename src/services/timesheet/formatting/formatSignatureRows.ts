@@ -4,7 +4,8 @@ import fillRow from "./fillRow.js";
 import mergeCells from "./mergeCells.js";
 import outlineBorder from "./outlineBorder.js";
 
-// Builds fill, border, and merge requests for the employee and supervisor signature rows — called by applyTimesheetFormatting.
+// Builds fill, border, and merge requests for the employee and supervisor signature rows, plus their
+// "Date" label (column E) and empty date-entry cell (column F) — called by applyTimesheetFormatting.
 const formatSignatureRows = (
   sheetId: number,
   employeeSignatureCell: SignatureCell,
@@ -14,10 +15,16 @@ const formatSignatureRows = (
   fillRow(sheetId, employeeSignatureCell.row, 1, 4, MUTED, TEXT, false, "LEFT"),
   outlineBorder(sheetId, employeeSignatureCell.row, 1, 4),
   mergeCells(sheetId, employeeSignatureCell.row, 1, 4),
+  fillRow(sheetId, employeeSignatureCell.row, 4, 5, PRIMARY, HEADER_TEXT, false, "LEFT"),
+  fillRow(sheetId, employeeSignatureCell.row, 5, 6, MUTED, TEXT, false, "LEFT"),
+  outlineBorder(sheetId, employeeSignatureCell.row, 5, 6),
   fillRow(sheetId, supervisorSignatureCell.row, 0, 1, PRIMARY, HEADER_TEXT, false, "LEFT"),
   fillRow(sheetId, supervisorSignatureCell.row, 1, 4, MUTED, TEXT, false, "LEFT"),
   outlineBorder(sheetId, supervisorSignatureCell.row, 1, 4),
   mergeCells(sheetId, supervisorSignatureCell.row, 1, 4),
+  fillRow(sheetId, supervisorSignatureCell.row, 4, 5, PRIMARY, HEADER_TEXT, false, "LEFT"),
+  fillRow(sheetId, supervisorSignatureCell.row, 5, 6, MUTED, TEXT, false, "LEFT"),
+  outlineBorder(sheetId, supervisorSignatureCell.row, 5, 6),
 ];
 
 export default formatSignatureRows;
