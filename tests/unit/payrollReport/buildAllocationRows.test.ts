@@ -896,4 +896,149 @@ describe('buildAllocationRows', () => {
       expect(taxesSum).toBe(100);
     });
   });
+
+  describe('hoursAllocation', () => {
+    it('reports the raw hours worked for a single funding source', () => {
+      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
+      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
+      const expenses = [makeExpense(employee.employeeId, 2400)];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].hoursAllocation).toBe(8);
+    });
+
+    it('is unaffected by pay rate — hours reflect actual time worked, not weighted dollar cost', () => {
+      // Same 4 hrs on each activity, but Activity B pays 3x as much. Wages split 25/75, hours stay 50/50.
+      const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [
+          makeActivityRate(activityA.activityId, { payRate: 10 }),
+          makeActivityRate(activityB.activityId, { payRate: 30 }),
+        ],
+      });
+      const hoursRows = [
+        makeHoursRow(employee.employeeId, 'Activity A', 4),
+        makeHoursRow(employee.employeeId, 'Activity B', 4),
+      ];
+      const expenses = [makeExpense(employee.employeeId, 160)];
+      const activityMap = new Map([
+        [activityA.activityName, activityA],
+        [activityB.activityName, activityB],
+      ]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
+      const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
+      expect(grantA.wagesAllocation).toBe(40);
+      expect(grantB.wagesAllocation).toBe(120);
+      expect(grantA.hoursAllocation).toBe(4);
+      expect(grantB.hoursAllocation).toBe(4);
+    });
+
+    it('splits hours across funding sources by activity percentage, same as dollars', () => {
+      const activity = makeActivity('Programs', [
+        { fundingSourceName: 'Grant A', percentage: 60 },
+        { fundingSourceName: 'Grant B', percentage: 40 },
+      ]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
+      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 10)];
+      const expenses = [makeExpense(employee.employeeId, 1000)];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
+      const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
+      expect(grantA.hoursAllocation).toBe(6);
+      expect(grantB.hoursAllocation).toBe(4);
+    });
+
+    it('sums hoursAllocation across employees for the same funding source', () => {
+      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const emp1 = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
+      const emp2 = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
+      const hoursRows = [
+        makeHoursRow(emp1.employeeId, 'Programs', 8),
+        makeHoursRow(emp2.employeeId, 'Programs', 5),
+      ];
+      const expenses = [
+        makeExpense(emp1.employeeId, 800),
+        makeExpense(emp2.employeeId, 500),
+      ];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([
+        [emp1.employeeId, emp1],
+        [emp2.employeeId, emp2],
+      ]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].hoursAllocation).toBe(13);
+    });
+
+    it('excludes an employee\'s hours when they have no bridge row for the activity (contributes $0 and 0 hours to Grant B)', () => {
+      const activityA = makeActivity('Known Activity', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const activityB = makeActivity('Unassigned Activity', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activityA.activityId, { payRate: 10 })] });
+      const hoursRows = [
+        makeHoursRow(employee.employeeId, 'Known Activity', 8),
+        makeHoursRow(employee.employeeId, 'Unassigned Activity', 8),
+      ];
+      const expenses = [makeExpense(employee.employeeId, 1000)];
+      const activityMap = new Map([
+        [activityA.activityName, activityA],
+        [activityB.activityName, activityB],
+      ]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      // Unassigned Activity resolves to $0 rate, but its 8 hours are still real hours worked toward
+      // Grant B — hours aren't zeroed out just because the dollar rate is $0.
+      const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
+      const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
+      expect(grantA.hoursAllocation).toBe(8);
+      expect(grantB.hoursAllocation).toBe(8);
+    });
+
+    it('last row absorbs remainder so hoursAllocation always sums to total hours worked (3-way split)', () => {
+      const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const activityC = makeActivity('Activity C', [{ fundingSourceName: 'Grant C', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [
+          makeActivityRate(activityA.activityId),
+          makeActivityRate(activityB.activityId),
+          makeActivityRate(activityC.activityId),
+        ],
+      });
+      const hoursRows = [
+        makeHoursRow(employee.employeeId, 'Activity A', 1),
+        makeHoursRow(employee.employeeId, 'Activity B', 1),
+        makeHoursRow(employee.employeeId, 'Activity C', 1),
+      ];
+      const expenses = [makeExpense(employee.employeeId, 100)];
+      const activityMap = new Map([
+        [activityA.activityName, activityA],
+        [activityB.activityName, activityB],
+        [activityC.activityName, activityC],
+      ]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+
+      const hoursSum = rows.reduce((sum, row) => sum + row.hoursAllocation, 0);
+      expect(hoursSum).toBe(3);
+    });
+  });
 });

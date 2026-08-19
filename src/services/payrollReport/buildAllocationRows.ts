@@ -28,6 +28,8 @@ const resolveDollarRate = (
 // Runs the full allocation calculation. Wages and taxes are allocated as two fully independent totals —
 // the bookkeeper's own spreadsheet keeps them separate — but both use the exact same per-employee
 // funding-source weighting (weightedCostByFundingSource), just applied to two different dollar amounts.
+// hoursAllocation is the raw hours worked, split across an activity's funding sources by the same
+// fundingSource.percentage used for dollars — it is not itself scaled by wageExpense/taxExpense.
 // Returns one AllocationReportRow per funding source, sorted by wagesAllocation descending.
 const buildAllocationRows = (
   hoursRows: PayrollReportHoursRow[],
@@ -38,6 +40,7 @@ const buildAllocationRows = (
 ): AllocationReportRow[] => {
   const wagesAllocationByFundingSource = new Map<string, number>();
   const taxesAllocationByFundingSource = new Map<string, number>();
+  const hoursAllocationByFundingSource = new Map<string, number>();
   let processedWagesTotal = 0;
   let processedTaxesTotal = 0;
 
@@ -55,8 +58,9 @@ const buildAllocationRows = (
     const employeeHoursRows = hoursRows.filter((row) => row.EmployeeId === expense.employeeId);
     const effectiveHourlyRate = calculateEffectiveHourlyRate(employee, employeeHoursRows, activityMap);
 
-    // Compute weighted cost per funding source for this employee
+    // Compute weighted cost, and raw hours, per funding source for this employee
     const weightedCostByFundingSource = new Map<string, number>();
+    const employeeHoursByFundingSource = new Map<string, number>();
     let totalWeightedCost = 0;
 
     for (const row of employeeHoursRows) {
@@ -76,10 +80,23 @@ const buildAllocationRows = (
           (weightedCostByFundingSource.get(fundingSource.fundingSourceName) ?? 0) + contribution,
         );
         totalWeightedCost += contribution;
+
+        const hoursContribution = row.Hours * (fundingSource.percentage / 100);
+        employeeHoursByFundingSource.set(
+          fundingSource.fundingSourceName,
+          (employeeHoursByFundingSource.get(fundingSource.fundingSourceName) ?? 0) + hoursContribution,
+        );
       }
     }
 
     if (totalWeightedCost === 0) continue;
+
+    for (const [fundingSourceName, hours] of employeeHoursByFundingSource) {
+      hoursAllocationByFundingSource.set(
+        fundingSourceName,
+        (hoursAllocationByFundingSource.get(fundingSourceName) ?? 0) + hours,
+      );
+    }
 
     // Apply the same per-funding-source proportions independently to wageExpense and taxExpense
     const wageExpense = expense.wageExpense ?? 0;
@@ -106,18 +123,22 @@ const buildAllocationRows = (
     0,
   );
   const targetAdditionalTotal = additionalExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const targetHoursTotal = Array.from(hoursAllocationByFundingSource.values()).reduce((sum, value) => sum + value, 0);
 
   const sortedEntries = Array.from(wagesAllocationByFundingSource.entries())
     .sort(([, a], [, b]) => b - a);
 
   // Round all rows except the last normally; the last row gets the remainder so each column's sum across
-  // all rows always equals its exact source total (employee wages, employee taxes, additional expenses).
+  // all rows always equals its exact source total (employee wages, employee taxes, additional expenses,
+  // and raw hours worked).
   let accumulatedWages = 0;
   let accumulatedTaxes = 0;
   let accumulatedAdditional = 0;
+  let accumulatedHours = 0;
 
   return sortedEntries.map(([fundingSourceName, wagesAllocation], index) => {
     const taxesAllocation = taxesAllocationByFundingSource.get(fundingSourceName) ?? 0;
+    const hoursAllocation = hoursAllocationByFundingSource.get(fundingSourceName) ?? 0;
     const share = totalWagesAllocation > 0 ? wagesAllocation / totalWagesAllocation : 0;
     const isLast = index === sortedEntries.length - 1;
 
@@ -133,12 +154,18 @@ const buildAllocationRows = (
       ? Math.round((targetAdditionalTotal - accumulatedAdditional) * 100) / 100
       : Math.round(share * targetAdditionalTotal * 100) / 100;
 
+    const roundedHours = isLast
+      ? Math.round((targetHoursTotal - accumulatedHours) * 100) / 100
+      : Math.round(hoursAllocation * 100) / 100;
+
     accumulatedWages += roundedWages;
     accumulatedTaxes += roundedTaxes;
     accumulatedAdditional += roundedAdditional;
+    accumulatedHours += roundedHours;
 
     return {
       fundingSourceName,
+      hoursAllocation: roundedHours,
       wagesAllocation: roundedWages,
       taxesAllocation: roundedTaxes,
       additionalExpenses: roundedAdditional,

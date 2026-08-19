@@ -73,6 +73,10 @@
             "type": "string",
             "example": "Federal Grant"
           },
+          "hoursAllocation": {
+            "type": "number",
+            "example": 320.5
+          },
           "wagesAllocation": {
             "type": "number",
             "example": 14250
