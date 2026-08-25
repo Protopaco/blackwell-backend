@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000",
+      "url": "http://localhost:1111",
       "description": "Development server"
     }
   ],
@@ -80,10 +80,6 @@
           "wagesAllocation": {
             "type": "number",
             "example": 14250
-          },
-          "taxesAllocation": {
-            "type": "number",
-            "example": 1156.5
           },
           "additionalExpenses": {
             "type": "number",

@@ -30,7 +30,7 @@ app.use(pinoHttp({ logger }));
 app.use(
   cors({
     origin: [
-      'http://localhost:5173',
+      'http://localhost:1113',
       process.env.FRONTEND_BASE_URL,
     ].filter(Boolean) as string[],
     credentials: true,
@@ -75,7 +75,7 @@ app.use(`${basePath}/v1/timesheetFolder`, timesheetFolderRoute);
 
 app.use(mapErrorResponse);
 
-const PORT = Number(process.env.PORT || 3000);
+const PORT = Number(process.env.PORT || 1111);
 const HOST = process.env.HOST ?? (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
 
 const server = app.listen(PORT, HOST, () => {
