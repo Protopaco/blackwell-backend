@@ -36,8 +36,18 @@ const generateAllocationReport = async (clientId: Guid, payPeriodId: Guid): Prom
 
   const activityMap = new Map(payrollConfig.activities.map((activity) => [activity.activityName, activity]));
   const employeeMap = new Map(payrollConfig.employees.map((employee) => [employee.employeeId, employee]));
+  const fundingSourceMap = new Map(
+    payrollConfig.fundingSources.map((fundingSource) => [fundingSource.fundingSourceName, fundingSource]),
+  );
 
-  const rows = buildAllocationRows(hoursRows, employeeExpenses ?? [], additionalExpenses ?? [], activityMap, employeeMap);
+  const rows = buildAllocationRows(
+    hoursRows,
+    employeeExpenses ?? [],
+    additionalExpenses ?? [],
+    activityMap,
+    employeeMap,
+    fundingSourceMap,
+  );
 
   await writeAllocationReportTab(reportFileId, rows);
 

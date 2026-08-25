@@ -36,10 +36,12 @@ const createConfiguredClientSetup = async (client: Client): Promise<void> => {
   await createFundingSource(client.clientId, {
     fundingSourceName: 'Program Grant',
     fundingSourceCode: 'PG',
+    fringeRate: null,
   });
   await createFundingSource(client.clientId, {
     fundingSourceName: 'General Operating',
     fundingSourceCode: 'GO',
+    fringeRate: null,
   });
 
   await createActivity(client.clientId, {

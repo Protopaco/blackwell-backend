@@ -6,6 +6,7 @@ const { existingFundingSource } = vi.hoisted(() => ({
     fundingSourceId: 'fs1',
     fundingSourceName: 'Federal Grant',
     fundingSourceCode: 'FG-100',
+    fringeRate: 32,
   } as FundingSource,
 }));
 
@@ -24,8 +25,8 @@ describe('writeFundingSources', () => {
     expect(overwriteTabRows).toHaveBeenCalledWith(
       'config-1',
       'FundingSources',
-      ['FundingSourceId', 'FundingSourceName', 'FundingSourceCode'],
-      [{ FundingSourceId: 'fs1', FundingSourceName: 'Renamed Grant', FundingSourceCode: 'FG-100' }],
+      ['FundingSourceId', 'FundingSourceName', 'FundingSourceCode', 'FringeRate'],
+      [{ FundingSourceId: 'fs1', FundingSourceName: 'Renamed Grant', FundingSourceCode: 'FG-100', FringeRate: 32 }],
     );
   });
 
@@ -34,6 +35,7 @@ describe('writeFundingSources', () => {
       writeFundingSources('config-1', {
         fundingSourceId: 'unknown',
         fundingSourceName: 'X',
+        fringeRate: null,
       }),
     ).rejects.toThrow('Funding source not found: unknown');
   });

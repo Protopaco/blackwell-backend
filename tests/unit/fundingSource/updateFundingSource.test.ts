@@ -13,7 +13,7 @@ import getClientById from '#services/client/getClientById.js';
 import writeFundingSources from '#db/fundingSource/writeFundingSources.js';
 import payrollConfigCache from '#utils/caches/payrollConfigCache.js';
 
-const fundingSource: FundingSource = { fundingSourceId: 'fs1', fundingSourceName: 'Federal Grant' };
+const fundingSource: FundingSource = { fundingSourceId: 'fs1', fundingSourceName: 'Federal Grant', fringeRate: null };
 
 describe('updateFundingSource', () => {
   it('writes the updated funding source and invalidates the cache', async () => {

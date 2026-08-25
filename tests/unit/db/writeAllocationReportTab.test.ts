@@ -12,7 +12,7 @@ import allocationReportCache from '#utils/caches/allocationReportCache.js';
 describe('writeAllocationReportTab', () => {
   it('invalidates the cache entry for the written workbook', async () => {
     allocationReportCache.set('workbook-allocation-1', [
-      { fundingSourceName: 'Stale Grant', hoursAllocation: 1, wagesAllocation: 1, additionalExpenses: 0, total: 1 },
+      { fundingSourceName: 'Stale Grant', hoursAllocation: 1, wagesAllocation: 1, fringeAllocation: 0, additionalExpenses: 0, total: 1 },
     ]);
 
     await writeAllocationReportTab('workbook-allocation-1', []);
@@ -22,13 +22,13 @@ describe('writeAllocationReportTab', () => {
 
   it('does not affect the cache entry for a different workbook', async () => {
     allocationReportCache.set('workbook-allocation-2', [
-      { fundingSourceName: 'Untouched Grant', hoursAllocation: 5, wagesAllocation: 5, additionalExpenses: 0, total: 5 },
+      { fundingSourceName: 'Untouched Grant', hoursAllocation: 5, wagesAllocation: 5, fringeAllocation: 0, additionalExpenses: 0, total: 5 },
     ]);
 
     await writeAllocationReportTab('workbook-allocation-1', []);
 
     expect(allocationReportCache.get('workbook-allocation-2')).toEqual([
-      { fundingSourceName: 'Untouched Grant', hoursAllocation: 5, wagesAllocation: 5, additionalExpenses: 0, total: 5 },
+      { fundingSourceName: 'Untouched Grant', hoursAllocation: 5, wagesAllocation: 5, fringeAllocation: 0, additionalExpenses: 0, total: 5 },
     ]);
   });
 });

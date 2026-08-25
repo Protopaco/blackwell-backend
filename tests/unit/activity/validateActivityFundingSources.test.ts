@@ -10,8 +10,8 @@ describe('validateActivityFundingSources', () => {
           { fundingSourceName: 'State Grant', percentage: 40 },
         ],
         [
-          { fundingSourceId: 'fs-1', fundingSourceName: 'Federal Grant', fundingSourceCode: 'FED' },
-          { fundingSourceId: 'fs-2', fundingSourceName: 'State Grant', fundingSourceCode: 'STATE' },
+          { fundingSourceId: 'fs-1', fundingSourceName: 'Federal Grant', fundingSourceCode: 'FED', fringeRate: null },
+          { fundingSourceId: 'fs-2', fundingSourceName: 'State Grant', fundingSourceCode: 'STATE', fringeRate: null },
         ],
       ),
     ).not.toThrow();
@@ -21,7 +21,7 @@ describe('validateActivityFundingSources', () => {
     expect(() =>
       validateActivityFundingSources(
         [{ fundingSourceName: 'Unknown Grant', percentage: 100 }],
-        [{ fundingSourceId: 'fs-1', fundingSourceName: 'Federal Grant', fundingSourceCode: 'FED' }],
+        [{ fundingSourceId: 'fs-1', fundingSourceName: 'Federal Grant', fundingSourceCode: 'FED', fringeRate: null }],
       ),
     ).toThrow('Activity funding source not found: Unknown Grant');
   });
@@ -33,7 +33,7 @@ describe('validateActivityFundingSources', () => {
           { fundingSourceName: 'Unknown Grant A', percentage: 50 },
           { fundingSourceName: 'Unknown Grant B', percentage: 50 },
         ],
-        [{ fundingSourceId: 'fs-1', fundingSourceName: 'Federal Grant', fundingSourceCode: 'FED' }],
+        [{ fundingSourceId: 'fs-1', fundingSourceName: 'Federal Grant', fundingSourceCode: 'FED', fringeRate: null }],
       ),
     ).toThrow('Activity funding source not found: Unknown Grant A, Unknown Grant B');
   });

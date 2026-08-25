@@ -10,6 +10,7 @@ const fundingSource: FundingSource = {
   fundingSourceId: 'fs1',
   fundingSourceName: 'Federal Grant',
   fundingSourceCode: 'FG-100',
+  fringeRate: 32,
 };
 
 describe('writeFundingSourcesBulk', () => {
@@ -17,8 +18,8 @@ describe('writeFundingSourcesBulk', () => {
     await writeFundingSourcesBulk('report-1', [fundingSource]);
 
     expect(writeValues).toHaveBeenCalledWith('report-1', 'FundingSources', [
-      ['FundingSourceId', 'FundingSourceName', 'FundingSourceCode'],
-      ['fs1', 'Federal Grant', 'FG-100'],
+      ['FundingSourceId', 'FundingSourceName', 'FundingSourceCode', 'FringeRate'],
+      ['fs1', 'Federal Grant', 'FG-100', 32],
     ]);
   });
 
@@ -26,7 +27,7 @@ describe('writeFundingSourcesBulk', () => {
     await writeFundingSourcesBulk('report-1', []);
 
     expect(writeValues).toHaveBeenCalledWith('report-1', 'FundingSources', [
-      ['FundingSourceId', 'FundingSourceName', 'FundingSourceCode'],
+      ['FundingSourceId', 'FundingSourceName', 'FundingSourceCode', 'FringeRate'],
     ]);
   });
 });

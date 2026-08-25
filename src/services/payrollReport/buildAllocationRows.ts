@@ -3,6 +3,7 @@ import Activity from '#models/Activity.js';
 import AllocationReportRow from '#models/AllocationReportRow.js';
 import AdditionalExpense from '#models/AdditionalExpense.js';
 import EmployeeExpense from '#models/EmployeeExpense.js';
+import FundingSource from '#models/FundingSource.js';
 import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
 import { EmployeeActivityPayRateType } from '#models/EmployeeActivityPayRateType.js';
 import calculateEffectiveHourlyRate from './calculateEffectiveHourlyRate.js';
@@ -29,6 +30,8 @@ const resolveDollarRate = (
 // split across funding sources using the per-employee funding-source weighting (weightedCostByFundingSource).
 // hoursAllocation is the raw hours worked, split across an activity's funding sources by the same
 // fundingSource.percentage used for dollars — it is not itself scaled by wageExpense.
+// fringeAllocation is a flat rate applied to each funding source's own wagesAllocation
+// (wagesAllocation * fundingSource.fringeRate / 100) — not derived from actual payroll taxes.
 // Returns one AllocationReportRow per funding source, sorted by wagesAllocation descending.
 const buildAllocationRows = (
   hoursRows: PayrollReportHoursRow[],
@@ -36,6 +39,7 @@ const buildAllocationRows = (
   additionalExpenses: AdditionalExpense[],
   activityMap: Map<string, Activity>,
   employeeMap: Map<string, Employee>,
+  fundingSourceMap: Map<string, FundingSource>,
 ): AllocationReportRow[] => {
   const wagesAllocationByFundingSource = new Map<string, number>();
   const hoursAllocationByFundingSource = new Map<string, number>();
@@ -144,12 +148,16 @@ const buildAllocationRows = (
     accumulatedAdditional += roundedAdditional;
     accumulatedHours += roundedHours;
 
+    const fringeRate = fundingSourceMap.get(fundingSourceName)?.fringeRate ?? 0;
+    const roundedFringe = Math.round(roundedWages * (fringeRate / 100) * 100) / 100;
+
     return {
       fundingSourceName,
       hoursAllocation: roundedHours,
       wagesAllocation: roundedWages,
+      fringeAllocation: roundedFringe,
       additionalExpenses: roundedAdditional,
-      total: Math.round((roundedWages + roundedAdditional) * 100) / 100,
+      total: Math.round((roundedWages + roundedFringe + roundedAdditional) * 100) / 100,
     };
   });
 };
