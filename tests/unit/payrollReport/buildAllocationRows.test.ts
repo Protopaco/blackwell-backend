@@ -5,6 +5,7 @@ import Activity, { ActivityFundingSource } from '#models/Activity.js';
 import EmployeeActivityRateInput from '#models/EmployeeActivityRateInput.js';
 import EmployeeExpense from '#models/EmployeeExpense.js';
 import AdditionalExpense from '#models/AdditionalExpense.js';
+import FundingSource from '#models/FundingSource.js';
 import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
 import { PayrollCategory } from '#models/PayrollCategory.js';
 import { EmployeeStatus } from '#models/EmployeeStatus.js';
@@ -69,30 +70,26 @@ const makeHoursRow = (
   ...overrides,
 });
 
-// wageExpense carries the full amount for existing tests (taxExpense left null, so taxesAllocation is 0
-// and every existing total()/wagesAllocation assertion is unaffected by the [082] chunk 2 split).
 const makeExpense = (employeeId: string, wageExpense: number | null): EmployeeExpense => ({
   employeeId,
   employeeName: 'Jane Smith',
   wageExpense,
-  taxExpense: null,
-});
-
-const makeWageAndTaxExpense = (
-  employeeId: string,
-  wageExpense: number | null,
-  taxExpense: number | null,
-): EmployeeExpense => ({
-  employeeId,
-  employeeName: 'Jane Smith',
-  wageExpense,
-  taxExpense,
 });
 
 const makeAdditional = (expenseName: string, amount: number): AdditionalExpense => ({
   expenseName,
   amount,
 });
+
+const makeFundingSourceMap = (
+  entries: [fundingSourceName: string, fringeRate: number | null][],
+): Map<string, FundingSource> =>
+  new Map(
+    entries.map(([fundingSourceName, fringeRate]) => [
+      fundingSourceName,
+      { fundingSourceId: crypto.randomUUID(), fundingSourceName, fringeRate },
+    ]),
+  );
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -106,7 +103,7 @@ describe('buildAllocationRows', () => {
       const activityMap = new Map([[activity.activityName, activity]]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(1);
       expect(rows[0].fundingSourceName).toBe('Grant A');
@@ -134,7 +131,7 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(2);
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
@@ -155,7 +152,7 @@ describe('buildAllocationRows', () => {
       const activityMap = new Map([[activity.activityName, activity]]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(2);
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
@@ -184,7 +181,7 @@ describe('buildAllocationRows', () => {
         [emp2.employeeId, emp2],
       ]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(1);
       expect(rows[0].wagesAllocation).toBe(3000);
@@ -217,7 +214,7 @@ describe('buildAllocationRows', () => {
         [emp2.employeeId, emp2],
       ]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
       const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
@@ -245,7 +242,7 @@ describe('buildAllocationRows', () => {
         [emp2.employeeId, emp2],
       ]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(1);
       expect(rows[0].wagesAllocation).toBe(4200);
@@ -287,7 +284,7 @@ describe('buildAllocationRows', () => {
         [emp2.employeeId, emp2],
       ]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       // emp1: 50% each → $500 Grant A, $500 Grant B
       // emp2: 80% / 20% → $800 Grant A, $200 Grant B
@@ -299,7 +296,7 @@ describe('buildAllocationRows', () => {
   });
 
   describe('filtering active employees', () => {
-    it('excludes employees where both wageExpense and taxExpense are null', () => {
+    it('excludes employees where wageExpense is null', () => {
       const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
       const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
@@ -307,7 +304,7 @@ describe('buildAllocationRows', () => {
       const activityMap = new Map([[activity.activityName, activity]]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(0);
     });
@@ -320,7 +317,7 @@ describe('buildAllocationRows', () => {
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
       // No hours rows at all
-      const rows = buildAllocationRows([], expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows([], expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(0);
     });
@@ -346,7 +343,7 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, additionalExpenses, activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, additionalExpenses, activityMap, employeeMap, new Map());
 
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
       const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
@@ -370,7 +367,7 @@ describe('buildAllocationRows', () => {
       const activityMap = new Map([[activity.activityName, activity]]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, additionalExpenses, activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, additionalExpenses, activityMap, employeeMap, new Map());
 
       expect(rows[0].additionalExpenses).toBe(350);
       expect(rows[0].total).toBe(1350);
@@ -384,7 +381,7 @@ describe('buildAllocationRows', () => {
       const activityMap = new Map([[activity.activityName, activity]]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows[0].additionalExpenses).toBe(0);
       expect(rows[0].total).toBe(rows[0].wagesAllocation);
@@ -414,7 +411,7 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
       const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
@@ -447,7 +444,7 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
       const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
@@ -466,7 +463,7 @@ describe('buildAllocationRows', () => {
       const activityMap = new Map([[activity.activityName, activity]]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(1);
       expect(rows[0].wagesAllocation).toBe(240);
@@ -489,7 +486,7 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
       const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
@@ -510,7 +507,7 @@ describe('buildAllocationRows', () => {
       const activityMap = new Map([[activity.activityName, activity]]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(1);
       expect(rows[0].fundingSourceName).toBe('Grant A');
@@ -540,7 +537,7 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
       const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
@@ -572,7 +569,7 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
       const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
@@ -591,7 +588,7 @@ describe('buildAllocationRows', () => {
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
       // No hours rows at all → salaryHours is 0 → totalWeightedCost is 0 → employee excluded
-      const rows = buildAllocationRows([], expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows([], expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(0);
     });
@@ -599,7 +596,7 @@ describe('buildAllocationRows', () => {
 
   describe('edge cases', () => {
     it('returns empty array when there are no active employees with expenses', () => {
-      const rows = buildAllocationRows([], [], [], new Map(), new Map());
+      const rows = buildAllocationRows([], [], [], new Map(), new Map(), new Map());
       expect(rows).toHaveLength(0);
     });
 
@@ -615,7 +612,7 @@ describe('buildAllocationRows', () => {
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
       // Should still produce a result based on known activity rows only
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(1);
       expect(rows[0].wagesAllocation).toBe(1000);
@@ -629,7 +626,7 @@ describe('buildAllocationRows', () => {
       const activityMap = new Map([[activity.activityName, activity]]);
 
       // Empty employeeMap — employee not found
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, new Map());
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, new Map(), new Map());
 
       expect(rows).toHaveLength(0);
     });
@@ -652,7 +649,7 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       // sorted descending: Grant B (2 hrs, 66.67) first, Grant A (1 hr, 33.33) last (gets remainder)
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
@@ -687,7 +684,7 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       const wagesSum = rows.reduce((sum, row) => sum + row.wagesAllocation, 0);
       expect(wagesSum).toBe(100);
@@ -718,13 +715,13 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, additionalExpenses, activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, additionalExpenses, activityMap, employeeMap, new Map());
 
       const additionalSum = rows.reduce((sum, row) => sum + row.additionalExpenses, 0);
       expect(additionalSum).toBe(100);
     });
 
-    it('total equals wagesAllocation + taxesAllocation + additionalExpenses for each row', () => {
+    it('total equals wagesAllocation + additionalExpenses for each row', () => {
       const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
       const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
       const employee = makeEmployee({
@@ -734,7 +731,7 @@ describe('buildAllocationRows', () => {
         makeHoursRow(employee.employeeId, 'Activity A', 6),
         makeHoursRow(employee.employeeId, 'Activity B', 4),
       ];
-      const expenses = [makeWageAndTaxExpense(employee.employeeId, 1000, 80)];
+      const expenses = [makeExpense(employee.employeeId, 1000)];
       const additionalExpenses = [makeAdditional('HSA', 500)];
       const activityMap = new Map([
         [activityA.activityName, activityA],
@@ -742,12 +739,10 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, additionalExpenses, activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, additionalExpenses, activityMap, employeeMap, new Map());
 
       for (const row of rows) {
-        expect(row.total).toBe(
-          Math.round((row.wagesAllocation + row.taxesAllocation + row.additionalExpenses) * 100) / 100,
-        );
+        expect(row.total).toBe(Math.round((row.wagesAllocation + row.additionalExpenses) * 100) / 100);
       }
     });
 
@@ -775,125 +770,11 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows[0].fundingSourceName).toBe('Grant B'); // 70%
       expect(rows[1].fundingSourceName).toBe('Grant A'); // 20%
       expect(rows[2].fundingSourceName).toBe('Grant C'); // 10%
-    });
-  });
-
-  describe('taxesAllocation', () => {
-    it('allocates taxExpense independently of wageExpense using the same funding-source weighting', () => {
-      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
-      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
-      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
-      const expenses = [makeWageAndTaxExpense(employee.employeeId, 2400, 195)];
-      const activityMap = new Map([[activity.activityName, activity]]);
-      const employeeMap = new Map([[employee.employeeId, employee]]);
-
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
-
-      expect(rows).toHaveLength(1);
-      expect(rows[0].wagesAllocation).toBe(2400);
-      expect(rows[0].taxesAllocation).toBe(195);
-    });
-
-    it('splits taxExpense across funding sources by the same hours proportion as wages', () => {
-      // Same 60/40 hours split as wages — Grant A gets 60% of both the wage and the tax total.
-      const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
-      const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
-      const employee = makeEmployee({
-        activityRates: [makeActivityRate(activityA.activityId), makeActivityRate(activityB.activityId)],
-      });
-      const hoursRows = [
-        makeHoursRow(employee.employeeId, 'Activity A', 6),
-        makeHoursRow(employee.employeeId, 'Activity B', 4),
-      ];
-      const expenses = [makeWageAndTaxExpense(employee.employeeId, 1000, 200)];
-      const activityMap = new Map([
-        [activityA.activityName, activityA],
-        [activityB.activityName, activityB],
-      ]);
-      const employeeMap = new Map([[employee.employeeId, employee]]);
-
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
-
-      const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
-      const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
-      expect(grantA.wagesAllocation).toBe(600);
-      expect(grantA.taxesAllocation).toBe(120);
-      expect(grantB.wagesAllocation).toBe(400);
-      expect(grantB.taxesAllocation).toBe(80);
-    });
-
-    it('allocates taxExpense for an employee whose wageExpense is null', () => {
-      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
-      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
-      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
-      const expenses = [makeWageAndTaxExpense(employee.employeeId, null, 195)];
-      const activityMap = new Map([[activity.activityName, activity]]);
-      const employeeMap = new Map([[employee.employeeId, employee]]);
-
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
-
-      expect(rows).toHaveLength(1);
-      expect(rows[0].wagesAllocation).toBe(0);
-      expect(rows[0].taxesAllocation).toBe(195);
-    });
-
-    it('sums taxesAllocation across employees for the same funding source', () => {
-      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
-      const emp1 = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
-      const emp2 = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
-      const hoursRows = [
-        makeHoursRow(emp1.employeeId, 'Programs', 8),
-        makeHoursRow(emp2.employeeId, 'Programs', 8),
-      ];
-      const expenses = [
-        makeWageAndTaxExpense(emp1.employeeId, 1000, 80),
-        makeWageAndTaxExpense(emp2.employeeId, 2000, 160),
-      ];
-      const activityMap = new Map([[activity.activityName, activity]]);
-      const employeeMap = new Map([
-        [emp1.employeeId, emp1],
-        [emp2.employeeId, emp2],
-      ]);
-
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
-
-      expect(rows).toHaveLength(1);
-      expect(rows[0].taxesAllocation).toBe(240);
-    });
-
-    it('last row absorbs remainder so taxesAllocation always sums to total employee taxes (3-way equal split)', () => {
-      const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
-      const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
-      const activityC = makeActivity('Activity C', [{ fundingSourceName: 'Grant C', percentage: 100 }]);
-      const employee = makeEmployee({
-        activityRates: [
-          makeActivityRate(activityA.activityId),
-          makeActivityRate(activityB.activityId),
-          makeActivityRate(activityC.activityId),
-        ],
-      });
-      const hoursRows = [
-        makeHoursRow(employee.employeeId, 'Activity A', 1),
-        makeHoursRow(employee.employeeId, 'Activity B', 1),
-        makeHoursRow(employee.employeeId, 'Activity C', 1),
-      ];
-      const expenses = [makeWageAndTaxExpense(employee.employeeId, 300, 100)];
-      const activityMap = new Map([
-        [activityA.activityName, activityA],
-        [activityB.activityName, activityB],
-        [activityC.activityName, activityC],
-      ]);
-      const employeeMap = new Map([[employee.employeeId, employee]]);
-
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
-
-      const taxesSum = rows.reduce((sum, row) => sum + row.taxesAllocation, 0);
-      expect(taxesSum).toBe(100);
     });
   });
 
@@ -906,7 +787,7 @@ describe('buildAllocationRows', () => {
       const activityMap = new Map([[activity.activityName, activity]]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(1);
       expect(rows[0].hoursAllocation).toBe(8);
@@ -933,7 +814,7 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
       const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
@@ -954,7 +835,7 @@ describe('buildAllocationRows', () => {
       const activityMap = new Map([[activity.activityName, activity]]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
       const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
@@ -980,7 +861,7 @@ describe('buildAllocationRows', () => {
         [emp2.employeeId, emp2],
       ]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       expect(rows).toHaveLength(1);
       expect(rows[0].hoursAllocation).toBe(13);
@@ -1001,7 +882,7 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       // Unassigned Activity resolves to $0 rate, but its 8 hours are still real hours worked toward
       // Grant B — hours aren't zeroed out just because the dollar rate is $0.
@@ -1035,10 +916,112 @@ describe('buildAllocationRows', () => {
       ]);
       const employeeMap = new Map([[employee.employeeId, employee]]);
 
-      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap);
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
 
       const hoursSum = rows.reduce((sum, row) => sum + row.hoursAllocation, 0);
       expect(hoursSum).toBe(3);
+    });
+  });
+
+  describe('fringeAllocation', () => {
+    it('applies the funding source\'s flat fringe rate to its own wagesAllocation', () => {
+      // 25 hrs × $25/hr = $625 wages. 32% fringe → $200 fringe.
+      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId, { payRate: 25 })] });
+      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 25)];
+      const expenses = [makeExpense(employee.employeeId, 625)];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+      const fundingSourceMap = makeFundingSourceMap([['Grant A', 32]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, fundingSourceMap);
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0].wagesAllocation).toBe(625);
+      expect(rows[0].fringeAllocation).toBe(200);
+      expect(rows[0].total).toBe(825);
+    });
+
+    it('defaults to 0 fringe when the funding source has no configured fringeRate', () => {
+      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
+      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
+      const expenses = [makeExpense(employee.employeeId, 800)];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+      const fundingSourceMap = makeFundingSourceMap([['Grant A', null]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, fundingSourceMap);
+
+      expect(rows[0].fringeAllocation).toBe(0);
+      expect(rows[0].total).toBe(800);
+    });
+
+    it('defaults to 0 fringe when the funding source is not in the map at all', () => {
+      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
+      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
+      const expenses = [makeExpense(employee.employeeId, 800)];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, new Map());
+
+      expect(rows[0].fringeAllocation).toBe(0);
+      expect(rows[0].total).toBe(800);
+    });
+
+    it('applies each funding source\'s own fringe rate independently when wages are split across sources', () => {
+      // 60/40 hours split → $600 / $400 wages. Grant A fringe 20% → $120. Grant B fringe 50% → $200.
+      const activityA = makeActivity('Activity A', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const activityB = makeActivity('Activity B', [{ fundingSourceName: 'Grant B', percentage: 100 }]);
+      const employee = makeEmployee({
+        activityRates: [makeActivityRate(activityA.activityId), makeActivityRate(activityB.activityId)],
+      });
+      const hoursRows = [
+        makeHoursRow(employee.employeeId, 'Activity A', 6),
+        makeHoursRow(employee.employeeId, 'Activity B', 4),
+      ];
+      const expenses = [makeExpense(employee.employeeId, 1000)];
+      const activityMap = new Map([
+        [activityA.activityName, activityA],
+        [activityB.activityName, activityB],
+      ]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+      const fundingSourceMap = makeFundingSourceMap([
+        ['Grant A', 20],
+        ['Grant B', 50],
+      ]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, [], activityMap, employeeMap, fundingSourceMap);
+
+      const grantA = rows.find((r) => r.fundingSourceName === 'Grant A')!;
+      const grantB = rows.find((r) => r.fundingSourceName === 'Grant B')!;
+      expect(grantA.wagesAllocation).toBe(600);
+      expect(grantA.fringeAllocation).toBe(120);
+      expect(grantA.total).toBe(720);
+      expect(grantB.wagesAllocation).toBe(400);
+      expect(grantB.fringeAllocation).toBe(200);
+      expect(grantB.total).toBe(600);
+    });
+
+    it('folds fringeAllocation into total alongside wages and additionalExpenses', () => {
+      const activity = makeActivity('Programs', [{ fundingSourceName: 'Grant A', percentage: 100 }]);
+      const employee = makeEmployee({ activityRates: [makeActivityRate(activity.activityId)] });
+      const hoursRows = [makeHoursRow(employee.employeeId, 'Programs', 8)];
+      const expenses = [makeExpense(employee.employeeId, 800)];
+      const additionalExpenses = [makeAdditional('HSA', 100)];
+      const activityMap = new Map([[activity.activityName, activity]]);
+      const employeeMap = new Map([[employee.employeeId, employee]]);
+      const fundingSourceMap = makeFundingSourceMap([['Grant A', 25]]);
+
+      const rows = buildAllocationRows(hoursRows, expenses, additionalExpenses, activityMap, employeeMap, fundingSourceMap);
+
+      // wages 800, fringe 800 * 25% = 200, additional 100 → total 1100
+      expect(rows[0].wagesAllocation).toBe(800);
+      expect(rows[0].fringeAllocation).toBe(200);
+      expect(rows[0].additionalExpenses).toBe(100);
+      expect(rows[0].total).toBe(1100);
     });
   });
 });

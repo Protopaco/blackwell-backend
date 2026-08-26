@@ -4,7 +4,7 @@ import EmployeePayrollSummary from '#models/EmployeePayrollSummary.js';
 import PayrollReportResponse from '#models/PayrollReportResponse.js';
 
 // Transforms flat PayrollReportSummaryRow records (read from the spreadsheet) into a grouped-by-employee response shape.
-// employeeExpenses is joined in by employeeId; an employee with no expense entry gets wageExpense/taxExpense: null.
+// employeeExpenses is joined in by employeeId; an employee with no expense entry gets wageExpense: null.
 // Rows are routed by PayRateType: FlatRate goes to the flatRate bucket; Hourly and Salary (both hour-tracked
 // on the timesheet) go to the hourly bucket — salary's own dollar handling is [057]'s scope, not this response shape.
 const buildPayrollReportResponse = (
@@ -24,7 +24,6 @@ const buildPayrollReportResponse = (
         totalHours: 0,
         totalFlatRate: 0,
         wageExpense: expenseByEmployeeId.get(employeeId)?.wageExpense ?? null,
-        taxExpense: expenseByEmployeeId.get(employeeId)?.taxExpense ?? null,
         hourly: [],
         flatRate: [],
       } satisfies EmployeePayrollSummary;

@@ -5,6 +5,7 @@ const mapFundingSourceRow = (fundingSource: FundingSource): Record<string, unkno
   FundingSourceId: fundingSource.fundingSourceId,
   FundingSourceName: fundingSource.fundingSourceName,
   FundingSourceCode: fundingSource.fundingSourceCode ?? '',
+  FringeRate: fundingSource.fringeRate ?? '',
 });
 
 export default mapFundingSourceRow;

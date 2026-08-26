@@ -3,6 +3,7 @@ import Activity from '#models/Activity.js';
 import AllocationReportRow from '#models/AllocationReportRow.js';
 import AdditionalExpense from '#models/AdditionalExpense.js';
 import EmployeeExpense from '#models/EmployeeExpense.js';
+import FundingSource from '#models/FundingSource.js';
 import PayrollReportHoursRow from '#models/PayrollReportHoursRow.js';
 import { EmployeeActivityPayRateType } from '#models/EmployeeActivityPayRateType.js';
 import calculateEffectiveHourlyRate from './calculateEffectiveHourlyRate.js';
@@ -25,11 +26,12 @@ const resolveDollarRate = (
   return isHoliday ? activityRate.holidayPayRate : activityRate.payRate;
 };
 
-// Runs the full allocation calculation. Wages and taxes are allocated as two fully independent totals —
-// the bookkeeper's own spreadsheet keeps them separate — but both use the exact same per-employee
-// funding-source weighting (weightedCostByFundingSource), just applied to two different dollar amounts.
+// Runs the full allocation calculation. wagesAllocation is the employee's actual wageExpense dollars,
+// split across funding sources using the per-employee funding-source weighting (weightedCostByFundingSource).
 // hoursAllocation is the raw hours worked, split across an activity's funding sources by the same
-// fundingSource.percentage used for dollars — it is not itself scaled by wageExpense/taxExpense.
+// fundingSource.percentage used for dollars — it is not itself scaled by wageExpense.
+// fringeAllocation is a flat rate applied to each funding source's own wagesAllocation
+// (wagesAllocation * fundingSource.fringeRate / 100) — not derived from actual payroll taxes.
 // Returns one AllocationReportRow per funding source, sorted by wagesAllocation descending.
 const buildAllocationRows = (
   hoursRows: PayrollReportHoursRow[],
@@ -37,16 +39,13 @@ const buildAllocationRows = (
   additionalExpenses: AdditionalExpense[],
   activityMap: Map<string, Activity>,
   employeeMap: Map<string, Employee>,
+  fundingSourceMap: Map<string, FundingSource>,
 ): AllocationReportRow[] => {
   const wagesAllocationByFundingSource = new Map<string, number>();
-  const taxesAllocationByFundingSource = new Map<string, number>();
   const hoursAllocationByFundingSource = new Map<string, number>();
   let processedWagesTotal = 0;
-  let processedTaxesTotal = 0;
 
-  const activeExpenses = employeeExpenses.filter(
-    (expense) => expense.wageExpense !== null || expense.taxExpense !== null,
-  );
+  const activeExpenses = employeeExpenses.filter((expense) => expense.wageExpense !== null);
 
   for (const expense of activeExpenses) {
     const employee = employeeMap.get(expense.employeeId);
@@ -98,22 +97,16 @@ const buildAllocationRows = (
       );
     }
 
-    // Apply the same per-funding-source proportions independently to wageExpense and taxExpense
+    // Apply the per-funding-source proportions to wageExpense
     const wageExpense = expense.wageExpense ?? 0;
-    const taxExpense = expense.taxExpense ?? 0;
     for (const [fundingSourceName, weightedCost] of weightedCostByFundingSource) {
       const proportion = weightedCost / totalWeightedCost;
       wagesAllocationByFundingSource.set(
         fundingSourceName,
         (wagesAllocationByFundingSource.get(fundingSourceName) ?? 0) + proportion * wageExpense,
       );
-      taxesAllocationByFundingSource.set(
-        fundingSourceName,
-        (taxesAllocationByFundingSource.get(fundingSourceName) ?? 0) + proportion * taxExpense,
-      );
     }
     processedWagesTotal += wageExpense;
-    processedTaxesTotal += taxExpense;
   }
 
   if (wagesAllocationByFundingSource.size === 0) return [];
@@ -129,15 +122,12 @@ const buildAllocationRows = (
     .sort(([, a], [, b]) => b - a);
 
   // Round all rows except the last normally; the last row gets the remainder so each column's sum across
-  // all rows always equals its exact source total (employee wages, employee taxes, additional expenses,
-  // and raw hours worked).
+  // all rows always equals its exact source total (employee wages, additional expenses, and raw hours worked).
   let accumulatedWages = 0;
-  let accumulatedTaxes = 0;
   let accumulatedAdditional = 0;
   let accumulatedHours = 0;
 
   return sortedEntries.map(([fundingSourceName, wagesAllocation], index) => {
-    const taxesAllocation = taxesAllocationByFundingSource.get(fundingSourceName) ?? 0;
     const hoursAllocation = hoursAllocationByFundingSource.get(fundingSourceName) ?? 0;
     const share = totalWagesAllocation > 0 ? wagesAllocation / totalWagesAllocation : 0;
     const isLast = index === sortedEntries.length - 1;
@@ -145,10 +135,6 @@ const buildAllocationRows = (
     const roundedWages = isLast
       ? Math.round((processedWagesTotal - accumulatedWages) * 100) / 100
       : Math.round(wagesAllocation * 100) / 100;
-
-    const roundedTaxes = isLast
-      ? Math.round((processedTaxesTotal - accumulatedTaxes) * 100) / 100
-      : Math.round(taxesAllocation * 100) / 100;
 
     const roundedAdditional = isLast
       ? Math.round((targetAdditionalTotal - accumulatedAdditional) * 100) / 100
@@ -159,17 +145,19 @@ const buildAllocationRows = (
       : Math.round(hoursAllocation * 100) / 100;
 
     accumulatedWages += roundedWages;
-    accumulatedTaxes += roundedTaxes;
     accumulatedAdditional += roundedAdditional;
     accumulatedHours += roundedHours;
+
+    const fringeRate = fundingSourceMap.get(fundingSourceName)?.fringeRate ?? 0;
+    const roundedFringe = Math.round(roundedWages * (fringeRate / 100) * 100) / 100;
 
     return {
       fundingSourceName,
       hoursAllocation: roundedHours,
       wagesAllocation: roundedWages,
-      taxesAllocation: roundedTaxes,
+      fringeAllocation: roundedFringe,
       additionalExpenses: roundedAdditional,
-      total: Math.round((roundedWages + roundedTaxes + roundedAdditional) * 100) / 100,
+      total: Math.round((roundedWages + roundedFringe + roundedAdditional) * 100) / 100,
     };
   });
 };

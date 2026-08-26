@@ -19,11 +19,11 @@ export const SUMMARY_HEADERS: (keyof PayrollReportSummaryRow)[] = [
   'PayrollCategory', 'PayRateType', 'IsHoliday', 'TotalHours',
 ];
 export const EMPLOYEE_EXPENSES_TAB = 'EmployeeExpenses';
-export const EMPLOYEE_EXPENSES_HEADERS: (keyof EmployeeExpense)[] = ['employeeId', 'employeeName', 'wageExpense', 'taxExpense'];
+export const EMPLOYEE_EXPENSES_HEADERS: (keyof EmployeeExpense)[] = ['employeeId', 'employeeName', 'wageExpense'];
 export const ADDITIONAL_EXPENSES_TAB = 'AdditionalExpenses';
 export const ADDITIONAL_EXPENSES_HEADERS: (keyof AdditionalExpense)[] = ['expenseName', 'amount'];
 export const ALLOCATION_REPORT_TAB = 'AllocationReport';
-export const ALLOCATION_REPORT_HEADERS: (keyof AllocationReportRow)[] = ['fundingSourceName', 'hoursAllocation', 'wagesAllocation', 'taxesAllocation', 'additionalExpenses', 'total'];
+export const ALLOCATION_REPORT_HEADERS: (keyof AllocationReportRow)[] = ['fundingSourceName', 'hoursAllocation', 'wagesAllocation', 'fringeAllocation', 'additionalExpenses', 'total'];
 
 // ─── Timesheet Tabs ───────────────────────────────────────────────────────────
 
@@ -79,7 +79,7 @@ export const EMPLOYEE_ACTIVITY_RATES_HEADERS = [
   'PayRateType', 'PayRate', 'HolidayPayRate',
 ];
 export const FUNDING_SOURCES_TAB = 'FundingSources';
-export const FUNDING_SOURCES_HEADERS = ['FundingSourceId', 'FundingSourceName', 'FundingSourceCode'];
+export const FUNDING_SOURCES_HEADERS = ['FundingSourceId', 'FundingSourceName', 'FundingSourceCode', 'FringeRate'];
 export const HOLIDAYS_TAB = 'Holidays';
 export const HOLIDAYS_HEADERS = ['HolidayId', 'HolidayName', 'HolidayDate'];
 export const SUPERVISORS_TAB = 'Supervisors';

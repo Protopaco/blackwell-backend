@@ -23,7 +23,6 @@ const writeEmployeeExpensesTab = async (
       expense.employeeId,
       expense.employeeName,
       expense.wageExpense ?? '',
-      expense.taxExpense ?? '',
     ]),
   ];
   await writeValues(workbookId, EMPLOYEE_EXPENSES_TAB, rows);

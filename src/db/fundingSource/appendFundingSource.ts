@@ -11,6 +11,7 @@ const appendFundingSource = async (
     FundingSourceId: fundingSource.fundingSourceId,
     FundingSourceName: fundingSource.fundingSourceName,
     FundingSourceCode: fundingSource.fundingSourceCode ?? '',
+    FringeRate: fundingSource.fringeRate ?? '',
   };
 
   await appendRow(workbookId, FUNDING_SOURCES_TAB, FUNDING_SOURCES_HEADERS, row);

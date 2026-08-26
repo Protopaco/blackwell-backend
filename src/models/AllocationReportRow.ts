@@ -2,7 +2,7 @@ interface AllocationReportRow {
   fundingSourceName: string;
   hoursAllocation: number;
   wagesAllocation: number;
-  taxesAllocation: number;
+  fringeAllocation: number;
   additionalExpenses: number;
   total: number;
 }

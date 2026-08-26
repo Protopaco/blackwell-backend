@@ -16,7 +16,7 @@ describe('createFundingSource', () => {
   it('appends the funding source with a generated fundingSourceId and invalidates the cache', async () => {
     payrollConfigCache.set('config-1', { fundingSources: [] } as any);
 
-    await createFundingSource('client-1', { fundingSourceName: 'Federal Grant' });
+    await createFundingSource('client-1', { fundingSourceName: 'Federal Grant', fringeRate: null });
 
     expect(appendFundingSource).toHaveBeenCalledWith(
       'config-1',
@@ -32,7 +32,7 @@ describe('createFundingSource', () => {
     vi.mocked(getClientById).mockResolvedValueOnce(null);
 
     await expect(
-      createFundingSource('unknown-client', { fundingSourceName: 'Federal Grant' }),
+      createFundingSource('unknown-client', { fundingSourceName: 'Federal Grant', fringeRate: null }),
     ).rejects.toThrow('Client not found: unknown-client');
   });
 });

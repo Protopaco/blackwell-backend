@@ -7,12 +7,14 @@ describe('mapFundingSource', () => {
       FundingSourceId: 'f1',
       FundingSourceName: 'Federal Grant',
       FundingSourceCode: 'FG-100',
+      FringeRate: 32,
     });
 
     expect(fundingSource).toEqual({
       fundingSourceId: 'f1',
       fundingSourceName: 'Federal Grant',
       fundingSourceCode: 'FG-100',
+      fringeRate: 32,
     });
   });
 
@@ -27,6 +29,20 @@ describe('mapFundingSource', () => {
 
     it('converts a missing value to undefined', () => {
       expect(mapFundingSource({}).fundingSourceCode).toBeUndefined();
+    });
+  });
+
+  describe('nullable fringeRate', () => {
+    it('keeps a present rate', () => {
+      expect(mapFundingSource({ FringeRate: 32 }).fringeRate).toBe(32);
+    });
+
+    it('converts an empty string to null', () => {
+      expect(mapFundingSource({ FringeRate: '' }).fringeRate).toBeNull();
+    });
+
+    it('converts a missing value to null', () => {
+      expect(mapFundingSource({}).fringeRate).toBeNull();
     });
   });
 });
