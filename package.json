@@ -15,7 +15,8 @@
     "test:integration": "vitest --project integration",
     "dev:test-data:reset": "tsx --conditions=development src/devTestData/scripts/reset.ts",
     "generate": "npx tsx src/utils/swagger/exportSwagger.ts",
-    "oauth:refresh": "tsx src/utils/oauth/getRefreshToken.ts"
+    "oauth:refresh": "tsx src/utils/oauth/getRefreshToken.ts",
+    "menu": "tsx scripts/menu.ts"
   },
   "imports": {
     "#app.js": {
@@ -84,6 +85,7 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
+    "@clack/prompts": "^1.7.0",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
