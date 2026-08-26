@@ -42,9 +42,6 @@ const router = Router();
  *                   wageExpense:
  *                     type: number
  *                     nullable: true
- *                   taxExpense:
- *                     type: number
- *                     nullable: true
  *                   hourly:
  *                     type: array
  *                     items:

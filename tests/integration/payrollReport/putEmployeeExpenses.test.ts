@@ -11,7 +11,6 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses', ()
       employeeId: incompleteEmployee.employeeId,
       employeeName: `${incompleteEmployee.firstName} ${incompleteEmployee.lastName}`,
       wageExpense: 123.45,
-      taxExpense: 12.35,
     };
 
     const res = await request(app)
@@ -37,7 +36,6 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses', ()
         employeeId: incompleteEmployee.employeeId,
         employeeName: `${incompleteEmployee.firstName} ${incompleteEmployee.lastName}`,
         wageExpense: 123.45,
-        taxExpense: 12.35,
       });
 
     expect(res.status).toBe(404);

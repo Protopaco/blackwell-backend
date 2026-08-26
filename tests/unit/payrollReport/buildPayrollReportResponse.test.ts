@@ -96,44 +96,40 @@ describe('buildPayrollReportResponse', () => {
     });
   });
 
-  describe('wageExpense and taxExpense', () => {
-    it('joins wageExpense and taxExpense from employeeExpenses by employeeId', () => {
+  describe('wageExpense', () => {
+    it('joins wageExpense from employeeExpenses by employeeId', () => {
       const response = buildPayrollReportResponse(
         [{ EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' }],
-        [{ employeeId: 'e1', employeeName: 'Jane Smith', wageExpense: 42.5, taxExpense: 4.25 }],
+        [{ employeeId: 'e1', employeeName: 'Jane Smith', wageExpense: 42.5 }],
       );
 
       expect(response.e1.wageExpense).toBe(42.5);
-      expect(response.e1.taxExpense).toBe(4.25);
     });
 
-    it('defaults wageExpense and taxExpense to null when no matching expense entry exists', () => {
+    it('defaults wageExpense to null when no matching expense entry exists', () => {
       const response = buildPayrollReportResponse(
         [{ EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' }],
         [],
       );
 
       expect(response.e1.wageExpense).toBeNull();
-      expect(response.e1.taxExpense).toBeNull();
     });
 
-    it('defaults wageExpense and taxExpense to null when employeeExpenses is null', () => {
+    it('defaults wageExpense to null when employeeExpenses is null', () => {
       const response = buildPayrollReportResponse(
         [{ EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' }],
         null,
       );
 
       expect(response.e1.wageExpense).toBeNull();
-      expect(response.e1.taxExpense).toBeNull();
     });
 
-    it('defaults wageExpense and taxExpense to null when employeeExpenses is omitted', () => {
+    it('defaults wageExpense to null when employeeExpenses is omitted', () => {
       const response = buildPayrollReportResponse([
         { EmployeeId: 'e1', EmployeeName: 'Jane Smith', PayRateType: 'Hourly', PayrollCategory: 'Regular', IsHoliday: 'FALSE', TotalHours: '8' },
       ]);
 
       expect(response.e1.wageExpense).toBeNull();
-      expect(response.e1.taxExpense).toBeNull();
     });
   });
 

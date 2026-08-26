@@ -23,7 +23,6 @@ describe('GET /api/v1/payrollReport/:clientId/:payPeriodId/allocationReport', ()
       employeeId: completeEmployee.employeeId,
       employeeName: `${completeEmployee.firstName} ${completeEmployee.lastName}`,
       wageExpense: 200,
-      taxExpense: 20,
     };
     const additionalExpenses = [
       { expenseName: 'Mileage', amount: 40 },

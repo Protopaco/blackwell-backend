@@ -74,7 +74,6 @@ const makeExpense = (employeeId: string, wageExpense: number | null): EmployeeEx
   employeeId,
   employeeName: 'Jane Smith',
   wageExpense,
-  taxExpense: null,
 });
 
 const makeAdditional = (expenseName: string, amount: number): AdditionalExpense => ({

@@ -52,7 +52,6 @@ const updateEmployeeExpensesBatch = async (
         employeeId,
         employeeName: `${employee.firstName} ${employee.lastName}`,
         wageExpense: update?.wageExpense ?? null,
-        taxExpense: update?.taxExpense ?? null,
       });
     }
   }

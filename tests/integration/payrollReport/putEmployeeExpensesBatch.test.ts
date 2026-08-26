@@ -12,7 +12,6 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses/batc
       employeeId: completeEmployee.employeeId,
       employeeName: `${completeEmployee.firstName} ${completeEmployee.lastName}`,
       wageExpense: 10,
-      taxExpense: 1,
     };
 
     const seedRes = await request(app)
@@ -23,8 +22,8 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses/batc
     const res = await request(app)
       .put(`/api/v1/payrollReport/${client.clientId}/${payPeriod.payPeriodId}/employeeExpenses/batch`)
       .send([
-        { employeeId: completeEmployee.employeeId, wageExpense: 15, taxExpense: 1.5 },
-        { employeeId: incompleteEmployee.employeeId, wageExpense: 20, taxExpense: 2 },
+        { employeeId: completeEmployee.employeeId, wageExpense: 15 },
+        { employeeId: incompleteEmployee.employeeId, wageExpense: 20 },
       ]);
 
     expect(res.status).toBe(200);
@@ -37,13 +36,11 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses/batc
     expect(getRes.body).toContainEqual({
       ...completeEmployeeExpense,
       wageExpense: 15,
-      taxExpense: 1.5,
     });
     expect(getRes.body).toContainEqual({
       employeeId: incompleteEmployee.employeeId,
       employeeName: `${incompleteEmployee.firstName} ${incompleteEmployee.lastName}`,
       wageExpense: 20,
-      taxExpense: 2,
     });
   });
 
@@ -52,7 +49,7 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses/batc
 
     const res = await request(app)
       .put(`/api/v1/payrollReport/${client.clientId}/${payPeriod.payPeriodId}/employeeExpenses/batch`)
-      .send([{ employeeId: incompleteEmployee.employeeId, wageExpense: 20, taxExpense: 2 }]);
+      .send([{ employeeId: incompleteEmployee.employeeId, wageExpense: 20 }]);
 
     expect(res.status).toBe(404);
     expect(res.body.message).toContain(`No payroll report file exists for pay period: ${payPeriod.payPeriodId}`);
@@ -64,7 +61,6 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses/batc
       employeeId: completeEmployee.employeeId,
       employeeName: `${completeEmployee.firstName} ${completeEmployee.lastName}`,
       wageExpense: 10,
-      taxExpense: 1,
     };
 
     const seedRes = await request(app)
@@ -81,8 +77,8 @@ describe('PUT /api/v1/payrollReport/:clientId/:payPeriodId/employeeExpenses/batc
     const res = await request(app)
       .put(`/api/v1/payrollReport/${client.clientId}/${payPeriod.payPeriodId}/employeeExpenses/batch`)
       .send([
-        { employeeId: completeEmployee.employeeId, wageExpense: 99, taxExpense: 9.9 },
-        { employeeId: missingEmployeeId, wageExpense: 20, taxExpense: 2 },
+        { employeeId: completeEmployee.employeeId, wageExpense: 99 },
+        { employeeId: missingEmployeeId, wageExpense: 20 },
       ]);
 
     expect(res.status).toBe(422);
