@@ -14,8 +14,8 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:1111',
-        description: 'Development server',
+        url: process.env.BACKEND_BASE_URL ?? 'http://localhost:1111',
+        description: 'API server',
       },
     ],
     // Controls Swagger UI's group display order — Swagger UI does not sort tags automatically,

@@ -3,7 +3,12 @@ import Bottleneck from 'bottleneck';
 import scheduleGoogleApiCall from '#utils/rateLimiters/scheduleGoogleApiCall.js';
 
 const rateLimitError = (): unknown => ({ code: 429, message: 'Quota exceeded' });
-const otherError = (): unknown => ({ code: 500, message: 'Internal error' });
+const permissionDeniedError = (): unknown => ({ code: 403, message: 'Permission denied' });
+const serviceUnavailableError = (): unknown => ({
+  code: 503,
+  response: { status: 503 },
+  message: 'The service is currently unavailable.',
+});
 
 describe('scheduleGoogleApiCall', () => {
   let limiter: Bottleneck;
@@ -28,14 +33,67 @@ describe('scheduleGoogleApiCall', () => {
     expect(apiCall).toHaveBeenCalledTimes(1);
   });
 
-  it('rethrows a non-429 error immediately without retrying', async () => {
-    const apiCall = vi.fn().mockRejectedValue(otherError());
+  it('rethrows a non-retryable error immediately without retrying', async () => {
+    const apiCall = vi.fn().mockRejectedValue(permissionDeniedError());
 
     const resultPromise = scheduleGoogleApiCall(limiter, apiCall);
-    const assertion = expect(resultPromise).rejects.toEqual(otherError());
+    const assertion = expect(resultPromise).rejects.toEqual(permissionDeniedError());
     await vi.runAllTimersAsync();
     await assertion;
     expect(apiCall).toHaveBeenCalledTimes(1);
+  });
+
+  it('rethrows an error carrying no HTTP status immediately without retrying', async () => {
+    const networkError = new Error('socket hang up');
+    const apiCall = vi.fn().mockRejectedValue(networkError);
+
+    const resultPromise = scheduleGoogleApiCall(limiter, apiCall);
+    const assertion = expect(resultPromise).rejects.toThrow('socket hang up');
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(apiCall).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([500, 502, 503, 504])(
+    'retries a transient %i and succeeds once the underlying call recovers',
+    async (httpStatusCode) => {
+      const transientError = { code: httpStatusCode, response: { status: httpStatusCode } };
+      const apiCall = vi.fn()
+        .mockRejectedValueOnce(transientError)
+        .mockResolvedValueOnce('ok');
+
+      const resultPromise = scheduleGoogleApiCall(limiter, apiCall);
+      await vi.runAllTimersAsync();
+      const result = await resultPromise;
+
+      expect(result).toBe('ok');
+      expect(apiCall).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it('retries a 503 reported only on response.status, not the top-level code', async () => {
+    const apiCall = vi.fn()
+      .mockRejectedValueOnce({ message: 'unavailable', response: { status: 503 } })
+      .mockResolvedValueOnce('ok');
+
+    const resultPromise = scheduleGoogleApiCall(limiter, apiCall);
+    await vi.runAllTimersAsync();
+    const result = await resultPromise;
+
+    expect(result).toBe('ok');
+    expect(apiCall).toHaveBeenCalledTimes(2);
+  });
+
+  it('gives up and throws the last 503 once retries are exhausted', async () => {
+    const apiCall = vi.fn().mockRejectedValue(serviceUnavailableError());
+
+    const resultPromise = scheduleGoogleApiCall(limiter, apiCall);
+    const assertion = expect(resultPromise).rejects.toEqual(serviceUnavailableError());
+    await vi.runAllTimersAsync();
+    await assertion;
+
+    // 1 initial attempt + RATE_LIMIT_RETRY_MAX_ATTEMPTS retries
+    expect(apiCall).toHaveBeenCalledTimes(6);
   });
 
   it('retries on 429 and succeeds once the underlying call recovers', async () => {

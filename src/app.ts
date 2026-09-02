@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import '#utils/loadEnvironmentVariables.js';
 import express from 'express';
 import cors from 'cors';
 import { pinoHttp } from 'pino-http';
@@ -19,8 +19,6 @@ import settingsRoute from '#routes/v1/settings/index.js';
 import supervisorRoute from '#routes/v1/supervisor/index.js';
 import timesheetRoute from '#routes/v1/timesheet/index.js';
 import timesheetFolderRoute from '#routes/v1/timesheetFolder/index.js';
-
-dotenv.config();
 
 const app = express();
 const basePath = '/api';
